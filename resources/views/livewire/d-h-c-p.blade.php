@@ -1,15 +1,16 @@
 <div>
     <h2 class="text-lg font-bold">DCHP Process</h2>
 
-   <div class="flex">
+   <div class="flex gap-12 mt-3">
         @foreach($servers as $server)
 
    <flux:context>
-        <flux:icon.computer-desktop class="size-64" />
-        <flux:text>{{ $server }}</flux:text>
-
+    <div class="flex flex-col items-center">
+            <flux:icon.computer-desktop class="size-20" />
+            <flux:text>{{ $server }}</flux:text>
+    </div>
     <flux:menu>
-        <flux:menu.item icon="check-circle" class="text-green-500">All OK</flux:menu.item>
+        <flux:menu.item icon="check-circle">All OK</flux:menu.item>
 
         <flux:menu.separator />
 

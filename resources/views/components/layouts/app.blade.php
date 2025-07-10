@@ -89,7 +89,7 @@
 </flux:dropdown></div>
             </div>
         </flux:heading>
-        <flux:text class="mb-6 mt-2 text-base">Welkomment zu Nettools</flux:text>
+        <flux:text class="mb-6 mt-2 text-base">Herzlich willkommen bei NetTools</flux:text>
         <flux:separator variant="subtle" />
         <div class="mt-4">
             {{ $slot }}
