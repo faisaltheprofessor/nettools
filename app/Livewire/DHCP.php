@@ -6,6 +6,7 @@ use Livewire\Component;
 
 class DHCP extends Component
 {
+    public $servers = ['vs002', 'vs003', 'vs004'];
     public function render()
     {
         return view('livewire.d-h-c-p');

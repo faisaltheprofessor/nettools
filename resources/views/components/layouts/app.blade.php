@@ -94,6 +94,10 @@
         <div class="mt-4">
             {{ $slot }}
         </div>
+    @persist('toast')
+        <flux:toast />
+    @endpersist
+
     </flux:main>
     @fluxScripts
 </body>

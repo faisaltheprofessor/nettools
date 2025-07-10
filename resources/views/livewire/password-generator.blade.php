@@ -36,6 +36,7 @@
                     min="4"
                     max="64"
                     class="w-24"
+                    :disabled="$mode != 'all'"
                 />
             </div>
 
