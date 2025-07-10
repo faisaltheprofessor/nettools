@@ -13,7 +13,7 @@ class PasswordGenerator extends Component
     public bool $useNumbers = true;
     public bool $useCommonSymbols = true;
     public bool $useSymbols = false;
-    public string $mode = 'all';
+    public string $mode = 'all'; // possible values: 'easy', 'hard', 'all', 'read'
 
     public function mount()
     {
@@ -22,23 +22,62 @@ class PasswordGenerator extends Component
 
     public function generatePassword()
     {
-        if ($this->mode === 'read') {
+        if ($this->mode === 'read' || $this->mode === 'easy' || $this->mode === 'hard') {
             $this->password = $this->generateReadablePassword();
         } else {
             $this->password = $this->generateDefaultPassword();
         }
     }
 
-    public function toggleSymbols()
-    {
-        return "toggleSymbols";
-    }
-
     private function generateReadablePassword(): string
     {
-        $words = ['Haus', 'Brot', 'Apfel', 'Buch', 'Licht', 'Baum', 'Hund', 'Zug', 'Glas'];
+
+$words = [
+    "Abendrot", "Anwaltin", "Apfelbaum", "Autobahn", "Bäckerei", "Bergwerk", "Bleistift",
+    "Dachboden", "Einkauf", "Erfahrung", "Fahrrad", "Fenster", "Feuerwehr", "Freiheit",
+    "Gartenlaube", "Gesundheit", "Hauptstadt", "Kofferraum", "Landschaft", "Mädchen",
+    "Morgendamm", "Nachricht", "Polizei", "Schlafzimmer", "Schreibtisch", "Taschenlampe",
+    "Verkehr", "Wissenschaft", "Absender", "Angebote", "Arbeitszeit", "Beispiel",
+    "Besuch", "Betrieb", "Datenbank", "Drucker", "Einladung", "Erlaubnis", "Fachfrau",
+    "Fahrstuhl", "Festung", "Führung", "Gebäude", "Gedanke", "Gefahr", "Geschäft",
+    "Gesetz", "Handlung", "Heizung", "Internet", "Kamera", "Lektion", "Lösung",
+    "Markt", "Mittel", "Nummer", "Objekt", "Ordner", "Papier", "Quelle", "Rezept",
+    "Schloss", "Schule", "Straße", "Abteilung", "Aufgabe", "Ausflug", "Bildung",
+    "Brücke", "Familie", "Frucht", "Gefühl", "Gericht", "Geschichte", "Glaube",
+    "Gruppe", "Hotel", "Information", "Küche", "Lehrer", "Mutter", "Nachbar",
+    "Presse", "Reise", "Schüler", "Schwester", "Sendung", "Tasche", "Urlaub",
+    "Vertrag", "Wandern", "Wissen", "Zahlung", "Zeichnung", "Zukunft"
+];
+
         $symbols = ['.', '_', '-', '+', '!'];
-        $word = $words[array_rand($words)];
+
+        if ($this->mode === 'easy') {
+            // Word with first capital, one symbol, 3-digit number
+            $word = ucfirst($words[array_rand($words)]);
+            $symbol = $symbols[array_rand($symbols)];
+            $number = rand(100, 999);
+
+            return "{$word}{$symbol}{$number}";
+        }
+
+        if ($this->mode === 'hard') {
+            // Word + symbol + word + symbol + 2-digit number + symbol
+            $word1 = $words[array_rand($words)];
+            $word2 = $words[array_rand($words)];
+            $symbol1 = $symbols[array_rand($symbols)];
+            $symbol2 = $symbols[array_rand($symbols)];
+            $symbol3 = $symbols[array_rand($symbols)];
+            $number = rand(10, 99);
+
+            // Capitalize only the first word's first letter, keep second word lowercase
+            $word1 = ucfirst($word1);
+            $word2 = ucfirst($word2);
+
+            return "{$word1}{$symbol1}{$word2}{$symbol2}{$number}{$symbol3}";
+        }
+
+        // Fallback: simple word + symbol + number for 'read' or others
+        $word = ucfirst($words[array_rand($words)]);
         $symbol = $symbols[array_rand($symbols)];
         $number = rand(10, 99);
 
@@ -81,3 +120,4 @@ class PasswordGenerator extends Component
         return view('livewire.password-generator');
     }
 }
+
