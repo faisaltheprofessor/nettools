@@ -2,21 +2,17 @@
     <div class="flex flex-col gap-8 items-start w-full">
         <!-- Passwortfeld + Stärke-Anzeige -->
         <div class="flex w-full">
-            <div class="relative w-full rounded-lg bg-white shadow-sm flex items-center">
+            <div class="relative w-full rounded-lg shadow-sm flex items-center">
                 <flux:input
                     icon="key"
                     placeholder="Passwort anzeigen"
                     wire:model="password"
                     readonly
                     copyable
-                    class="!rounded-lg !border-none !bg-white !shadow-none text-xl flex-1"
+                class="ring-0 focus:ring-0"
                 />
 
 
-                <!-- Stärke-Balken -->
-                <div class="absolute bottom-0 left-0 w-full h-[4px]">
-                    <div class="h-full w-full bg-green-700"></div>
-                </div>
             </div>
 
             <!-- Refresh Button -->
@@ -44,7 +40,7 @@
             </div>
 
             <!-- Zeichenoptionen -->
-            <div class="flex gap-4 pt-2">
+            <div class="flex gap-4 pt-2 flex-wrap">
                 <flux:field variant="inline">
                     <flux:checkbox wire:model="useUppercase" wire:change="generatePassword" :disabled="$mode != 'all'" />
                     <flux:label>Großbuchstaben</flux:label>
