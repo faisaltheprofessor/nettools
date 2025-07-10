@@ -6,13 +6,14 @@ use Livewire\Component;
 
 class PasswordGenerator extends Component
 {
-       public string $password = '';
-    public int $length = 13;
+    public string $password = '';
+    public int $length = 10;
     public bool $useUppercase = true;
     public bool $useLowercase = true;
     public bool $useNumbers = true;
-    public bool $useSymbols = true;
-    public string $mode = 'all'; // 'say', 'read', 'all'
+    public bool $useCommonSymbols = true;
+    public bool $useSymbols = false;
+    public string $mode = 'all';
 
     public function mount()
     {
@@ -28,10 +29,15 @@ class PasswordGenerator extends Component
         }
     }
 
+    public function toggleSymbols()
+    {
+        return "toggleSymbols";
+    }
+
     private function generateReadablePassword(): string
     {
         $words = ['Haus', 'Brot', 'Apfel', 'Buch', 'Licht', 'Baum', 'Hund', 'Zug', 'Glas'];
-        $symbols = ['.', '_', '-', '+'];
+        $symbols = ['.', '_', '-', '+', '!'];
         $word = $words[array_rand($words)];
         $symbol = $symbols[array_rand($symbols)];
         $number = rand(10, 99);
@@ -44,16 +50,20 @@ class PasswordGenerator extends Component
         $characters = '';
 
         if ($this->useLowercase) {
-            $characters .= 'abcdefghijklmnopqrstuvwxyz';
+            $characters .= 'abcdefghijkmnopqrstuvwxyz';
         }
         if ($this->useUppercase) {
-            $characters .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $characters .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
         }
         if ($this->useNumbers) {
-            $characters .= '0123456789';
+            $characters .= '123456789';
         }
         if ($this->useSymbols) {
             $characters .= '!@#$%^&*()-_=+[]{};:,.<>?';
+        }
+
+        if ($this->useCommonSymbols) {
+            $characters .= '!$%.,';
         }
 
         if ($characters === '') {

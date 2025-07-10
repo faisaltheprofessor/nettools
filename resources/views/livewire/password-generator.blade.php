@@ -44,45 +44,49 @@
             </div>
 
             <!-- Zeichenoptionen -->
-            <div class="grid grid-cols-2 gap-4 pt-2">
-                <label class="flex items-center gap-2">
-                    <flux:checkbox wire:model="useUppercase" wire:change="generatePassword" />
-                    <span>Großbuchstaben</span>
-                </label>
+            <div class="flex gap-4 pt-2">
+                <flux:field variant="inline">
+                    <flux:checkbox wire:model="useUppercase" wire:change="generatePassword" :disabled="$mode != 'all'" />
+                    <flux:label>Großbuchstaben</flux:label>
+                </flux:field>
 
-                <label class="flex items-center gap-2">
-                    <flux:checkbox wire:model="useLowercase" wire:change="generatePassword" />
-                    <span>Kleinbuchstaben</span>
-                </label>
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="useLowercase" wire:change="generatePassword" :disabled="$mode != 'all'" />
+                <flux:label>Kleinbuchstaben</flux:label>
+            </flux:field>
 
-                <label class="flex items-center gap-2">
-                    <flux:checkbox wire:model="useNumbers" wire:change="generatePassword" />
-                    <span>Zahlen</span>
-                </label>
 
-                <label class="flex items-center gap-2">
-                    <flux:checkbox wire:model="useSymbols" wire:change="generatePassword" />
-                    <span>Sonderzeichen</span>
-                </label>
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="useNumbers" wire:change="generatePassword" :disabled="$mode != 'all'" />
+                <flux:label>Zahlen</flux:label>
+            </flux:field>
+
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="useCommonSymbols" wire:change="generatePassword" :disabled="$mode != 'all'" />
+                <flux:label>Gemeinsame Sonderzeichen (DE/US)</flux:label>
+            </flux:field>
+
+
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="useSymbols" wire:change="generatePassword" :disabled="$mode != 'all'" />
+                <flux:label>Alle Sonderzeichen</flux:label>
+            </flux:field>
+
+
             </div>
+
+
+
+            <hr class="border-gray-200">
+
+
+<flux:radio.group wire:model="mode" label="mnemonic" variant="pills" wire:change="generatePassword">
+    <flux:radio value="all" label="x" checked/>
+    <flux:radio value="easy" label="einfach" />
+    <flux:radio value="hard" label="erweritert" />
+</flux:radio.group>
 
             <!-- Moduswahl -->
-            <div class="space-y-3 pt-2">
-                <label class="flex items-center gap-2">
-                    <flux:radio wire:model="mode" wire:change="generatePassword" name="mode" value="say" />
-                    <span>Einfach auszusprechen (ohne Zahlen und Sonderzeichen)</span>
-                </label>
-
-                <label class="flex items-center gap-2">
-                    <flux:radio wire:model="mode" wire:change="generatePassword" name="mode" value="read" />
-                    <span>Einfach zu lesen (ohne l, 1, o, 0)</span>
-                </label>
-
-                <label class="flex items-center gap-2">
-                    <flux:radio wire:model="mode" wire:change="generatePassword" name="mode" value="all" />
-                    <span>Alle Zeichen (beliebige Kombination)</span>
-                </label>
-            </div>
         </flux:card>
     </div>
 </div>
