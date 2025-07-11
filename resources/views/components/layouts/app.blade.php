@@ -14,7 +14,7 @@
         <flux:brand href="#" logo="#" name="Net Tools" class="px-2 hidden dark:flex" />
 
  <flux:navlist>
-            <flux:navlist.item icon="home" href="/">Home</flux:navlist.item>
+            <flux:navlist.item icon="home" href="/" wire:navigate>Home</flux:navlist.item>
              {{-- DHCP --}}
             <flux:navlist.item icon="satellite-dish" href="/dhcp" wire:navigate>
                 <div class="flex items-center justify-between">

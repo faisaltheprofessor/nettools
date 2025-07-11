@@ -9,6 +9,6 @@ class DNS extends Component
     public $servers = ["vs002", "vs003", "vs004"];
     public function render()
     {
-        return view('livewire.d-n-s');
+        return view('livewire.dns');
     }
 }

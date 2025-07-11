@@ -9,7 +9,7 @@
 
    <flux:context>
     <div class="flex flex-col items-center">
-        <flux:icon.computer-desktop class="size-20 text-blue-500 cursor-context-menu" variant="solid"/>
+        <flux:icon.computer-desktop class="size-20 text-emerald-500 cursor-context-menu" variant="solid"/>
         <flux:text>{{ $server }}</flux:text>
     </div>
     <flux:menu>
@@ -41,7 +41,7 @@
 
     <div class="flex items-center gap-2 justify-center">
             <flux:button variant="primary" color="green" icon="play" x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})" class="cursor-pointer">Start</flux:button>
-        <flux:button variant="primary" color="red" icon="power" x-on:click="$flux.toast({heading: 'Fehler', text: 'Etwas ist schiefgelaufen', variant: 'danger', duration: 3000})" class="cursor-pointer">Stop</flux:button>
+        <flux:button variant="primary" color="red" icon="power" disabled x-on:click="$flux.toast({heading: 'Fehler', text: 'Etwas ist schiefgelaufen', variant: 'danger', duration: 3000})" class="cursor-pointer">Stop</flux:button>
 
         <flux:modal.trigger name="confirm-action">
             <flux:button variant="primary" color="teal" icon="arrow-path" class="cursor-pointer">Neuestart</flux:button>

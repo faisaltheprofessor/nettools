@@ -1,10 +1,10 @@
-<div class="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+<div class="flex items-center justify-center min-h-screen">
   <blockquote class="w-2/3 text-center italic font-semibold text-gray-500 dark:text-gray-400 text-xl relative">
-    
+
     <!-- Small grayed-out watermark above the quote icon -->
-    <img 
-      src="/pankow.svg" 
-      alt="Watermark" 
+    <img
+      src="/pankow.svg"
+      alt="Watermark"
       class="mx-auto mb-2 w-64 h-64 opacity-60 select-none pointer-events-none"
       aria-hidden="true"
     />
