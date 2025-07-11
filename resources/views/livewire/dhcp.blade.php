@@ -1,4 +1,5 @@
 <div>
+    <h2>DCHP: </h2> {{ $result}}
     <h2 class="text-lg font-bold">DCHP Dienst</h2>
 <div class="flex mt-32 items-center justify-center">
     <div>
@@ -18,7 +19,7 @@
         <flux:menu.separator />
 
         <flux:menu.submenu heading="DHCP">
-            <flux:menu.item icon="play">Start</flux:button>
+            <flux:menu.item icon="play" wire:click="getDhcpStatus">Start</flux:button>
             <flux:menu.item icon="power">Stop</flux:button>
             <flux:menu.item icon="rotate-ccw">Neuestart</flux:button>
         </flux:menu.submenu>
