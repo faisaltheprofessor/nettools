@@ -2,6 +2,7 @@
 
 use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
+use App\Livewire\DNS;
 use App\Livewire\PasswordGenerator;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -17,6 +18,10 @@ Route::get('dashboard', Dashboard::class)
      // DHCP
 Route::get('dhcp', DHCP::class)
     ->name('dhcp.index');
+
+
+Route::get('dns', DNS::class)
+    ->name('dns.index');
 
     // Password Generator
 Route::get('password-generator', PasswordGenerator::class)

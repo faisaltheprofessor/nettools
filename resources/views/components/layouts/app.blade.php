@@ -28,7 +28,7 @@
             </flux:navlist.item>
 
              {{-- DNS --}}
-            <flux:navlist.item icon="earth-lock" href="#" wire:navigate>
+            <flux:navlist.item icon="earth-lock" href="/dns" wire:navigate>
                 <div class="flex items-center justify-between">
                     <span>DNS</span>
                     <span class="inline-flex items-center text-green-600">
@@ -95,7 +95,7 @@
             {{ $slot }}
         </div>
     @persist('toast')
-        <flux:toast />
+        <flux:toast position="top right" class="pt-24" />
     @endpersist
 
     </flux:main>
