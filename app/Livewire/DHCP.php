@@ -34,22 +34,22 @@ class DHCP extends Component
 
             if ($output === 'active') {
                 Flux::toast(
-                    heading: 'Erfolgreich',
                     text: $output,
+                    heading: 'Erfolgreich',
                     variant: 'success'
                 );
             } else {
                 Flux::toast(
-                    heading: 'Etwas ist schief gelaufen',
                     text: $output,
+                    heading: 'Etwas ist schief gelaufen',
                     variant: 'danger'
                 );
             }
 
         } catch (\Throwable $e) {
             Flux::toast(
-                heading: 'Verbindungsfehler',
                 text: $e->getMessage(),
+                heading: 'Verbindungsfehler',
                 variant: 'danger'
             );
         }
