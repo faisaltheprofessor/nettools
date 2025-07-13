@@ -8,22 +8,21 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
-    return redirect("/dashboard");
+    return redirect('/dashboard');
 })->name('home');
 
 // Dashboard
 Route::get('dashboard', Dashboard::class)
     ->name('dashboard');
 
-     // DHCP
+// DHCP
 Route::get('dhcp', DHCP::class)
     ->name('dhcp.index');
-
 
 Route::get('dns', DNS::class)
     ->name('dns.index');
 
-    // Password Generator
+// Password Generator
 Route::get('password-generator', PasswordGenerator::class)
     ->name('password.generator');
 

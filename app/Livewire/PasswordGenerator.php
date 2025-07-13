@@ -7,12 +7,19 @@ use Livewire\Component;
 class PasswordGenerator extends Component
 {
     public string $password = '';
+
     public int $length = 10;
+
     public bool $useUppercase = true;
+
     public bool $useLowercase = true;
+
     public bool $useNumbers = true;
+
     public bool $useCommonSymbols = true;
+
     public bool $useSymbols = false;
+
     public string $mode = 'all'; // possible values: 'easy', 'hard', 'all', 'read'
 
     public function mount()
@@ -32,22 +39,22 @@ class PasswordGenerator extends Component
     private function generateReadablePassword(): string
     {
 
-$words = [
-    "Abendrot", "Anwaltin", "Apfelbaum", "Autobahn", "Bäckerei", "Bergwerk", "Bleistift",
-    "Dachboden", "Einkauf", "Erfahrung", "Fahrrad", "Fenster", "Feuerwehr", "Freiheit",
-    "Gartenlaube", "Gesundheit", "Hauptstadt", "Kofferraum", "Landschaft", "Mädchen",
-    "Morgendamm", "Nachricht", "Polizei", "Schlafzimmer", "Schreibtisch", "Taschenlampe",
-    "Verkehr", "Wissenschaft", "Absender", "Angebote", "Arbeitszeit", "Beispiel",
-    "Besuch", "Betrieb", "Datenbank", "Drucker", "Einladung", "Erlaubnis", "Fachfrau",
-    "Fahrstuhl", "Festung", "Führung", "Gebäude", "Gedanke", "Gefahr", "Geschäft",
-    "Gesetz", "Handlung", "Heizung", "Internet", "Kamera", "Lektion", "Lösung",
-    "Markt", "Mittel", "Nummer", "Objekt", "Ordner", "Papier", "Quelle", "Rezept",
-    "Schloss", "Schule", "Straße", "Abteilung", "Aufgabe", "Ausflug", "Bildung",
-    "Brücke", "Familie", "Frucht", "Gefühl", "Gericht", "Geschichte", "Glaube",
-    "Gruppe", "Hotel", "Information", "Küche", "Lehrer", "Mutter", "Nachbar",
-    "Presse", "Reise", "Schüler", "Schwester", "Sendung", "Tasche", "Urlaub",
-    "Vertrag", "Wandern", "Wissen", "Zahlung", "Zeichnung", "Zukunft"
-];
+        $words = [
+            'Abendrot', 'Anwaltin', 'Apfelbaum', 'Autobahn', 'Bäckerei', 'Bergwerk', 'Bleistift',
+            'Dachboden', 'Einkauf', 'Erfahrung', 'Fahrrad', 'Fenster', 'Feuerwehr', 'Freiheit',
+            'Gartenlaube', 'Gesundheit', 'Hauptstadt', 'Kofferraum', 'Landschaft', 'Mädchen',
+            'Morgendamm', 'Nachricht', 'Polizei', 'Schlafzimmer', 'Schreibtisch', 'Taschenlampe',
+            'Verkehr', 'Wissenschaft', 'Absender', 'Angebote', 'Arbeitszeit', 'Beispiel',
+            'Besuch', 'Betrieb', 'Datenbank', 'Drucker', 'Einladung', 'Erlaubnis', 'Fachfrau',
+            'Fahrstuhl', 'Festung', 'Führung', 'Gebäude', 'Gedanke', 'Gefahr', 'Geschäft',
+            'Gesetz', 'Handlung', 'Heizung', 'Internet', 'Kamera', 'Lektion', 'Lösung',
+            'Markt', 'Mittel', 'Nummer', 'Objekt', 'Ordner', 'Papier', 'Quelle', 'Rezept',
+            'Schloss', 'Schule', 'Straße', 'Abteilung', 'Aufgabe', 'Ausflug', 'Bildung',
+            'Brücke', 'Familie', 'Frucht', 'Gefühl', 'Gericht', 'Geschichte', 'Glaube',
+            'Gruppe', 'Hotel', 'Information', 'Küche', 'Lehrer', 'Mutter', 'Nachbar',
+            'Presse', 'Reise', 'Schüler', 'Schwester', 'Sendung', 'Tasche', 'Urlaub',
+            'Vertrag', 'Wandern', 'Wissen', 'Zahlung', 'Zeichnung', 'Zukunft',
+        ];
 
         $symbols = ['.', '_', '-', '+', '!'];
 
@@ -120,4 +127,3 @@ $words = [
         return view('livewire.password-generator');
     }
 }
-

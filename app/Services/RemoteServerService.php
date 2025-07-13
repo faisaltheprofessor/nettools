@@ -1,14 +1,17 @@
 <?php
+
 namespace App\Services;
 
-use DivineOmega\SSHConnection\SSHConnection;
 use DivineOmega\SSHConnection\Exceptions\SSHConnectionException;
+use DivineOmega\SSHConnection\SSHConnection;
 use Exception;
 
 class RemoteServerService
 {
     protected ?SSHConnection $connection = null;
+
     protected ?string $lastOutput = null;
+
     protected ?string $lastError = null;
 
     public function connect(
@@ -22,7 +25,7 @@ class RemoteServerService
         string $fingerprintType = SSHConnection::FINGERPRINT_MD5
     ): static {
         try {
-            $this->connection = (new SSHConnection())
+            $this->connection = (new SSHConnection)
                 ->to($host)
                 ->onPort($port)
                 ->as($username);
@@ -32,7 +35,7 @@ class RemoteServerService
             } elseif ($password) {
                 $this->connection->withPassword($password);
             } else {
-                throw new Exception("Provide password or private key.");
+                throw new Exception('Provide password or private key.');
             }
 
             $this->connection->timeout($timeout)->connect();
@@ -41,12 +44,12 @@ class RemoteServerService
             if ($expectedFingerprint) {
                 $actual = $this->connection->fingerprint($fingerprintType);
                 if ($actual !== $expectedFingerprint) {
-                    throw new Exception("SSH fingerprint mismatch!");
+                    throw new Exception('SSH fingerprint mismatch!');
                 }
             }
 
-        } catch (SSHConnectionException | Exception $e) {
-            throw new Exception("SSH connection failed: " . $e->getMessage());
+        } catch (SSHConnectionException|Exception $e) {
+            throw new Exception('SSH connection failed: '.$e->getMessage());
         }
 
         return $this;
@@ -57,8 +60,8 @@ class RemoteServerService
         $this->lastOutput = null;
         $this->lastError = null;
 
-        if (!$this->connection) {
-            throw new Exception("No SSH connection established.");
+        if (! $this->connection) {
+            throw new Exception('No SSH connection established.');
         }
 
         $result = $this->connection->run($command);
@@ -96,8 +99,8 @@ class RemoteServerService
 
     public function upload(string $localPath, string $remotePath): bool
     {
-        if (!$this->connection) {
-            throw new Exception("No SSH connection established.");
+        if (! $this->connection) {
+            throw new Exception('No SSH connection established.');
         }
 
         return $this->connection->upload($localPath, $remotePath);
@@ -105,8 +108,8 @@ class RemoteServerService
 
     public function download(string $remotePath, string $localPath): bool
     {
-        if (!$this->connection) {
-            throw new Exception("No SSH connection established.");
+        if (! $this->connection) {
+            throw new Exception('No SSH connection established.');
         }
 
         return $this->connection->download($remotePath, $localPath);
@@ -114,8 +117,8 @@ class RemoteServerService
 
     public function getFingerprint(string $type = SSHConnection::FINGERPRINT_MD5): string
     {
-        if (!$this->connection) {
-            throw new Exception("No SSH connection established.");
+        if (! $this->connection) {
+            throw new Exception('No SSH connection established.');
         }
 
         return $this->connection->fingerprint($type);
