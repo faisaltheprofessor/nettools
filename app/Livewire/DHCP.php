@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Livewire;
-use DivineOmega\SSHConnection\SSHConnection;
 use Flux\Flux;
-
 use Livewire\Component;
+use App\Facades\RemoteSSH;
+
 
 class DHCP extends Component
 {
@@ -17,31 +17,38 @@ class DHCP extends Component
     }
 
     public function getDhcpStatus()
-    {
-        $connection = (new SSHConnection())
-                    -> to(env("DHCP_SERVER"))
-                    -> as(env("DHCP_USER"))
-                    -> withPassword(env("DHCP_PASSWORD"))
-                    -> connect();
+{
+    try {
+        RemoteSSH::connect(
+            env("DHCP_SERVER"),
+            env("DHCP_USER"),
+            env("DHCP_PASSWORD")
+        );
 
-        $command = $connection->run('sudo systemctl is-active sshd');
-        if (($command->getOutput()) === 'active')
-        {
+        RemoteSSH::execute('sudo systemctl is-active sshd');
+
+        $output = trim(RemoteSSH::getOutput());
+
+        if ($output === 'active') {
             Flux::toast(
                 heading: 'Erfolgreich',
-                text: $command->getOutput(),
+                text: $output,
                 variant: 'success'
             );
-        }
-
-        else
-        {
-
+        } else {
             Flux::toast(
                 heading: 'Etwas ist schief gelaufen',
-                text: $command->getOutput(),
+                text: $output,
                 variant: 'danger'
             );
         }
+
+    } catch (\Throwable $e) {
+        Flux::toast(
+            heading: 'Verbindungsfehler',
+            text: $e->getMessage(),
+            variant: 'danger'
+        );
     }
+}
 }
