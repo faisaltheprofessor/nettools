@@ -7,20 +7,19 @@ use Livewire\Component;
 class PasswordGenerator extends Component
 {
     public string $password = '';
-
     public int $length = 10;
 
     public bool $useUppercase = true;
-
     public bool $useLowercase = true;
-
     public bool $useNumbers = true;
-
     public bool $useCommonSymbols = true;
-
     public bool $useSymbols = false;
 
-    public string $mode = 'all'; // possible values: 'easy', 'hard', 'all', 'read'
+    public string $mode = 'all';
+
+    public float $entropy = 0.0;
+    public string $strengthLabel = '';
+    public string $strengthColor = 'bg-red-500';
 
     public function mount()
     {
@@ -29,97 +28,125 @@ class PasswordGenerator extends Component
 
     public function generatePassword()
     {
-        if ($this->mode === 'read' || $this->mode === 'easy' || $this->mode === 'hard') {
+        if (in_array($this->mode, ['read', 'easy', 'hard'])) {
             $this->password = $this->generateReadablePassword();
         } else {
             $this->password = $this->generateDefaultPassword();
+        }
+
+        $this->updateEntropy();
+    }
+
+    private function updateEntropy(): void
+    {
+        $charSet = '';
+
+        if ($this->useLowercase) {
+            $charSet .= 'abcdefghijkmnopqrstuvwxyz';
+        }
+        if ($this->useUppercase) {
+            $charSet .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
+        }
+        if ($this->useNumbers) {
+            $charSet .= '1234567890';
+        }
+        if ($this->useSymbols) {
+            $charSet .= '!@#$%^&*()-_=+[]{};:,.<>?';
+        }
+        if ($this->useCommonSymbols) {
+            $charSet .= '!$%.,';
+        }
+
+        $length = strlen($this->password);
+        $poolSize = strlen($charSet) ?: 1;
+
+        $this->entropy = round($length * log($poolSize, 2), 2);
+
+        if ($this->entropy < 40) {
+            $this->strengthLabel = 'Sehr schwach';
+            $this->strengthColor = 'bg-red-500';
+        } elseif ($this->entropy < 60) {
+            $this->strengthLabel = 'Schwach';
+            $this->strengthColor = 'bg-yellow-500';
+        } elseif ($this->entropy < 80) {
+            $this->strengthLabel = 'Mittel';
+            $this->strengthColor = 'bg-blue-500';
+        } elseif ($this->entropy < 100) {
+            $this->strengthLabel = 'Stark';
+            $this->strengthColor = 'bg-green-500';
+        } else {
+            $this->strengthLabel = 'Sehr stark';
+            $this->strengthColor = 'bg-emerald-600';
         }
     }
 
     private function generateReadablePassword(): string
     {
-
         $words = [
-            'Abendrot', 'Anwaltin', 'Apfelbaum', 'Autobahn', 'Bäckerei', 'Bergwerk', 'Bleistift',
-            'Dachboden', 'Einkauf', 'Erfahrung', 'Fahrrad', 'Fenster', 'Feuerwehr', 'Freiheit',
-            'Gartenlaube', 'Gesundheit', 'Hauptstadt', 'Kofferraum', 'Landschaft', 'Mädchen',
-            'Morgendamm', 'Nachricht', 'Polizei', 'Schlafzimmer', 'Schreibtisch', 'Taschenlampe',
-            'Verkehr', 'Wissenschaft', 'Absender', 'Angebote', 'Arbeitszeit', 'Beispiel',
-            'Besuch', 'Betrieb', 'Datenbank', 'Drucker', 'Einladung', 'Erlaubnis', 'Fachfrau',
-            'Fahrstuhl', 'Festung', 'Führung', 'Gebäude', 'Gedanke', 'Gefahr', 'Geschäft',
-            'Gesetz', 'Handlung', 'Heizung', 'Internet', 'Kamera', 'Lektion', 'Lösung',
-            'Markt', 'Mittel', 'Nummer', 'Objekt', 'Ordner', 'Papier', 'Quelle', 'Rezept',
-            'Schloss', 'Schule', 'Straße', 'Abteilung', 'Aufgabe', 'Ausflug', 'Bildung',
-            'Brücke', 'Familie', 'Frucht', 'Gefühl', 'Gericht', 'Geschichte', 'Glaube',
-            'Gruppe', 'Hotel', 'Information', 'Küche', 'Lehrer', 'Mutter', 'Nachbar',
-            'Presse', 'Reise', 'Schüler', 'Schwester', 'Sendung', 'Tasche', 'Urlaub',
-            'Vertrag', 'Wandern', 'Wissen', 'Zahlung', 'Zeichnung', 'Zukunft',
+            'Absender', 'Angebote', 'Apfelbaum', 'Arbeitszeit', 'Aufgabe', 'Ausflug',
+            'Autobahn', 'Bäckerei', 'Beispiel', 'Besucher', 'Bratwurst', 'Brücke',
+            'Dachboden', 'Datenbank', 'Druckerei', 'Einladung', 'Erfahrung', 'Fahrstuhl',
+            'Familien', 'Fensters', 'Feuerwehr', 'Freiheit', 'Fruchtbar', 'Gebäude',
+            'Gedanken', 'Gefahren', 'Geschirr', 'Gesetzlich', 'Glaube', 'Hausarbeit',
+            'Heizung', 'Hoffnung', 'Internet', 'Kamerads', 'Kofferraum', 'Kulturraum',
+            'Landschaft', 'Lektion', 'Lieblings', 'Lösung', 'Marktplatz', 'Mittelwert',
+            'Nachricht', 'Objektive', 'Papierkorb', 'Polizei', 'Quelle', 'Rechnung',
+            'Reisepass', 'Schlafraum', 'Schloss', 'Schreibtisch', 'Sendungen', 'Straßen',
+            'Taschenlampe', 'Verbindung', 'Vertrag', 'Wanderung', 'Wissenschaft', 'Zahlung'
         ];
 
+        $words = array_filter($words, fn($w) => strlen($w) >= 6 && strlen($w) <= 12);
         $symbols = ['.', '_', '-', '+', '!'];
 
         if ($this->mode === 'easy') {
-            // Word with first capital, one symbol, 3-digit number
-            $word = ucfirst($words[array_rand($words)]);
-            $symbol = $symbols[array_rand($symbols)];
-            $number = rand(100, 999);
-
-            return "{$word}{$symbol}{$number}";
+            return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(100, 999);
         }
 
         if ($this->mode === 'hard') {
-            // Word + symbol + word + symbol + 2-digit number + symbol
-            $word1 = $words[array_rand($words)];
-            $word2 = $words[array_rand($words)];
-            $symbol1 = $symbols[array_rand($symbols)];
-            $symbol2 = $symbols[array_rand($symbols)];
-            $symbol3 = $symbols[array_rand($symbols)];
-            $number = rand(10, 99);
-
-            // Capitalize only the first word's first letter, keep second word lowercase
-            $word1 = ucfirst($word1);
-            $word2 = ucfirst($word2);
-
-            return "{$word1}{$symbol1}{$word2}{$symbol2}{$number}{$symbol3}";
+            $word1 = ucfirst($this->randomItem($words));
+            $word2 = ucfirst($this->randomItem($words));
+            return "{$word1}{$this->randomItem($symbols)}{$word2}{$this->randomItem($symbols)}" .
+                rand(10, 99) . "{$this->randomItem($symbols)}";
         }
 
-        // Fallback: simple word + symbol + number for 'read' or others
-        $word = ucfirst($words[array_rand($words)]);
-        $symbol = $symbols[array_rand($symbols)];
-        $number = rand(10, 99);
-
-        return "{$word}{$symbol}{$number}";
+        return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(10, 99);
     }
 
     private function generateDefaultPassword(): string
     {
-        $characters = '';
+        $charPool = '';
 
         if ($this->useLowercase) {
-            $characters .= 'abcdefghijkmnopqrstuvwxyz';
+            $charPool .= 'abcdefghijkmnopqrstuvwxyz';
         }
         if ($this->useUppercase) {
-            $characters .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
+            $charPool .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
         }
         if ($this->useNumbers) {
-            $characters .= '123456789';
+            $charPool .= '1234567890';
         }
         if ($this->useSymbols) {
-            $characters .= '!@#$%^&*()-_=+[]{};:,.<>?';
+            $charPool .= '!@#$%^&*()-_=+[]{};:,.<>?';
         }
-
         if ($this->useCommonSymbols) {
-            $characters .= '!$%.,';
+            $charPool .= '!$%.,';
         }
 
-        if ($characters === '') {
+        if (empty($charPool)) {
             return 'Bitte Option wählen';
         }
 
-        return collect(str_split($characters))
-            ->shuffle()
-            ->take($this->length)
-            ->implode('');
+        $chars = str_split($charPool);
+        $repeats = ceil($this->length / count($chars));
+        $extendedPool = array_merge(...array_fill(0, $repeats, $chars));
+        shuffle($extendedPool);
+
+        return implode('', array_slice($extendedPool, 0, $this->length));
+    }
+
+    private function randomItem(array $array)
+    {
+        return $array[array_rand($array)];
     }
 
     public function render()
