@@ -1,5 +1,4 @@
 <div>
-    @php dump($output)@endphp
     <h2 class="text-lg font-bold">DCHP Dienst</h2>
 <div class="flex mt-32 items-center justify-center">
     <div>
