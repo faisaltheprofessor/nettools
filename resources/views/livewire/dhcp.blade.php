@@ -1,5 +1,5 @@
 <div>
-    <h2>DCHP: </h2> {{ $result}}
+    @php dump($output)@endphp
     <h2 class="text-lg font-bold">DCHP Dienst</h2>
 <div class="flex mt-32 items-center justify-center">
     <div>
@@ -19,7 +19,7 @@
         <flux:menu.separator />
 
         <flux:menu.submenu heading="DHCP">
-            <flux:menu.item icon="play" wire:click="getDhcpStatus">Start</flux:button>
+            <flux:menu.item icon="play">Start</flux:button>
             <flux:menu.item icon="power">Stop</flux:button>
             <flux:menu.item icon="rotate-ccw">Neuestart</flux:button>
         </flux:menu.submenu>
@@ -42,7 +42,7 @@
 
     <div class="flex items-center gap-2 justify-center">
             <flux:button variant="primary" color="green" icon="play" x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})" class="cursor-pointer">Start</flux:button>
-        <flux:button variant="primary" color="red" icon="power" disabled x-on:click="$flux.toast({heading: 'Fehler', text: 'Etwas ist schiefgelaufen', variant: 'danger', duration: 3000})" class="cursor-pointer">Stop</flux:button>
+        <flux:button variant="primary" color="red" icon="power" wire:click="getDhcpStatus" class="cursor-pointer">Stop</flux:button>
 
         <flux:modal.trigger name="confirm-action">
             <flux:button variant="primary" color="teal" icon="arrow-path" class="cursor-pointer">Neuestart</flux:button>
