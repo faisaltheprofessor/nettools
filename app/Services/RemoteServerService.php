@@ -5,25 +5,40 @@ namespace App\Services;
 use DivineOmega\SSHConnection\SSHConnection;
 use Exception;
 
+/**
+ * Service for managing SSH connections and remote server operations.
+ */
 class RemoteServerService
 {
+    /**
+     * The current SSH connection instance.
+     */
     protected ?SSHConnection $connection = null;
 
+    /**
+     * The output from the last executed SSH command.
+     */
     protected ?string $lastOutput = null;
 
+    /**
+     * The error output from the last executed SSH command.
+     */
     protected ?string $lastError = null;
 
     /**
-     * @param string $host
-     * @param string $username
-     * @param string|null $password
-     * @param string|null $privateKey
-     * @param int $port
-     * @param int $timeout
-     * @param string|null $expectedFingerprint
-     * @param string $fingerprintType
+     * Establish an SSH connection to the remote server.
+     *
+     * @param  string  $host  The hostname or IP address of the server.
+     * @param  string  $username  The SSH username.
+     * @param  string|null  $password  The SSH password (optional).
+     * @param  string|null  $privateKey  The private key path or contents (optional).
+     * @param  int  $port  The SSH port (default is 22).
+     * @param  int  $timeout  Connection timeout in seconds (default is 10).
+     * @param  string|null  $expectedFingerprint  Expected fingerprint of the remote server (optional).
+     * @param  string  $fingerprintType  Fingerprint type (e.g., md5, sha256).
      * @return $this
-     * @throws Exception
+     *
+     * @throws Exception If connection fails or authentication is not provided.
      */
     public function connect(
         string $host,
@@ -51,7 +66,6 @@ class RemoteServerService
 
             $this->connection->timeout($timeout)->connect();
 
-            // Fingerprint validation
             if ($expectedFingerprint) {
                 $actual = $this->connection->fingerprint($fingerprintType);
                 if ($actual !== $expectedFingerprint) {
@@ -67,9 +81,12 @@ class RemoteServerService
     }
 
     /**
-     * @param string $command
+     * Run a shell command on the remote server.
+     *
+     * @param  string  $command  The command to execute.
      * @return $this
-     * @throws Exception
+     *
+     * @throws Exception If connection is not established.
      */
     public function execute(string $command): static
     {
@@ -89,7 +106,7 @@ class RemoteServerService
     }
 
     /**
-     * @return string|null
+     * Get the output of the last executed command.
      */
     public function getOutput(): ?string
     {
@@ -97,7 +114,7 @@ class RemoteServerService
     }
 
     /**
-     * @return string|null
+     * Get the error output of the last executed command.
      */
     public function getError(): ?string
     {
@@ -105,8 +122,11 @@ class RemoteServerService
     }
 
     /**
-     * @param string $command
-     * @return string
+     * Start a service on the remote server using a command.
+     *
+     * @param  string  $command  The command to start the service.
+     * @return string Output of the executed command.
+     *
      * @throws Exception
      */
     public function startService(string $command): string
@@ -115,8 +135,11 @@ class RemoteServerService
     }
 
     /**
-     * @param string $command
-     * @return string
+     * Stop a service on the remote server using a command.
+     *
+     * @param  string  $command  The command to stop the service.
+     * @return string Output of the executed command.
+     *
      * @throws Exception
      */
     public function stopService(string $command): string
@@ -125,8 +148,11 @@ class RemoteServerService
     }
 
     /**
-     * @param string $command
-     * @return string
+     * Get the status of a remote service using a command.
+     *
+     * @param  string  $command  The command to check the service status.
+     * @return string Output of the executed command.
+     *
      * @throws Exception
      */
     public function getServiceStatus(string $command): string
@@ -135,10 +161,13 @@ class RemoteServerService
     }
 
     /**
-     * @param string $localPath
-     * @param string $remotePath
-     * @return bool
-     * @throws Exception
+     * Upload a local file to the remote server.
+     *
+     * @param  string  $localPath  Full path of the local file.
+     * @param  string  $remotePath  Destination path on the remote server.
+     * @return bool True on success, false otherwise.
+     *
+     * @throws Exception If no connection is established.
      */
     public function upload(string $localPath, string $remotePath): bool
     {
@@ -150,10 +179,13 @@ class RemoteServerService
     }
 
     /**
-     * @param string $remotePath
-     * @param string $localPath
-     * @return bool
-     * @throws Exception
+     * Download a file from the remote server.
+     *
+     * @param  string  $remotePath  Path of the file on the remote server.
+     * @param  string  $localPath  Destination path on the local machine.
+     * @return bool True on success, false otherwise.
+     *
+     * @throws Exception If no connection is established.
      */
     public function download(string $remotePath, string $localPath): bool
     {
@@ -165,9 +197,12 @@ class RemoteServerService
     }
 
     /**
-     * @param string $type
-     * @return string
-     * @throws Exception
+     * Get the fingerprint of the remote server.
+     *
+     * @param  string  $type  The fingerprint type (e.g., md5, sha256).
+     * @return string The fingerprint string.
+     *
+     * @throws Exception If no connection is established.
      */
     public function getFingerprint(string $type = SSHConnection::FINGERPRINT_MD5): string
     {

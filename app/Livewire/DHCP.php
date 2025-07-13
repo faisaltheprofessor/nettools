@@ -19,7 +19,7 @@ class DHCP extends Component
         return view('livewire.dhcp');
     }
 
-    public function getDhcpStatus()
+    public function getDhcpStatus(): void
     {
         try {
             RemoteSSH::connect(
