@@ -23,9 +23,9 @@ class DHCP extends Component
     {
         try {
             RemoteSSH::connect(
-                env('DHCP_SERVER'),
-                env('DHCP_USER'),
-                env('DHCP_PASSWORD')
+                config('remote.dhcp.host'),
+                config('remote.dhcp.user'),
+                config('remote.dhcp.password')
             );
 
             RemoteSSH::execute('sudo systemctl is-active sshd');
