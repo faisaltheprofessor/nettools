@@ -21,6 +21,8 @@ class PasswordGenerator extends Component
     public string $strengthLabel = '';
     public string $strengthColor = 'bg-red-500';
 
+    private array $wordListCache = [];
+
     public function mount()
     {
         $this->generatePassword();
@@ -80,23 +82,36 @@ class PasswordGenerator extends Component
         }
     }
 
+    private function getWordList(): array
+    {
+        if (!empty($this->wordListCache)) {
+            return $this->wordListCache;
+        }
+
+        $filePath = public_path('wordlist/german.txt');
+        if (!file_exists($filePath)) {
+            return ['Fehler']; // this is fallck word
+        }
+
+        $words = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        // Filter for word length (6–12)
+        $words = array_filter($words, fn($w) => strlen($w) >= 6 && strlen($w) <= 12);
+
+        // Cache and return
+        $this->wordListCache = array_values($words);
+
+        return $this->wordListCache;
+    }
+
     private function generateReadablePassword(): string
     {
-        $words = [
-            'Absender', 'Angebote', 'Apfelbaum', 'Arbeitszeit', 'Aufgabe', 'Ausflug',
-            'Autobahn', 'Bäckerei', 'Beispiel', 'Besucher', 'Bratwurst', 'Brücke',
-            'Dachboden', 'Datenbank', 'Druckerei', 'Einladung', 'Erfahrung', 'Fahrstuhl',
-            'Familien', 'Fensters', 'Feuerwehr', 'Freiheit', 'Fruchtbar', 'Gebäude',
-            'Gedanken', 'Gefahren', 'Geschirr', 'Gesetzlich', 'Glaube', 'Hausarbeit',
-            'Heizung', 'Hoffnung', 'Internet', 'Kamerads', 'Kofferraum', 'Kulturraum',
-            'Landschaft', 'Lektion', 'Lieblings', 'Lösung', 'Marktplatz', 'Mittelwert',
-            'Nachricht', 'Objektive', 'Papierkorb', 'Polizei', 'Quelle', 'Rechnung',
-            'Reisepass', 'Schlafraum', 'Schloss', 'Schreibtisch', 'Sendungen', 'Straßen',
-            'Taschenlampe', 'Verbindung', 'Vertrag', 'Wanderung', 'Wissenschaft', 'Zahlung'
-        ];
-
-        $words = array_filter($words, fn($w) => strlen($w) >= 6 && strlen($w) <= 12);
+        $words = $this->getWordList();
         $symbols = ['.', '_', '-', '+', '!'];
+
+        if (empty($words)) {
+            return 'Fehler123!';
+        }
 
         if ($this->mode === 'easy') {
             return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(100, 999);
@@ -154,3 +169,4 @@ class PasswordGenerator extends Component
         return view('livewire.password-generator');
     }
 }
+
