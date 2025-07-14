@@ -9,8 +9,8 @@ class IpCalculator extends Component
 {
     public $ip = '';
     public $subnet = '';
-
     public $results = null;
+    public bool $showResultsModal = false;
 
     public function render()
     {
@@ -19,28 +19,30 @@ class IpCalculator extends Component
 
     public function calculate()
     {
+        $this->reset('results', 'showResultsModal');
+
         $ip = trim($this->ip);
         $subnet = trim($this->subnet);
 
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
-            $this->results = ['error' => 'Invalid IP address.'];
+            $this->results = ['error' => 'Ungültige IP-Adresse.'];
             return;
         }
 
         if (Str::contains($subnet, '.')) {
             $cidr = $this->maskToCidr($subnet);
             if ($cidr === null) {
-                $this->results = ['error' => 'Invalid subnet mask.'];
+                $this->results = ['error' => 'Ungültige Subnetzmaske.'];
                 return;
             }
         } else {
             if (!is_numeric($subnet)) {
-                $this->results = ['error' => 'Subnet mask must be a CIDR number or dotted mask.'];
+                $this->results = ['error' => 'Die Subnetzmaske muss eine Zahl oder Punktnotation sein.'];
                 return;
             }
             $cidr = (int)$subnet;
             if ($cidr < 1 || $cidr > 32) {
-                $this->results = ['error' => 'CIDR must be between 1 and 32.'];
+                $this->results = ['error' => 'CIDR muss zwischen 1 und 32 liegen.'];
                 return;
             }
         }
@@ -91,25 +93,21 @@ class IpCalculator extends Component
                 'Broadcast' => $this->ipToBinary(long2ip($broadcastLong)),
             ],
         ];
+
+        $this->showResultsModal = true;
     }
 
     private function maskToCidr($mask)
     {
-        if (!filter_var($mask, FILTER_VALIDATE_IP)) {
-            return null;
-        }
+        if (!filter_var($mask, FILTER_VALIDATE_IP)) return null;
         $long = ip2long($mask);
-        if ($long === false) {
-            return null;
-        }
+        if ($long === false) return null;
+
         $bin = decbin($long);
         $ones = strpos($bin, '0');
-        if ($ones === false) {
-            $ones = 32;
-        }
-        if (substr_count($bin, '1') !== $ones) {
-            return null;
-        }
+        if ($ones === false) $ones = 32;
+        if (substr_count($bin, '1') !== $ones) return null;
+
         return $ones;
     }
 
@@ -123,19 +121,20 @@ class IpCalculator extends Component
     private function getClass($ip)
     {
         $firstOctet = (int)explode('.', $ip)[0];
-        if ($firstOctet >= 1 && $firstOctet <= 126) return 'A';
-        if ($firstOctet >= 128 && $firstOctet <= 191) return 'B';
-        if ($firstOctet >= 192 && $firstOctet <= 223) return 'C';
-        if ($firstOctet >= 224 && $firstOctet <= 239) return 'D (Multicast)';
-        if ($firstOctet >= 240) return 'E (Experimental)';
-        return 'Unknown';
+        return match (true) {
+            $firstOctet >= 1 && $firstOctet <= 126 => 'A',
+            $firstOctet >= 128 && $firstOctet <= 191 => 'B',
+            $firstOctet >= 192 && $firstOctet <= 223 => 'C',
+            $firstOctet >= 224 && $firstOctet <= 239 => 'D (Multicast)',
+            $firstOctet >= 240 => 'E (Experimental)',
+            default => 'Unknown',
+        };
     }
 
     private function getIpType($ip)
     {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            return 'Public';
-        }
-        return 'Private or Reserved';
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+            ? 'Public'
+            : 'Private or Reserved';
     }
 }
