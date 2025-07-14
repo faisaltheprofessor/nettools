@@ -1,4 +1,4 @@
-<div class="flex w-1/2 mx-auto justify-center">
+<flux:card class="flex w-1/2 mx-auto justify-center">
     <div class="flex flex-col gap-8 items-start w-full">
 
         <!-- Passwortfeld + Stärke-Anzeige -->
@@ -102,4 +102,4 @@
             </flux:radio.group>
         </flux:card>
     </div>
-</div>
+</flux:card>

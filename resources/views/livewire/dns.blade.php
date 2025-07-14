@@ -1,6 +1,6 @@
-<div>
+<flux:card class="w-2/3 mx-auto space-y-6">
 
-    <h2 class="text-lg font-bold">DNS Dienst</h2>
+<h2 class="text-lg font-bold">DNS Dienst</h2>
 <div class="flex mt-32 items-center justify-center">
     <div>
 
@@ -10,7 +10,10 @@
 
    <flux:context>
     <div class="flex flex-col items-center">
-        <flux:icon.computer-desktop class="size-20 text-amber-500 cursor-context-menu" variant="solid"/>
+        <flux:icon.computer-desktop
+            class="size-20 text-gray-400"
+            variant="solid"
+        />
         <flux:text>{{ $server }}</flux:text>
     </div>
     <flux:menu>
@@ -71,5 +74,5 @@
     </div>
 </flux:modal>
 </div>
-
+</flux:card>
 

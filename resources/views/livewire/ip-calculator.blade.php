@@ -1,10 +1,7 @@
-<div class="mx-auto p-6" style="max-width: 80vw;">
-
-    <h1 class="text-3xl font-bold mb-6 text-center">IP-Subnetz-Rechner</h1>
-
+<flux:card class="w-2/3 mx-auto space-y-6">
     <form wire:submit.prevent="calculate" class="space-y-6">
 
-        <flux:field style="width: 100%;">
+        <flux:field>
             <flux:label>IP-Adresse</flux:label>
             <flux:description>Geben Sie eine gültige IPv4-Adresse ein.</flux:description>
             <input
@@ -111,5 +108,4 @@
         @endif
     @endif
 
-</div>
-
+</flux:card>

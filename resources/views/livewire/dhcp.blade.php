@@ -1,4 +1,4 @@
-<div wire:poll.10s="getDhcpStatus">
+<flux:card wire:poll.10s="getDhcpStatus" class="w-2/3 mx-auto space-y-6">
     <h2 class="text-lg font-bold">DCHP Dienst</h2>
 
     <div class="flex mt-32 items-center justify-center">
@@ -8,7 +8,7 @@
                 @foreach($servers as $server)
                     <flux:context>
                         <div
-                            class="flex flex-col items-center p-2 rounded-md cursor-context-menu relative
+                            class="flex flex-col items-center rounded-md cursor-context-menu relative
                                 {{ $runningServer === $server && $dhcpStatus === 'running' ? 'border-4 border-emerald-500 shadow-lg' : 'border border-transparent' }}"
                             style="width: 80px;"
                         >
@@ -113,5 +113,5 @@
             </div>
         </flux:modal>
     </div>
-</div>
+</flux:card>
 
