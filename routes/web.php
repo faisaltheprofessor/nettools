@@ -3,6 +3,7 @@
 use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
+use App\Livewire\IpCalculator;
 use App\Livewire\PasswordGenerator;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -21,6 +22,9 @@ Route::get('dhcp', DHCP::class)
 
 Route::get('dns', DNS::class)
     ->name('dns.index');
+
+Route::get('ip-calculator', IpCalculator::class)
+    ->name('ip-calculator.index');
 
 // Password Generator
 Route::get('password-generator', PasswordGenerator::class)

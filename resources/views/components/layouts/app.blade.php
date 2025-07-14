@@ -42,7 +42,7 @@
             <flux:navlist.group expandable heading="Generatoren" class="grid">
                 <flux:navlist.item icon="dices" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
                 <flux:navlist.item icon="numbered-list" href="#">oVirt Seriennummer</flux:navlist.item>
-                <flux:navlist.item icon="network" href="#">Subnetting</flux:navlist.item>
+                <flux:navlist.item icon="network" href="/ip-calculator" wire:navigate>Subnetting</flux:navlist.item>
             </flux:navlist.group>
         </flux:navlist>
         <flux:spacer />
