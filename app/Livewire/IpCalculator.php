@@ -70,7 +70,6 @@ class IpCalculator extends Component
         }
 
         $ipClass = $this->getClass($ip);
-        $ipType = $this->getIpType($ip);
 
         $this->results = [
             'Address' => $ip,
@@ -82,16 +81,6 @@ class IpCalculator extends Component
             'Broadcast' => long2ip($broadcastLong),
             'Hosts/Net' => $hostCount,
             'Class' => $ipClass,
-            'Type' => $ipType,
-            'Binary' => [
-                'Address' => $this->ipToBinary($ip),
-                'Subnet Mask' => $this->ipToBinary($subnetMask),
-                'Wildcard Mask' => $this->ipToBinary($wildcardMask),
-                'Network Address' => $this->ipToBinary(long2ip($networkLong)),
-                'HostMin' => $this->ipToBinary(long2ip($hostMin)),
-                'HostMax' => $this->ipToBinary(long2ip($hostMax)),
-                'Broadcast' => $this->ipToBinary(long2ip($broadcastLong)),
-            ],
         ];
 
         $this->showResultsModal = true;
@@ -111,13 +100,6 @@ class IpCalculator extends Component
         return $ones;
     }
 
-    private function ipToBinary($ip)
-    {
-        return collect(explode('.', $ip))
-            ->map(fn($octet) => str_pad(decbin((int)$octet), 8, '0', STR_PAD_LEFT))
-            ->implode('.');
-    }
-
     private function getClass($ip)
     {
         $firstOctet = (int)explode('.', $ip)[0];
@@ -130,11 +112,5 @@ class IpCalculator extends Component
             default => 'Unknown',
         };
     }
-
-    private function getIpType($ip)
-    {
-        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-            ? 'Public'
-            : 'Private or Reserved';
-    }
 }
+

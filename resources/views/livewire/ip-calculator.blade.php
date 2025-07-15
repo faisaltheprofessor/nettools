@@ -52,18 +52,21 @@
                 </div>
 
                 <div class="overflow-auto max-h-[30rem]">
-                    <flux:table style="width: 100%; border-collapse: collapse;">
+                    <flux:table class="w-full border-collapse">
                         <flux:table.columns>
-                            <flux:table.column style="text-align: left; padding: 0.75rem; border-bottom: 2px solid #ccc;">Eigenschaft</flux:table.column>
-                            <flux:table.column style="text-align: left; padding: 0.75rem; border-bottom: 2px solid #ccc;">Wert</flux:table.column>
-                            <flux:table.column style="text-align: left; padding: 0.75rem; border-bottom: 2px solid #ccc;">Binär</flux:table.column>
+                            <flux:table.column class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                Eigenschaft
+                            </flux:table.column>
+                            <flux:table.column class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                Wert
+                            </flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>
                             @foreach ($results as $key => $value)
-                                @if ($key !== 'Binary')
-                                    <flux:table.row style="border-bottom: 1px solid #eee;">
-                                        <flux:table.cell style="padding: 0.5rem 0.75rem;">
+                                @if ($key !== 'Binary' && $key !== 'Type')
+                                    <flux:table.row class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <flux:table.cell class="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                                             @switch($key)
                                                 @case('Address') Adresse @break
                                                 @case('Subnet Mask') Subnetzmaske @break
@@ -74,13 +77,11 @@
                                                 @case('Broadcast') Broadcast @break
                                                 @case('Hosts/Net') Hosts / Netz @break
                                                 @case('Class') Klasse @break
-                                                @case('Type') Typ @break
                                                 @default {{ $key }}
                                             @endswitch
                                         </flux:table.cell>
-                                        <flux:table.cell style="padding: 0.5rem 0.75rem;">{{ $value }}</flux:table.cell>
-                                        <flux:table.cell style="padding: 0.5rem 0.75rem; font-family: monospace;">
-                                            {{ $results['Binary'][$key] ?? '—' }}
+                                        <flux:table.cell class="px-4 py-2 font-mono text-gray-800 dark:text-gray-200">
+                                            {{ $value }}
                                         </flux:table.cell>
                                     </flux:table.row>
                                 @endif
@@ -90,9 +91,12 @@
                 </div>
 
                 <div class="flex justify-end pt-2">
-                    <flux:button variant="ghost" wire:click="$set('showResultsModal', false)" class="cursor-pointer">Schließen</flux:button>
+                    <flux:button variant="ghost" wire:click="$set('showResultsModal', false)" class="cursor-pointer">
+                        Schließen
+                    </flux:button>
                 </div>
             </div>
         @endif
     </flux:modal>
 </flux:card>
+
