@@ -24,7 +24,7 @@
         <flux:menu.submenu heading="DHCP">
             <flux:menu.item icon="play">Start</flux:button>
             <flux:menu.item icon="power">Stop</flux:button>
-            <flux:menu.item icon="rotate-ccw">Neuestart</flux:button>
+            <flux:menu.item icon="rotate-ccw">Neustart</flux:button>
         </flux:menu.submenu>
 
 
@@ -33,7 +33,7 @@
         <flux:menu.submenu heading="DNS">
             <flux:menu.item icon="play">Start</flux:button>
             <flux:menu.item icon="power">Stop</flux:button>
-            <flux:menu.item icon="rotate-ccw">Neuestart</flux:button>
+            <flux:menu.item icon="rotate-ccw">Neustart</flux:button>
         </flux:menu.submenu>
 
     </flux:menu>
@@ -48,7 +48,7 @@
         <flux:button variant="primary" color="red" icon="power" x-on:click="$flux.toast({heading: 'Fehler', text: 'Etwas ist schiefgelaufen', variant: 'danger', duration: 3000})" class="cursor-pointer" disabled>Stop</flux:button>
 
         <flux:modal.trigger name="confirm-action">
-            <flux:button variant="primary" color="teal" icon="arrow-path" class="cursor-pointer">Neuestart</flux:button>
+            <flux:button variant="primary" color="teal" icon="arrow-path" class="cursor-pointer">Neustart</flux:button>
         </flux:modal.trigger>
     </div>
 </div>
@@ -69,7 +69,7 @@
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
 
-            <flux:button type="submit" variant="danger">Ja! Neuestart</flux:button>
+            <flux:button type="submit" variant="danger">Ja! Neustart</flux:button>
         </div>
     </div>
 </flux:modal>

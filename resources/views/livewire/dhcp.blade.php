@@ -8,8 +8,7 @@
                 @foreach($servers as $server)
                     <flux:context>
                         <div
-                            class="flex flex-col items-center rounded-md cursor-context-menu relative
-                                {{ $runningServer === $server && $dhcpStatus === 'running' ? 'border-4 border-emerald-500 shadow-lg' : 'border border-transparent' }}"
+                            class="flex flex-col items-center rounded-md cursor-context-menu relative""
                             style="width: 80px;"
                         >
                             <flux:icon.computer-desktop
@@ -39,7 +38,7 @@
                             <flux:menu.submenu heading="DHCP">
                                 <flux:menu.item icon="play">Start</flux:menu.item>
                                 <flux:menu.item icon="power">Stop</flux:menu.item>
-                                <flux:menu.item icon="rotate-ccw">Neuestart</flux:menu.item>
+                                <flux:menu.item icon="rotate-ccw">Neustart</flux:menu.item>
                             </flux:menu.submenu>
 
                             <flux:menu.separator />
@@ -47,7 +46,7 @@
                             <flux:menu.submenu heading="DNS">
                                 <flux:menu.item icon="play">Start</flux:menu.item>
                                 <flux:menu.item icon="power">Stop</flux:menu.item>
-                                <flux:menu.item icon="rotate-ccw">Neuestart</flux:menu.item>
+                                <flux:menu.item icon="rotate-ccw">Neustart</flux:menu.item>
                             </flux:menu.submenu>
                         </flux:menu>
                     </flux:context>
@@ -79,7 +78,7 @@
                         icon="arrow-path"
                         class="cursor-pointer"
                         :loading="$beingRestarted"
-                    >Neuestart</flux:button>
+                    >Neustart</flux:button>
                 </flux:modal.trigger>
 
                 <flux:button
@@ -108,7 +107,7 @@
                         <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal.close>
 
-                    <flux:button variant="danger" wire:click="restartDhcp" class="cursor-pointer">Ja! Neuestart</flux:button>
+                    <flux:button variant="danger" wire:click="restartDhcp" class="cursor-pointer">Ja! Neustart</flux:button>
                 </div>
             </div>
         </flux:modal>
