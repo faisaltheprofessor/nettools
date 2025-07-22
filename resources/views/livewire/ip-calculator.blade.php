@@ -1,4 +1,4 @@
-<flux:card class="w-2/3 mx-auto space-y-6">
+<flux:card class="w-1/2 mx-auto space-y-6">
     <form wire:submit.prevent="calculate" class="space-y-6">
         <flux:field>
             <flux:label>IP-Adresse</flux:label>

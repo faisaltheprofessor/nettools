@@ -1,4 +1,4 @@
-<flux:card wire:poll.10s="getDhcpStatus" class="w-2/3 mx-auto space-y-6">
+<flux:card wire:poll.10s="getDhcpStatus" class="w-1/2 mx-auto space-y-6">
     <h2 class="text-lg font-bold">DCHP Dienst</h2>
 
     <div class="flex mt-32 items-center justify-center">
@@ -31,7 +31,7 @@
                         </div>
 
                         <flux:menu>
-                            <flux:menu.item icon="check-circle">All OK</flux:menu.item>
+                            <flux:menu.item icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin migrieren</flux:menu.item>
 
                             <flux:menu.separator />
 

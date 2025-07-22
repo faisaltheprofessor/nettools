@@ -1,4 +1,4 @@
-<flux:card class="w-2/3 mx-auto space-y-6">
+<flux:card class="w-1/2 mx-auto space-y-6">
         <flux:field>
             <flux:label>Servername</flux:label>
           <input
@@ -36,7 +36,7 @@
           >
               Generieren
           </flux:button>
-    
+
           <flux:input
              icon="barcode"
              wire:model="serial"

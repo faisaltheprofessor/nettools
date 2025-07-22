@@ -1,4 +1,4 @@
-<flux:card class="w-2/3 mx-auto space-y-6">
+<flux:card class="w-1/2 mx-auto space-y-6">
 
 <h2 class="text-lg font-bold">DNS Dienst</h2>
 <div class="flex mt-32 items-center justify-center">
