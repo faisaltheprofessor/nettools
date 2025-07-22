@@ -5,44 +5,45 @@
     </header>
 
     <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Search and Global Toggle -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i data-feather="search" class="text-gray-400"></i>
-                </div>
-                <input
-                    type="text"
-                    wire:model.live="search"
-                    placeholder="Search for any bookmark..."
-                    class="w-full p-3 pl-10 text-md border-2 border-gray-300 dark:border-gray-700 rounded-full focus:ring-4 focus:ring-blue-300 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition duration-300"
-                />
+        <!-- Search -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i data-feather="search" class="text-gray-400"></i>
+            </div>
+            <input
+                type="text"
+                wire:model.live="search"
+                placeholder="Search for any bookmark..."
+                class="w-full p-3 pl-10 text-md border-2 border-gray-300 dark:border-gray-700 rounded-full focus:ring-4 focus:ring-blue-300 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition duration-300"
+            />
 
-            <flux:field variant="inline" class="flex justify-center items-center">
-                <flux:label>Global</flux:label>
+            <flux:field variant="inline" class="flex items-center gap-2">
+                <flux:label class="whitespace-nowrap">Global</flux:label>
                 <flux:switch wire:model.live="globalSearch" />
                 <flux:error name="globalSearch" />
             </flux:field>
+
+            <flux:modal.trigger name="add-bookmark">
+                <flux:button variant="primary">Add Bookmark</flux:button>
+            </flux:modal.trigger>
         </div>
 
         <!-- Breadcrumbs -->
-
-<flux:breadcrumbs>
-    <flux:breadcrumbs.item icon="home">
-        <a href="#" wire:click.prevent="goBackTo(0)" class="cursor-pointer text-blue-600 hover:underline">
-            Home
-        </a>
-    </flux:breadcrumbs.item>
-
-    @foreach ($breadcrumbs as $index => $crumb)
-        @if ($index > 0)
-            <flux:breadcrumbs.item>
-                <a href="#" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
-                    {{ $crumb['name'] }}
-                </a>
-            </flux:breadcrumbs.item>
-        @endif
-    @endforeach
-</flux:breadcrumbs>
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <flux:breadcrumbs>
+                @foreach ($breadcrumbs as $index => $breadcrumb)
+                    @if ($breadcrumb['id'] !== null)
+                        <flux:breadcrumbs.item href="#" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
+                            {{ $breadcrumb['name'] }}
+                        </flux:breadcrumbs.item>
+                    @else
+                        <flux:breadcrumbs.item href="#" icon="home" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
+                            {{ $breadcrumb['name'] }}
+                        </flux:breadcrumbs.item>
+                    @endif
+                @endforeach
+            </flux:breadcrumbs>
+        </nav>
 
         <!-- Bookmarks Grid -->
         @if ($filteredItems->isEmpty())
@@ -87,6 +88,56 @@
             </div>
         @endif
     </div>
+
+    <!-- Modal -->
+    <flux:modal name="add-bookmark" class="md:w-[32rem]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Add Bookmark</flux:heading>
+                <flux:text class="mt-2">Fill in the details to add a new bookmark or folder.</flux:text>
+            </div>
+
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model.live="newBookmarkName" />
+                <flux:error name="newBookmarkName" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Type</flux:label>
+                <select wire:model.live="newBookmarkType" class="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-white">
+                    <option value="link">Link</option>
+                    <option value="folder">Folder</option>
+                </select>
+                <flux:error name="newBookmarkType" />
+            </flux:field>
+
+            @if ($newBookmarkType === 'link')
+                <flux:field>
+                    <flux:label>URL</flux:label>
+                    <flux:input wire:model.live="newBookmarkUrl" />
+                    <flux:error name="newBookmarkUrl" />
+                </flux:field>
+            @endif
+
+            <flux:field>
+                <flux:label>Parent</flux:label>
+                <select wire:model.live="newBookmarkParentId" class="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-white">
+                    <option value="">None</option>
+                    @foreach ($allFolders as $folder)
+                        <option value="{{ $folder->id }}">{{ $folder->name }}</option>
+                    @endforeach
+                </select>
+                <flux:error name="newBookmarkParentId" />
+            </flux:field>
+
+            <flux:input type="file" wire:model="newBookmarkIcon" label="Icon" />
+
+            <div class="flex justify-end">
+                <flux:button wire:click="createBookmark" variant="primary">Save</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 
     <script>
         document.addEventListener('livewire:load', () => {

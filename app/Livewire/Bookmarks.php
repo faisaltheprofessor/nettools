@@ -4,13 +4,22 @@ namespace App\Livewire;
 
 use App\Models\Bookmark;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Bookmarks extends Component
 {
+    use WithFileUploads;
     public string $search = '';
     public ?int $currentFolderId = null;
     public array $breadcrumbs = [];
     public bool $globalSearch = false;
+
+    public bool $showModal = false;
+    public string $newBookmarkName = '';
+    public string $newBookmarkUrl = '';
+    public ?int $newBookmarkParentId = null;
+    public string $newBookmarkIcon = '';
+    public string $newBookmarkType = 'link';
 
     public function mount(): void
     {
@@ -23,26 +32,12 @@ class Bookmarks extends Component
         $this->setBreadcrumbs();
     }
 
-
     public function goBackTo(int $index): void
-{
-    if ($index === 0) {
-        // Reset everything to root
-        $this->currentFolderId = null;
-        $this->breadcrumbs = [['id' => null, 'name' => 'Home']];
-    } else {
+    {
         $this->breadcrumbs = array_slice($this->breadcrumbs, 0, $index + 1);
         $this->currentFolderId = $this->breadcrumbs[$index]['id'] ?? null;
+        $this->setBreadcrumbs();
     }
-
-    // Rebuild breadcrumbs from the new folder ID
-    $this->setBreadcrumbs();
-
-    // Force reactivity (even if currentFolderId was already null)
-    $this->dispatch('$refresh');
-}
-
-
 
     protected function setBreadcrumbs(): void
     {
@@ -81,10 +76,39 @@ class Bookmarks extends Component
                          ->get();
     }
 
+    public function createBookmark(): void
+    {
+        $this->validate([
+            'newBookmarkName' => 'required|string|max:255',
+            'newBookmarkType' => 'required|in:link,folder',
+            'newBookmarkUrl' => $this->newBookmarkType === 'link' ? 'required|url' : 'nullable',
+        ]);
+
+        Bookmark::create([
+            'name' => $this->newBookmarkName,
+            'url' => $this->newBookmarkType === 'link' ? $this->newBookmarkUrl : null,
+            'parent_id' => $this->newBookmarkParentId ?? $this->currentFolderId,
+            'icon' => $this->newBookmarkIcon,
+            'type' => $this->newBookmarkType,
+        ]);
+
+        $this->reset([
+            'newBookmarkName',
+            'newBookmarkUrl',
+            'newBookmarkIcon',
+            'newBookmarkParentId',
+            'newBookmarkType',
+            'showModal'
+        ]);
+
+        \Flux\Flux::toast('Bookmark created successfully.');
+    }
+
     public function render()
     {
         return view('livewire.bookmarks', [
             'filteredItems' => $this->filteredItems,
+            'allFolders' => Bookmark::where('type', 'folder')->orderBy('name')->get(),
         ]);
     }
 }
