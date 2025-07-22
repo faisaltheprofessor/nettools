@@ -5,29 +5,44 @@
     </header>
 
     <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Search -->
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i data-feather="search" class="text-gray-400"></i>
-            </div>
-            <input
-                type="text"
-                wire:model.live="search"
-                placeholder="Search for any bookmark..."
-                class="w-full p-3 pl-10 text-md border-2 border-gray-300 dark:border-gray-700 rounded-full focus:ring-4 focus:ring-blue-300 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition duration-300"
-            />
+        <!-- Search and Global Toggle -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-feather="search" class="text-gray-400"></i>
+                </div>
+                <input
+                    type="text"
+                    wire:model.live="search"
+                    placeholder="Search for any bookmark..."
+                    class="w-full p-3 pl-10 text-md border-2 border-gray-300 dark:border-gray-700 rounded-full focus:ring-4 focus:ring-blue-300 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition duration-300"
+                />
+
+            <flux:field variant="inline" class="flex justify-center items-center">
+                <flux:label>Global</flux:label>
+                <flux:switch wire:model.live="globalSearch" />
+                <flux:error name="globalSearch" />
+            </flux:field>
         </div>
 
         <!-- Breadcrumbs -->
-        <flux:breadcrumbs>
-            @foreach ($breadcrumbs as $index => $crumb)
-                <flux:breadcrumbs.item href="#" icon="{{ $index === 0 ? 'home' : null }}">
-                    <a href="#" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer">
-                        {{ $index !== 0 ? $crumb['name'] : '' }}
-                    </a>
-                </flux:breadcrumbs.item>
-            @endforeach
-        </flux:breadcrumbs>
+
+<flux:breadcrumbs>
+    <flux:breadcrumbs.item icon="home">
+        <a href="#" wire:click.prevent="goBackTo(0)" class="cursor-pointer text-blue-600 hover:underline">
+            Home
+        </a>
+    </flux:breadcrumbs.item>
+
+    @foreach ($breadcrumbs as $index => $crumb)
+        @if ($index > 0)
+            <flux:breadcrumbs.item>
+                <a href="#" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
+                    {{ $crumb['name'] }}
+                </a>
+            </flux:breadcrumbs.item>
+        @endif
+    @endforeach
+</flux:breadcrumbs>
 
         <!-- Bookmarks Grid -->
         @if ($filteredItems->isEmpty())
@@ -36,13 +51,14 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 @foreach ($filteredItems as $item)
                     @php
-                        $color = $item->type === 'folder' ? 'bg-yellow-100 dark:bg-yellow-700' : 'bg-blue-100 dark:bg-blue-700';
-                        $favicon = $item->icon ?? 'https://www.google.com/s2/favicons?domain=' . parse_url($item->url ?? '', PHP_URL_HOST) . '&sz=32';
+                        $favicon = $item->icon
+                            ? (filter_var($item->icon, FILTER_VALIDATE_URL) ? $item->icon : asset($item->icon))
+                            : 'https://www.google.com/s2/favicons?domain=' . parse_url($item->url ?? '', PHP_URL_HOST) . '&sz=32';
                     @endphp
 
                     @if ($item->type === 'folder')
                         <div wire:click="openFolder({{ $item->id }})" class="cursor-pointer">
-                            <flux:card class="p-4 {{ $color }} text-center rounded-lg space-y-2 h-40 flex flex-col justify-center">
+                            <flux:card class="p-4 text-center rounded-lg space-y-2 h-40 flex flex-col justify-center">
                                 <div class="flex justify-center">
                                     <flux:icon.folder />
                                 </div>
@@ -52,7 +68,7 @@
                         </div>
                     @else
                         <a href="{{ $item->url }}" target="_blank" rel="noopener noreferrer">
-                            <flux:card class="p-4 {{ $color }} text-center rounded-lg space-y-2 h-40 flex flex-col justify-center">
+                            <flux:card class="p-4 text-center rounded-lg space-y-2 h-40 flex flex-col justify-center">
                                 <div class="flex justify-center items-center">
                                     <img
                                         src="{{ $favicon }}"

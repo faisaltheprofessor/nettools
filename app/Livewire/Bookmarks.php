@@ -4,13 +4,13 @@ namespace App\Livewire;
 
 use App\Models\Bookmark;
 use Livewire\Component;
-use Livewire\Attributes\Reactive;
-use Livewire\Attributes\Computed;
+
 class Bookmarks extends Component
 {
-    public string $search = "";
+    public string $search = '';
     public ?int $currentFolderId = null;
     public array $breadcrumbs = [];
+    public bool $globalSearch = false;
 
     public function mount(): void
     {
@@ -23,12 +23,26 @@ class Bookmarks extends Component
         $this->setBreadcrumbs();
     }
 
+
     public function goBackTo(int $index): void
-    {
+{
+    if ($index === 0) {
+        // Reset everything to root
+        $this->currentFolderId = null;
+        $this->breadcrumbs = [['id' => null, 'name' => 'Home']];
+    } else {
         $this->breadcrumbs = array_slice($this->breadcrumbs, 0, $index + 1);
         $this->currentFolderId = $this->breadcrumbs[$index]['id'] ?? null;
-        $this->setBreadcrumbs();
     }
+
+    // Rebuild breadcrumbs from the new folder ID
+    $this->setBreadcrumbs();
+
+    // Force reactivity (even if currentFolderId was already null)
+    $this->dispatch('$refresh');
+}
+
+
 
     protected function setBreadcrumbs(): void
     {
@@ -43,21 +57,25 @@ class Bookmarks extends Component
         array_unshift($this->breadcrumbs, ['id' => null, 'name' => 'Home']);
     }
 
-    #[Computed]
-    public function filteredItems()
+    public function getFilteredItemsProperty()
     {
         $query = trim($this->search);
 
-        $baseQuery = Bookmark::where('parent_id', $this->currentFolderId);
+        $baseQuery = Bookmark::query();
+
+        if (!$this->globalSearch) {
+            $baseQuery->where('parent_id', $this->currentFolderId);
+        }
 
         if ($query !== '') {
             $baseQuery->where(function ($q) use ($query) {
                 $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
                   ->orWhereRaw('LOWER(url) LIKE ?', ['%' . strtolower($query) . '%']);
             });
+        } else if ($this->globalSearch) {
+            $baseQuery->where('parent_id', null);
         }
 
-        // folders first, then links, ordered by name
         return $baseQuery->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
                          ->orderBy('name')
                          ->get();
@@ -67,7 +85,6 @@ class Bookmarks extends Component
     {
         return view('livewire.bookmarks', [
             'filteredItems' => $this->filteredItems,
-            'breadcrumbs' => $this->breadcrumbs,
         ]);
     }
 }
