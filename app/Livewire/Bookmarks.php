@@ -23,6 +23,17 @@ class Bookmarks extends Component
     public string $newBookmarkType = 'link';
     public $newBookmarkIcon; // file upload
 
+    protected array $messages = [
+        'newBookmarkName.required' => 'Dieses Feld ist erforderlich.',
+        'newBookmarkUrl.required' => 'Dieses Feld ist erforderlich.',
+        'newBookmarkUrl.url' => 'Bitte eine gültige URL eingeben.',
+        'newBookmarkType.required' => 'Dieses Feld ist erforderlich.',
+        'newBookmarkType.in' => 'Ungültiger Typ ausgewählt.',
+        'newBookmarkIcon.image' => 'Die Datei muss ein Bild sein.',
+        'newBookmarkIcon.file' => 'Bitte eine gültige Datei hochladen.',
+        'newBookmarkIcon.max' => 'Die Datei darf nicht größer als 2048 KB sein.',
+    ];
+
     public function mount(): void
     {
         $this->setBreadcrumbs();
@@ -51,7 +62,7 @@ class Bookmarks extends Component
             $folder = $folder->parent;
         }
 
-        array_unshift($this->breadcrumbs, ['id' => null, 'name' => 'Home']);
+        array_unshift($this->breadcrumbs, ['id' => null, 'name' => 'Start']);
     }
 
     public function getFilteredItemsProperty()
@@ -69,7 +80,7 @@ class Bookmarks extends Component
                 $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
                   ->orWhereRaw('LOWER(url) LIKE ?', ['%' . strtolower($query) . '%']);
             });
-        } else if ($this->globalSearch) {
+        } elseif ($this->globalSearch) {
             $baseQuery->where('parent_id', null);
         }
 
@@ -106,11 +117,11 @@ class Bookmarks extends Component
             'newBookmarkIcon',
             'newBookmarkParentId',
             'newBookmarkType',
-            'showModal'
+            'showModal',
         ]);
 
         $this->showModal = false;
-        Flux::toast('Bookmark created successfully.');
+        Flux::toast('Lesezeichen erfolgreich erstellt.');
     }
 
     public function render()
