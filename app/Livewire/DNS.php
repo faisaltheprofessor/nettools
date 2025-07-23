@@ -4,13 +4,12 @@ namespace App\Livewire;
 
 use Flux\Flux;
 use Illuminate\Support\Facades\Cache;
-use Livewire\Component;
 use Illuminate\Support\Facades\Artisan;
+use Livewire\Component;
 
 class DNS extends Component
 {
     public array $servers = ['vs002', 'vs003', 'vs004'];
-
     public ?string $dnsStatus = null;
     public ?string $runningServer = null;
     public bool $loading = false;
@@ -28,9 +27,7 @@ class DNS extends Component
 
     public function getDnsStatus(): void
     {
-        if ($this->loading || $this->beingRestarted) {
-            return;
-        }
+        if ($this->loading || $this->beingRestarted) return;
 
         $this->loading = true;
 
@@ -38,7 +35,7 @@ class DNS extends Component
             $status = Cache::get('dns:status');
 
             if (!$status) {
-                throw new \Exception('Kein Status im Cache gefunden. Bitte warten Sie einen Moment und versuchen Sie es erneut.');
+                throw new \Exception('Kein Status im Cache gefunden.');
             }
 
             $this->runningServer = $status['running_server'] ?? null;
@@ -52,11 +49,10 @@ class DNS extends Component
                 default => 'error',
             };
 
-            // Optional toast if not running
             if ($this->dnsStatus !== 'running') {
                 Flux::toast(
-                    text: "dns ist aktuell im Status: {$this->dnsStatus}.",
-                    heading: 'dns-Status',
+                    text: "DNS ist aktuell im Status: {$this->dnsStatus}.",
+                    heading: 'DNS-Status',
                     variant: $this->dnsStatus === 'offline' ? 'danger' : 'warning'
                 );
             }
@@ -75,46 +71,38 @@ class DNS extends Component
 
     public function restartDns(): void
     {
-           if ($this->beingRestarted || $this->loading) {
-        return;
-    }
+        if ($this->beingRestarted || $this->loading) return;
 
-    $this->beingRestarted = true;
+        if (Cache::get('dns:restart:queued')) {
+            Flux::toast(
+                text: 'Ein Neustart läuft bereits oder ist geplant.',
+                heading: 'Bereits in Warteschlange',
+                variant: 'warning'
+            );
+            return;
+        }
 
-    $lock = Cache::lock('dns_restart_lock', 30);
+        $this->beingRestarted = true;
 
-    if (!$lock->get()) {
-        Flux::toast(
-            text: 'Diese Funktion wird aktuell durch einen anderen Benutzer genutzt. Bitte in wenigen Sekunden noch einmal probieren.',
-            heading: 'Locked',
-            variant: 'warning'
-        );
-        $this->beingRestarted = false;
-        return;
-    }
+        try {
+            Artisan::queue('dns:restart-service');
 
-    try {
-        // Dispatch the Artisan command asynchronously, so UI stays responsive
-        Artisan::queue('dns:restart-service');
+            Flux::toast(
+                text: 'Neustart wurde gestartet. Bitte prüfen Sie den Status in Kürze.',
+                heading: 'Neustart läuft',
+                variant: 'success'
+            );
 
-        Flux::toast(
-            text: 'Neustart wurde initiiert. Bitte prüfen Sie in wenigen Momenten den Status erneut.',
-            heading: 'Neustart initiiert',
-            variant: 'success'
-        );
-
-
-    } catch (\Throwable $e) {
-        Flux::toast(
-            text: $e->getMessage(),
-            heading: 'Neustart-Fehler',
-            variant: 'danger'
-        );
-    } finally {
-        $lock->release();
-        $this->beingRestarted = false;
-        $this->getDnsStatus();
-    }
+        } catch (\Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Neustart-Fehler',
+                variant: 'danger'
+            );
+        } finally {
+            $this->beingRestarted = false;
+            Flux::modals()->close();
+        }
     }
 
     public function getButtonColorProperty(): string
@@ -136,6 +124,31 @@ class DNS extends Component
             'loading', 'unloading' => 'clock',
             'error' => 'exclamation-circle',
             default => 'question-mark-circle',
+        };
+    }
+
+    public function pollRestartStatus(): void
+    {
+        $status = Cache::get('dns:restart:status');
+
+        match (true) {
+            $status === 'running' => $this->dnsStatus = 'loading',
+            str_starts_with($status, 'error') => Flux::toast(
+                text: $status,
+                heading: 'Restart fehlgeschlagen',
+                variant: 'danger'
+            ),
+            $status === 'success' => Flux::toast(
+                text: 'DNS wurde erfolgreich neugestartet.',
+                heading: 'Erfolg',
+                variant: 'success'
+            ),
+            $status === 'locked' => Flux::toast(
+                text: 'Ein anderer Benutzer führt gerade einen Neustart durch.',
+                heading: 'Locked',
+                variant: 'warning'
+            ),
+            default => null,
         };
     }
 }

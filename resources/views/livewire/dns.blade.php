@@ -1,5 +1,4 @@
-
-<flux:card wire:poll.10s="getDnsStatus" class="w-1/2 mx-auto space-y-6">
+<flux:card wire:poll.5s="getDnsStatus" class="w-1/2 mx-auto space-y-6">
     <h2 class="text-lg font-bold">DNS Dienst</h2>
 
     <div class="flex mt-32 items-center justify-center">
@@ -9,7 +8,7 @@
                 @foreach($servers as $server)
                     <flux:context>
                         <div
-                            class="flex flex-col items-center rounded-md cursor-context-menu relative""
+                            class="flex flex-col items-center rounded-md cursor-context-menu relative"
                             style="width: 80px;"
                         >
                             <flux:icon.computer-desktop
@@ -20,7 +19,6 @@
                             <flux:text>{{ $server }}</flux:text>
 
                             @if($runningServer === $server && $dnsStatus === 'running')
-                                {{-- Active status icon below the computer icon --}}
                                 <div class="mt-2 flex justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg"
                                          class="h-6 w-6 text-emerald-600 bg-white rounded-full"
@@ -61,7 +59,8 @@
                     variant="primary"
                     color="green"
                     icon="play"
-                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
+                    :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
+                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'DNS gestartet 🎉', variant: 'success', duration: 3000})"
                     class="cursor-pointer"
                 >Start</flux:button>
 
@@ -72,7 +71,7 @@
                     class="cursor-pointer"
                 >Stop</flux:button>
 
-                <flux:modal.trigger name="confirm-restart">
+                <flux:modal.trigger name="confirm-dns-restart">
                     <flux:button
                         variant="primary"
                         color="teal"
@@ -81,37 +80,30 @@
                         :loading="$beingRestarted"
                     >Neustart</flux:button>
                 </flux:modal.trigger>
-
-                <flux:button
-                    variant="primary"
-                    icon="{{ $this->buttonIcon }}"
-                    class="cursor-pointer {{ $this->buttonColor }}"
-                    wire:click="getdnsStatus"
-                    @if($loading) disabled @endif
-                />
             </div>
         </div>
 
-        <flux:modal name="confirm-action">
+        <flux:modal name="confirm-dns-restart">
             <div class="space-y-6">
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der dns Server wirklich gestoppt und danach neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach neugestartet werden?</p>
                     </flux:text>
                 </div>
 
                 <div class="flex gap-2">
                     <flux:spacer />
 
-                    <flux:modal.close>
-                        <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal.close>
+                    <flux:modal>
+                        <flux:button variant="ghost">Abbrechen</flux:button>
+                    </flux:modal>
 
-                    <flux:button variant="danger" type="submit" wire:click="restartdns" class="cursor-pointer">Ja! Neustart</flux:button>
+                    <flux:button variant="danger" type="submit" wire:click.prevent="restartDns" class="cursor-pointer">
+                        Ja! Neustart
+                    </flux:button>
                 </div>
             </div>
         </flux:modal>
     </div>
 </flux:card>
-

@@ -1,16 +1,16 @@
 <?php
 
+
 namespace App\Livewire;
 
 use Flux\Flux;
 use Illuminate\Support\Facades\Cache;
-use Livewire\Component;
 use Illuminate\Support\Facades\Artisan;
+use Livewire\Component;
 
 class DHCP extends Component
 {
     public array $servers = ['vs002', 'vs003', 'vs004'];
-
     public ?string $dhcpStatus = null;
     public ?string $runningServer = null;
     public bool $loading = false;
@@ -28,9 +28,7 @@ class DHCP extends Component
 
     public function getDhcpStatus(): void
     {
-        if ($this->loading || $this->beingRestarted) {
-            return;
-        }
+        if ($this->loading || $this->beingRestarted) return;
 
         $this->loading = true;
 
@@ -38,7 +36,7 @@ class DHCP extends Component
             $status = Cache::get('dhcp:status');
 
             if (!$status) {
-                throw new \Exception('Kein Status im Cache gefunden. Bitte warten Sie einen Moment und versuchen Sie es erneut.');
+                throw new \Exception('Kein Status im Cache gefunden.');
             }
 
             $this->runningServer = $status['running_server'] ?? null;
@@ -52,7 +50,6 @@ class DHCP extends Component
                 default => 'error',
             };
 
-            // Optional toast if not running
             if ($this->dhcpStatus !== 'running') {
                 Flux::toast(
                     text: "DHCP ist aktuell im Status: {$this->dhcpStatus}.",
@@ -63,6 +60,7 @@ class DHCP extends Component
         } catch (\Throwable $e) {
             $this->dhcpStatus = 'error';
             $this->runningServer = null;
+
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Fehler beim Statusabruf',
@@ -75,46 +73,64 @@ class DHCP extends Component
 
     public function restartDhcp(): void
     {
-           if ($this->beingRestarted || $this->loading) {
-        return;
+        if ($this->beingRestarted || $this->loading) return;
+
+        if (Cache::get('dhcp:restart:queued')) {
+            Flux::toast(
+                text: 'Ein Neustart läuft bereits oder ist geplant.',
+                heading: 'Bereits in Warteschlange',
+                variant: 'warning'
+            );
+            return;
+        }
+
+        $this->beingRestarted = true;
+
+        try {
+            Artisan::queue('dhcp:restart-service');
+
+            Flux::toast(
+                text: 'Neustart wurde gestartet. Bitte prüfen Sie den Status in Kürze.',
+                heading: 'DHCP Neustart',
+                variant: 'success'
+            );
+
+            // Close modal after triggering restart
+            Flux::modals()->close();
+        } catch (\Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Neustart-Fehler',
+                variant: 'danger'
+            );
+        } finally {
+            $this->beingRestarted = false;
+        }
     }
 
-    $this->beingRestarted = true;
+    public function pollRestartStatus(): void
+    {
+        $status = Cache::get('dhcp:restart:status');
 
-    $lock = Cache::lock('dhcp_restart_lock', 30);
-
-    if (!$lock->get()) {
-        Flux::toast(
-            text: 'Diese Funktion wird aktuell durch einen anderen Benutzer genutzt. Bitte in wenigen Sekunden noch einmal probieren.',
-            heading: 'Locked',
-            variant: 'warning'
-        );
-        $this->beingRestarted = false;
-        return;
-    }
-
-    try {
-        // Dispatch the Artisan command asynchronously, so UI stays responsive
-        Artisan::queue('dhcp:restart-service');
-
-        Flux::toast(
-            text: 'Neustart wurde initiiert. Bitte prüfen Sie in wenigen Momenten den Status erneut.',
-            heading: 'Neustart initiiert',
-            variant: 'success'
-        );
-
-
-    } catch (\Throwable $e) {
-        Flux::toast(
-            text: $e->getMessage(),
-            heading: 'Neustart-Fehler',
-            variant: 'danger'
-        );
-    } finally {
-        $lock->release();
-        $this->beingRestarted = false;
-        $this->getDhcpStatus();
-    }
+        match (true) {
+            $status === 'running' => $this->dhcpStatus = 'loading',
+            str_starts_with($status, 'error') => Flux::toast(
+                text: $status,
+                heading: 'Restart fehlgeschlagen',
+                variant: 'danger'
+            ),
+            $status === 'success' => Flux::toast(
+                text: 'DHCP wurde erfolgreich neugestartet.',
+                heading: 'Erfolg',
+                variant: 'success'
+            ),
+            $status === 'locked' => Flux::toast(
+                text: 'Ein anderer Benutzer führt gerade einen Neustart durch.',
+                heading: 'Locked',
+                variant: 'warning'
+            ),
+            default => null,
+        };
     }
 
     public function getButtonColorProperty(): string
@@ -139,4 +155,3 @@ class DHCP extends Component
         };
     }
 }
-

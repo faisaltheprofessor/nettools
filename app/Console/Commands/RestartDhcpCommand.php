@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -13,16 +14,19 @@ class RestartDhcpCommand extends Command
     public function handle()
     {
         $cacheKey = 'dhcp:restart:status';
+        $queuedKey = 'dhcp:restart:queued';
         $lock = Cache::lock('dhcp_restart_lock', 30);
 
         if (!$lock->get()) {
-            $this->warn('Ein anderer Neustart läuft bereits. Bitte später erneut versuchen.');
+            $this->warn('Ein anderer Neustart läuft bereits.');
             Cache::put($cacheKey, 'locked', 60);
             return 1;
         }
 
+        Cache::put($cacheKey, 'running', 60);
+        Cache::put($queuedKey, true, 180); // 3-minute UI flag
+
         try {
-            Cache::put($cacheKey, 'running', 60);
             $this->info('Starte Neustart...');
 
             $sshUser = config('remote.dhcp.user');
@@ -70,17 +74,17 @@ BASH;
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
             RemoteSSH::execute("rm -f {$tmpFile}");
 
-            $this->info("DHCP wurde erfolgreich auf {$runningServer} neugestartet.");
             Cache::put($cacheKey, 'success', 60);
+            $this->info("DHCP wurde erfolgreich auf {$runningServer} neugestartet.");
             return 0;
 
         } catch (\Throwable $e) {
-            $this->error("Fehler beim Neustart: " . $e->getMessage());
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
+            $this->error("Fehler beim Neustart: " . $e->getMessage());
             return 1;
         } finally {
             $lock->release();
+            Cache::forget($queuedKey);
         }
     }
 }
-
