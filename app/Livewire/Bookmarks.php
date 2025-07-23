@@ -5,10 +5,12 @@ namespace App\Livewire;
 use App\Models\Bookmark;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Flux\Flux;
 
 class Bookmarks extends Component
 {
     use WithFileUploads;
+
     public string $search = '';
     public ?int $currentFolderId = null;
     public array $breadcrumbs = [];
@@ -18,8 +20,8 @@ class Bookmarks extends Component
     public string $newBookmarkName = '';
     public string $newBookmarkUrl = '';
     public ?int $newBookmarkParentId = null;
-    public string $newBookmarkIcon = '';
     public string $newBookmarkType = 'link';
+    public $newBookmarkIcon; // file upload
 
     public function mount(): void
     {
@@ -82,13 +84,19 @@ class Bookmarks extends Component
             'newBookmarkName' => 'required|string|max:255',
             'newBookmarkType' => 'required|in:link,folder',
             'newBookmarkUrl' => $this->newBookmarkType === 'link' ? 'required|url' : 'nullable',
+            'newBookmarkIcon' => $this->newBookmarkType === 'link' ? 'nullable|file|image|max:2048' : 'nullable',
         ]);
+
+        $iconPath = null;
+        if ($this->newBookmarkType === 'link' && $this->newBookmarkIcon) {
+            $iconPath = $this->newBookmarkIcon->store('icons', 'public');
+        }
 
         Bookmark::create([
             'name' => $this->newBookmarkName,
             'url' => $this->newBookmarkType === 'link' ? $this->newBookmarkUrl : null,
             'parent_id' => $this->newBookmarkParentId ?? $this->currentFolderId,
-            'icon' => $this->newBookmarkIcon,
+            'icon' => $iconPath,
             'type' => $this->newBookmarkType,
         ]);
 
@@ -101,7 +109,8 @@ class Bookmarks extends Component
             'showModal'
         ]);
 
-        \Flux\Flux::toast('Bookmark created successfully.');
+        $this->showModal = false;
+        Flux::toast('Bookmark created successfully.');
     }
 
     public function render()

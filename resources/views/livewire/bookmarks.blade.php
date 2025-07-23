@@ -5,7 +5,7 @@
     </header>
 
     <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Search -->
+        <!-- Search and Global Toggle -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i data-feather="search" class="text-gray-400"></i>
@@ -17,30 +17,27 @@
                 class="w-full p-3 pl-10 text-md border-2 border-gray-300 dark:border-gray-700 rounded-full focus:ring-4 focus:ring-blue-300 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition duration-300"
             />
 
-            <flux:field variant="inline" class="flex items-center gap-2">
-                <flux:label class="whitespace-nowrap">Global</flux:label>
-                <flux:switch wire:model.live="globalSearch" />
-                <flux:error name="globalSearch" />
-            </flux:field>
+            <div class="flex items-center gap-2">
+                <flux:field variant="inline" class="flex items-center gap-2">
+                    <flux:label class="whitespace-nowrap">Global</flux:label>
+                    <flux:switch wire:model.live="globalSearch" />
+                </flux:field>
 
-            <flux:modal.trigger name="add-bookmark">
-                <flux:button variant="primary">Add Bookmark</flux:button>
-            </flux:modal.trigger>
+            </div>
         </div>
 
         <!-- Breadcrumbs -->
         <nav aria-label="Breadcrumb" class="mb-4">
             <flux:breadcrumbs>
                 @foreach ($breadcrumbs as $index => $breadcrumb)
-                    @if ($breadcrumb['id'] !== null)
-                        <flux:breadcrumbs.item href="#" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
-                            {{ $breadcrumb['name'] }}
-                        </flux:breadcrumbs.item>
-                    @else
-                        <flux:breadcrumbs.item href="#" icon="home" wire:click.prevent="goBackTo({{ $index }})" class="cursor-pointer text-blue-600 hover:underline">
-                            {{ $breadcrumb['name'] }}
-                        </flux:breadcrumbs.item>
-                    @endif
+                    <flux:breadcrumbs.item
+                        href="#"
+                        icon="{{ $breadcrumb['id'] === null ? 'home' : null }}"
+                        wire:click.prevent="goBackTo({{ $index }})"
+                        class="cursor-pointer text-blue-600 hover:underline"
+                    >
+                        {{ $breadcrumb['name'] }}
+                    </flux:breadcrumbs.item>
                 @endforeach
             </flux:breadcrumbs>
         </nav>
@@ -53,7 +50,7 @@
                 @foreach ($filteredItems as $item)
                     @php
                         $favicon = $item->icon
-                            ? (filter_var($item->icon, FILTER_VALIDATE_URL) ? $item->icon : asset($item->icon))
+                            ? (filter_var($item->icon, FILTER_VALIDATE_URL) ? $item->icon : asset('storage/' . $item->icon))
                             : 'https://www.google.com/s2/favicons?domain=' . parse_url($item->url ?? '', PHP_URL_HOST) . '&sz=32';
                     @endphp
 
@@ -89,23 +86,23 @@
         @endif
     </div>
 
-    <!-- Modal -->
-    <flux:modal name="add-bookmark" class="md:w-[32rem]">
+    <!-- Add Bookmark Modal -->
+    <flux:modal name="add-bookmark" class="w-full md:max-w-xl" wire:model="showModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Add Bookmark</flux:heading>
-                <flux:text class="mt-2">Fill in the details to add a new bookmark or folder.</flux:text>
+                <flux:text class="mt-2">Create a new bookmark or folder.</flux:text>
             </div>
 
             <flux:field>
                 <flux:label>Name</flux:label>
-                <flux:input wire:model.live="newBookmarkName" />
+                <flux:input wire:model.defer="newBookmarkName" />
                 <flux:error name="newBookmarkName" />
             </flux:field>
 
             <flux:field>
                 <flux:label>Type</flux:label>
-                <select wire:model.live="newBookmarkType" class="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-white">
+                <select wire:model="newBookmarkType" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
                     <option value="link">Link</option>
                     <option value="folder">Folder</option>
                 </select>
@@ -115,15 +112,18 @@
             @if ($newBookmarkType === 'link')
                 <flux:field>
                     <flux:label>URL</flux:label>
-                    <flux:input wire:model.live="newBookmarkUrl" />
+                    <flux:input wire:model.defer="newBookmarkUrl" placeholder="https://..." />
                     <flux:error name="newBookmarkUrl" />
                 </flux:field>
+
+                <flux:input type="file" wire:model="newBookmarkIcon" label="Icon" />
+                <flux:error name="newBookmarkIcon" />
             @endif
 
             <flux:field>
-                <flux:label>Parent</flux:label>
-                <select wire:model.live="newBookmarkParentId" class="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-white">
-                    <option value="">None</option>
+                <flux:label>Parent Folder (optional)</flux:label>
+                <select wire:model="newBookmarkParentId" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
+                    <option value="">None (root)</option>
                     @foreach ($allFolders as $folder)
                         <option value="{{ $folder->id }}">{{ $folder->name }}</option>
                     @endforeach
@@ -131,10 +131,8 @@
                 <flux:error name="newBookmarkParentId" />
             </flux:field>
 
-            <flux:input type="file" wire:model="newBookmarkIcon" label="Icon" />
-
             <div class="flex justify-end">
-                <flux:button wire:click="createBookmark" variant="primary">Save</flux:button>
+                <flux:button wire:click="createBookmark" variant="primary">Create</flux:button>
             </div>
         </div>
     </flux:modal>
@@ -144,5 +142,9 @@
             feather.replace();
         });
     </script>
+    <div class="fixed bottom-0 right-0 p-4">
+
+                <flux:button icon="plus" variant="primary" color="green" class="cursor-pointer" wire:click="$set('showModal', true)">Neue</flux:button>
+    </div>
 </div>
 
