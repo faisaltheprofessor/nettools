@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Bookmark extends Model
 {
     protected $fillable = [
-        'name', 'type', 'url', 'icon', 'parent_id'
+        'name', 'type', 'url', 'icon', 'parent_id',
     ];
 
     public function children()

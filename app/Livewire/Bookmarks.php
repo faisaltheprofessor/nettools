@@ -3,24 +3,32 @@
 namespace App\Livewire;
 
 use App\Models\Bookmark;
+use Flux\Flux;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Flux\Flux;
 
 class Bookmarks extends Component
 {
     use WithFileUploads;
 
     public string $search = '';
+
     public ?int $currentFolderId = null;
+
     public array $breadcrumbs = [];
+
     public bool $globalSearch = false;
 
     public bool $showModal = false;
+
     public string $newBookmarkName = '';
+
     public string $newBookmarkUrl = '';
+
     public ?int $newBookmarkParentId = null;
+
     public string $newBookmarkType = 'link';
+
     public $newBookmarkIcon; // file upload
 
     protected array $messages = [
@@ -71,22 +79,22 @@ class Bookmarks extends Component
 
         $baseQuery = Bookmark::query();
 
-        if (!$this->globalSearch) {
+        if (! $this->globalSearch) {
             $baseQuery->where('parent_id', $this->currentFolderId);
         }
 
         if ($query !== '') {
             $baseQuery->where(function ($q) use ($query) {
-                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
-                  ->orWhereRaw('LOWER(url) LIKE ?', ['%' . strtolower($query) . '%']);
+                $q->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($query).'%'])
+                    ->orWhereRaw('LOWER(url) LIKE ?', ['%'.strtolower($query).'%']);
             });
         } elseif ($this->globalSearch) {
             $baseQuery->where('parent_id', null);
         }
 
         return $baseQuery->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
-                         ->orderBy('name')
-                         ->get();
+            ->orderBy('name')
+            ->get();
     }
 
     public function createBookmark(): void
@@ -132,4 +140,3 @@ class Bookmarks extends Component
         ]);
     }
 }
-

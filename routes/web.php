@@ -4,8 +4,8 @@ use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
 use App\Livewire\IpCalculator;
-use App\Livewire\PasswordGenerator;
 use App\Livewire\OVirtSerialNumberGenerator;
+use App\Livewire\PasswordGenerator;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -26,9 +26,9 @@ Route::get('dns', DNS::class)
 
 Route::get('ip-calculator', IpCalculator::class)
     ->name('ip-calculator.index');
-    
+
 Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
-    ->name('ovirt-serialnumber-generator.index');
+        ->name('ovirt-serialnumber-generator.index');
 
 // Password Generator
 Route::get('password-generator', PasswordGenerator::class)

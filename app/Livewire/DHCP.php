@@ -12,8 +12,11 @@ class DHCP extends Component
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
+
     public ?string $runningServer = null;
+
     public bool $loading = false;
+
     public bool $beingRestarted = false;
 
     public function render()
@@ -36,13 +39,14 @@ class DHCP extends Component
 
         $lock = Cache::lock('dhcp_status_lock', 10);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             Flux::toast(
                 text: 'Diese Funktion wird aktuell durch einen anderen Benutzer genutzt. Bitte in wenigen Sekunden noch einmal probieren.',
                 heading: 'Locked',
                 variant: 'warning'
             );
             $this->loading = false;
+
             return;
         }
 
@@ -67,25 +71,25 @@ class DHCP extends Component
                         break;
                     case 'Offline':
                         $this->dhcpStatus = 'offline';
-                        Flux::toast(text: "DHCP läuft nicht und ist offline.", heading: 'Fehler', variant: 'danger');
+                        Flux::toast(text: 'DHCP läuft nicht und ist offline.', heading: 'Fehler', variant: 'danger');
                         break;
                     case 'Loading':
                         $this->dhcpStatus = 'loading';
-                        Flux::toast(text: "DHCP fährt gerade hoch. Bitte in wenigen Sekunden erneut versuchen.", heading: 'Wartezeit', variant: 'warning');
+                        Flux::toast(text: 'DHCP fährt gerade hoch. Bitte in wenigen Sekunden erneut versuchen.', heading: 'Wartezeit', variant: 'warning');
                         break;
                     case 'Unloading':
                         $this->dhcpStatus = 'unloading';
-                        Flux::toast(text: "DHCP fährt gerade runter. Bitte in wenigen Sekunden erneut versuchen.", heading: 'Wartezeit', variant: 'warning');
+                        Flux::toast(text: 'DHCP fährt gerade runter. Bitte in wenigen Sekunden erneut versuchen.', heading: 'Wartezeit', variant: 'warning');
                         break;
                     default:
                         $this->dhcpStatus = 'error';
-                        Flux::toast(text: "Status derzeit nicht ermittelbar. Bitte in wenigen Sekunden erneut versuchen.", heading: 'Unbekannter Status', variant: 'danger');
+                        Flux::toast(text: 'Status derzeit nicht ermittelbar. Bitte in wenigen Sekunden erneut versuchen.', heading: 'Unbekannter Status', variant: 'danger');
                         break;
                 }
             } else {
                 $this->dhcpStatus = 'error';
                 $this->runningServer = null;
-                Flux::toast(text: "Status derzeit nicht ermittelbar. Bitte in wenigen Sekunden erneut versuchen.", heading: 'Unbekannter Server', variant: 'danger');
+                Flux::toast(text: 'Status derzeit nicht ermittelbar. Bitte in wenigen Sekunden erneut versuchen.', heading: 'Unbekannter Server', variant: 'danger');
             }
         } catch (\Throwable $e) {
             $this->dhcpStatus = 'error';
@@ -107,13 +111,14 @@ class DHCP extends Component
 
         $lock = Cache::lock('dhcp_restart_lock', 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             Flux::toast(
                 text: 'Diese Funktion wird aktuell durch einen anderen Benutzer genutzt. Bitte in wenigen Sekunden noch einmal probieren.',
                 heading: 'Locked',
                 variant: 'warning'
             );
             $this->beingRestarted = false;
+
             return;
         }
 
@@ -127,8 +132,8 @@ class DHCP extends Component
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$3}'");
             $runningServer = trim(RemoteSSH::getOutput());
 
-            if (!str_starts_with($runningServer, 'vs')) {
-                throw new \Exception("DHCP läuft derzeit auf keinem bekannten Server.");
+            if (! str_starts_with($runningServer, 'vs')) {
+                throw new \Exception('DHCP läuft derzeit auf keinem bekannten Server.');
             }
 
             RemoteSSH::connect($runningServer, $sshUser, $sshPass);
@@ -158,7 +163,7 @@ echo "Failed after 10 attempts at $(date)" >> $log
 exit 1
 BASH;
 
-            RemoteSSH::execute("echo " . escapeshellarg($script) . " > {$tmpFile}");
+            RemoteSSH::execute('echo '.escapeshellarg($script)." > {$tmpFile}");
             RemoteSSH::execute("chmod +x {$tmpFile}");
 
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
@@ -210,4 +215,3 @@ BASH;
         };
     }
 }
-
