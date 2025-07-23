@@ -1,5 +1,5 @@
-<flux:card wire:poll.10s="getDhcpStatus" class="w-1/2 mx-auto space-y-6">
-    <h2 class="text-lg font-bold">DCHP Dienst</h2>
+<flux:card wire:poll.5s="getDhcpStatus" class="w-1/2 mx-auto space-y-6">
+    <h2 class="text-lg font-bold">DHCP Dienst</h2>
 
     <div class="flex mt-32 items-center justify-center">
         <div>
@@ -60,18 +60,19 @@
                     variant="primary"
                     color="green"
                     icon="play"
-                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
-                    class="cursor-pointer"
-                >Start</flux:button>
+                :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
+                x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
+                class="cursor-pointer"
+            >Start</flux:button>
 
-                <flux:button
-                    variant="primary"
-                    color="red"
+            <flux:button
+                variant="primary"
+                color="red"
                     icon="power"
                     class="cursor-pointer"
                 >Stop</flux:button>
 
-                <flux:modal.trigger name="confirm-action">
+                <flux:modal.trigger name="confirm-restart">
                     <flux:button
                         variant="primary"
                         color="teal"
@@ -81,17 +82,10 @@
                     >Neustart</flux:button>
                 </flux:modal.trigger>
 
-                <flux:button
-                    variant="primary"
-                    icon="{{ $this->buttonIcon }}"
-                    class="cursor-pointer {{ $this->buttonColor }}"
-                    wire:click="getDhcpStatus"
-                    @if($loading) disabled @endif
-                />
             </div>
         </div>
 
-        <flux:modal name="confirm-action" class="min-w-[22rem]">
+        <flux:modal name="confirm-restart">
             <div class="space-y-6">
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
@@ -103,11 +97,11 @@
                 <div class="flex gap-2">
                     <flux:spacer />
 
-                    <flux:modal.close>
+                    <flux:modal>
                         <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal.close>
+                    </flux:modal>
 
-                    <flux:button variant="danger" wire:click="restartDhcp" class="cursor-pointer">Ja! Neustart</flux:button>
+                    <flux:button variant="danger" type="submit" wire:click.prevent="restartDhcp" class="cursor-pointer">Ja! Neustart</flux:button>
                 </div>
             </div>
         </flux:modal>

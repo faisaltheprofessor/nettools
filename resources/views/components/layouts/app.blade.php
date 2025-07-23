@@ -19,11 +19,7 @@
             <flux:navlist.item icon="satellite-dish" href="/dhcp" wire:navigate>
                 <div class="flex items-center justify-between">
                     <span>DHCP</span>
-                    <span class="inline-flex items-center text-green-600">
-                        <svg class="w-2 h-2 mr-1 fill-current text-green-500 animate-pulse" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="4" />
-                        </svg>
-                        </span>
+                <livewire:service-status-indicator service="dhcp" />
                 </div>
             </flux:navlist.item>
 
@@ -31,11 +27,7 @@
             <flux:navlist.item icon="earth-lock" href="{{ route('dns.index') }}" wire:navigate>
                 <div class="flex items-center justify-between">
                     <span>DNS</span>
-                    <span class="inline-flex items-center text-green-600">
-                        <svg class="w-2 h-2 mr-1 fill-current text-green-500 animate-pulse" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="4" />
-                        </svg>
-                        </span>
+                    <livewire:service-status-indicator service="dns" />
                 </div>
             </flux:navlist.item>
             <flux:navlist.item icon="user-group" href="#" wire:navitate>ID-Tools</flux:navlist.item>
