@@ -102,7 +102,7 @@
 
             <flux:field>
                 <flux:label>Type</flux:label>
-                <select wire:model="newBookmarkType" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
+                <select wire:model.live="newBookmarkType" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
                     <option value="link">Link</option>
                     <option value="folder">Folder</option>
                 </select>
@@ -123,7 +123,7 @@
             <flux:field>
                 <flux:label>Parent Folder (optional)</flux:label>
                 <select wire:model="newBookmarkParentId" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
-                    <option value="">None (root)</option>
+                    <option value="">Root</option>
                     @foreach ($allFolders as $folder)
                         <option value="{{ $folder->id }}">{{ $folder->name }}</option>
                     @endforeach
