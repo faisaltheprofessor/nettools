@@ -30,7 +30,7 @@ class DhcpPollStatusCommand extends Command
                 'updated_at' => now()->toIso8601String()
             ], 30); // cache for 30 seconds
 
-            $this->info("DNS status updated: {$dhcpStatusRaw} on {$runningServer}");
+            $this->info("DHCP status updated: {$dhcpStatusRaw} on {$runningServer}");
         } catch (\Throwable $e) {
             Cache::put('dhcp:status', [
                 'status' => 'error',

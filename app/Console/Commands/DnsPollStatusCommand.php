@@ -14,24 +14,24 @@ class DnsPollStatusCommand extends Command
     public function handle()
     {
         try {
-            $sshUser = config('remote.dhcp.user');
-            $sshPass = config('remote.dhcp.password');
-            $clusterHost = config('remote.dhcp.host');
+            $sshUser = config('remote.dns.user');
+            $sshPass = config('remote.dns.password');
+            $clusterHost = config('remote.dns.host');
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
             RemoteSSH::execute("cluster status DNS_SERVER | grep Running | awk '{print \$3}'");
             $runningServer = trim(RemoteSSH::getOutput());
 
             RemoteSSH::execute("cluster status DNS_SERVER | grep Lives | awk '{print \$1}'");
-            $dhcpStatusRaw = trim(RemoteSSH::getOutput());
+            $dns = trim(RemoteSSH::getOutput());
 
             Cache::put('dns:status', [
                 'running_server' => $runningServer,
-                'status' => $dhcpStatusRaw,
+                'status' => $dns,
                 'updated_at' => now()->toIso8601String()
             ], 30); // cache for 30 seconds
 
-            $this->info("DNS status updated: {$dhcpStatusRaw} on {$runningServer}");
+            $this->info("DNS status updated: {$dns} on {$runningServer}");
         } catch (\Throwable $e) {
             Cache::put('dns:status', [
                 'status' => 'error',
