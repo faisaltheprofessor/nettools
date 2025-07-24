@@ -133,6 +133,44 @@ class DHCP extends Component
         };
     }
 
+    public function migrateDhcp(string $node): void
+{
+    if ($this->loading) return;
+
+    $cacheKey = 'dhcp:migrate:status';
+
+    try {
+        if (Cache::lock('dhcp_migrate_lock', 30)->get() === false) {
+            Flux::toast(
+                text: 'Eine andere Migration ist gerade aktiv.',
+                heading: 'Migration blockiert',
+                variant: 'warning'
+            );
+            return;
+        }
+
+        Artisan::queue('dhcp:migrate-service', [
+            'targetNode' => $node,
+        ]);
+
+        Flux::toast(
+            text: "Migration nach {$node} gestartet.",
+            heading: 'DHCP Migration',
+            variant: 'success'
+        );
+
+    } catch (\Throwable $e) {
+        Flux::toast(
+            text: $e->getMessage(),
+            heading: 'Migrationsfehler',
+            variant: 'danger'
+        );
+    } finally {
+        Flux::modals()->close();
+    }
+}
+
+
     public function getButtonColorProperty(): string
     {
         return match ($this->dhcpStatus) {

@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use App\Facades\RemoteSSH;
 
-class RestartDnsCommand extends Command
+class DnsRestartCommand extends Command
 {
     protected $signature = 'dns:restart-service';
     protected $description = 'Restart the DNS service via SSH';

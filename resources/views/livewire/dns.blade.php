@@ -31,22 +31,6 @@
 
                         <flux:menu>
                             <flux:menu.item icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin migrieren</flux:menu.item>
-
-                            <flux:menu.separator />
-
-                            <flux:menu.submenu heading="DNS">
-                                <flux:menu.item icon="play">Start</flux:menu.item>
-                                <flux:menu.item icon="power">Stop</flux:menu.item>
-                                <flux:menu.item icon="rotate-ccw">Neustart</flux:menu.item>
-                            </flux:menu.submenu>
-
-                            <flux:menu.separator />
-
-                            <flux:menu.submenu heading="DHCP">
-                                <flux:menu.item icon="play">Start</flux:menu.item>
-                                <flux:menu.item icon="power">Stop</flux:menu.item>
-                                <flux:menu.item icon="rotate-ccw">Neustart</flux:menu.item>
-                            </flux:menu.submenu>
                         </flux:menu>
                     </flux:context>
                 @endforeach
@@ -63,13 +47,6 @@
                     x-on:click="$flux.toast({heading: 'Erfolg', text: 'DNS gestartet 🎉', variant: 'success', duration: 3000})"
                     class="cursor-pointer"
                 >Start</flux:button>
-
-                <flux:button
-                    variant="primary"
-                    color="red"
-                    icon="power"
-                    class="cursor-pointer"
-                >Stop</flux:button>
 
                 <flux:modal.trigger name="confirm-dns-restart">
                     <flux:button

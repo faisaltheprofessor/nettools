@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use App\Facades\RemoteSSH;
 
-class RestartDhcpCommand extends Command
+class DhcpRestartCommand extends Command
 {
     protected $signature = 'dhcp:restart-service';
     protected $description = 'Restart the DHCP service via SSH';

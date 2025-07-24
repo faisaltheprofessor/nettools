@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Facades\RemoteSSH;
 use Illuminate\Support\Facades\Cache;
 
-class PollDnsStatus extends Command
+class DnsPollStatusCommand extends Command
 {
     protected $signature = 'dns:poll-status';
     protected $description = 'Poll DNS service status and cache it';

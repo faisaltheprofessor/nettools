@@ -5,7 +5,7 @@ use Illuminate\Console\Command;
 use App\Facades\RemoteSSH;
 use Illuminate\Support\Facades\Cache;
 
-class PollDhcpStatus extends Command
+class DhcpPollStatusCommand extends Command
 {
     protected $signature = 'dhcp:poll-status';
     protected $description = 'Poll DHCP service status and cache it';
