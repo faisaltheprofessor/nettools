@@ -7,4 +7,10 @@ return [
         'user' => env('DHCP_USER', 'remote'),
         'password' => env('DHCP_PASSWORD', 'remote'),
     ],
+    'dns' => [
+        'host' => env('DNS_HOST', '127.0.0.1'),
+        'port' => env('DNS_PORT', 22),
+        'user' => env('DNS_USER', 'remote'),
+        'password' => env('DNS_PASSWORD', 'remote'),
+    ],
 ];
