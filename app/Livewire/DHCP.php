@@ -3,16 +3,20 @@
 namespace App\Livewire;
 
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class DHCP extends Component
 {
     public array $servers = ['vs002', 'vs003', 'vs004'];
+
     public ?string $dhcpStatus = null;
+
     public ?string $runningServer = null;
+
     public bool $loading = false;
+
     public bool $beingRestarted = false;
 
     public function render()
@@ -27,7 +31,9 @@ class DHCP extends Component
 
     public function getDhcpStatus(): void
     {
-        if ($this->loading || $this->beingRestarted) return;
+        if ($this->loading || $this->beingRestarted) {
+            return;
+        }
 
         $this->loading = true;
 
@@ -72,7 +78,9 @@ class DHCP extends Component
 
     public function restartDhcp(): void
     {
-        if ($this->beingRestarted || $this->loading) return;
+        if ($this->beingRestarted || $this->loading) {
+            return;
+        }
 
         if (Cache::get('dhcp:restart:queued')) {
             Flux::toast(
@@ -80,6 +88,7 @@ class DHCP extends Component
                 heading: 'Bereits in Warteschlange',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -133,7 +142,9 @@ class DHCP extends Component
 
     public function migrateDhcp(string $node): void
     {
-        if ($this->loading) return;
+        if ($this->loading) {
+            return;
+        }
 
         $cacheKey = 'dhcp:migrate:status';
 
@@ -144,6 +155,7 @@ class DHCP extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
+
                 return;
             }
 
@@ -189,4 +201,3 @@ class DHCP extends Component
         };
     }
 }
-

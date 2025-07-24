@@ -1,12 +1,13 @@
 <div class="container mx-auto p-4 md:p-8">
     <header class="text-center mb-8">
         <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">Lesezeichen</h1>
-        <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Die All-in-One Seite für alle wichtigen Lesezeichen.</p>
+        <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Die All-in-One Seite für alle wichtigen
+            Lesezeichen.</p>
     </header>
 
     <div class="max-w-6xl mx-auto space-y-6"
-        x-data
-        x-init="
+         x-data
+         x-init="
         window.addEventListener('keydown', e => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
@@ -32,7 +33,7 @@
             <div class="flex items-center gap-2">
                 <flux:field variant="inline" class="flex items-center gap-2">
                     <flux:label class="whitespace-nowrap">Global</flux:label>
-                    <flux:switch wire:model.live="globalSearch" />
+                    <flux:switch wire:model.live="globalSearch"/>
                 </flux:field>
             </div>
         </div>
@@ -69,10 +70,14 @@
                         <div wire:click="openFolder({{ $item->id }})" class="cursor-pointer">
                             <flux:card class="p-4 text-center rounded-lg space-y-2 h-40 flex flex-col justify-center">
                                 <div class="flex justify-center">
-                                    <flux:icon.folder />
+                                    <flux:icon.folder/>
                                 </div>
-                                <flux:heading size="sm" class="truncate dark:text-white">{{ $item->name }}</flux:heading>
-                                <flux:text class="text-xs text-gray-500 dark:text-gray-300">{{ $item->children()->count() }} Einträge</flux:text>
+                                <flux:heading size="sm"
+                                              class="truncate dark:text-white">{{ $item->name }}</flux:heading>
+                                <flux:text
+                                    class="text-xs text-gray-500 dark:text-gray-300">{{ $item->children()->count() }}
+                                    Einträge
+                                </flux:text>
                             </flux:card>
                         </div>
                     @else
@@ -86,8 +91,10 @@
                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
                                     />
                                 </div>
-                                <flux:heading size="sm" class="truncate dark:text-white">{{ $item->name }}</flux:heading>
-                                <flux:text class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ $item->url }}</flux:text>
+                                <flux:heading size="sm"
+                                              class="truncate dark:text-white">{{ $item->name }}</flux:heading>
+                                <flux:text
+                                    class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ $item->url }}</flux:text>
                             </flux:card>
                         </a>
                     @endif
@@ -106,39 +113,41 @@
 
             <flux:field>
                 <flux:label>Name</flux:label>
-                <flux:input wire:model.defer="newBookmarkName" />
-                <flux:error name="newBookmarkName" />
+                <flux:input wire:model.defer="newBookmarkName"/>
+                <flux:error name="newBookmarkName"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>Typ</flux:label>
-                <select wire:model.live="newBookmarkType" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
+                <select wire:model.live="newBookmarkType"
+                        class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
                     <option value="link">Link</option>
                     <option value="folder">Ordner</option>
                 </select>
-                <flux:error name="newBookmarkType" />
+                <flux:error name="newBookmarkType"/>
             </flux:field>
 
             @if ($newBookmarkType === 'link')
                 <flux:field>
                     <flux:label>URL</flux:label>
-                    <flux:input wire:model.defer="newBookmarkUrl" placeholder="https://..." />
-                    <flux:error name="newBookmarkUrl" />
+                    <flux:input wire:model.defer="newBookmarkUrl" placeholder="https://..."/>
+                    <flux:error name="newBookmarkUrl"/>
                 </flux:field>
 
-                <flux:input type="file" wire:model="newBookmarkIcon" label="Symbol" />
-                <flux:error name="newBookmarkIcon" />
+                <flux:input type="file" wire:model="newBookmarkIcon" label="Symbol"/>
+                <flux:error name="newBookmarkIcon"/>
             @endif
 
             <flux:field>
                 <flux:label>Übergeordneter Ordner (optional)</flux:label>
-                <select wire:model="newBookmarkParentId" class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
+                <select wire:model="newBookmarkParentId"
+                        class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white">
                     <option value="">Root</option>
                     @foreach ($allFolders as $folder)
                         <option value="{{ $folder->id }}">{{ $folder->name }}</option>
                     @endforeach
                 </select>
-                <flux:error name="newBookmarkParentId" />
+                <flux:error name="newBookmarkParentId"/>
             </flux:field>
 
             <div class="flex justify-end">
@@ -150,7 +159,8 @@
 
     <!-- Neue Schaltfläche -->
     <div class="fixed bottom-0 right-0 p-4">
-        <flux:button icon="plus" variant="primary" color="green" class="cursor-pointer" wire:click="$set('showModal', true)">
+        <flux:button icon="plus" variant="primary" color="green" class="cursor-pointer"
+                     wire:click="$set('showModal', true)">
             Neu
         </flux:button>
     </div>

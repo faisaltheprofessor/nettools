@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Component;
 
 class ServiceStatusIndicator extends Component
 {
@@ -25,4 +25,3 @@ class ServiceStatusIndicator extends Component
         ]);
     }
 }
-

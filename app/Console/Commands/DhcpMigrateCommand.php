@@ -2,19 +2,20 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use App\Facades\RemoteSSH;
+use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 
 class DhcpMigrateCommand extends Command implements ShouldQueue
 {
     protected $signature = 'dhcp:migrate-service {targetNode}';
+
     protected $description = 'Migriert den laufenden DHCP-Dienst zu einem anderen Cluster-Knoten';
 
     public function handle()
     {
-        \Log::info("Migration Started");
+        \Log::info('Migration Started');
         $cacheKey = 'dhcp:migrate:status';
         $lock = Cache::lock('dhcp_migrate_lock', 30);
 
@@ -40,6 +41,7 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
             if ($status !== 'Running') {
                 Cache::put($cacheKey, 'offline', 60);
                 $this->error('DHCP ist nicht aktiv. Bitte zuerst starten.');
+
                 return 1;
             }
 
@@ -56,15 +58,16 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
             Cache::put($cacheKey, 'success', 60);
 
             \Log::info("DHCP wurde erfolgreich nach {$targetNode} migriert.");
+
             return 0;
 
         } catch (\Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            \Log::error("Fehler bei der Migration: " . $e->getMessage());
+            \Log::error('Fehler bei der Migration: ' . $e->getMessage());
+
             return 1;
         } finally {
             $lock->release();
         }
     }
 }
-

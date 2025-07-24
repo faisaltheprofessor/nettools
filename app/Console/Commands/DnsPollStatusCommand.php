@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Facades\RemoteSSH;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 class DnsPollStatusCommand extends Command
 {
     protected $signature = 'dns:poll-status';
+
     protected $description = 'Poll DNS service status and cache it';
 
     public function handle()
@@ -28,7 +29,7 @@ class DnsPollStatusCommand extends Command
             Cache::put('dns:status', [
                 'running_server' => $runningServer,
                 'status' => $dns,
-                'updated_at' => now()->toIso8601String()
+                'updated_at' => now()->toIso8601String(),
             ], 30); // cache for 30 seconds
 
             $this->info("DNS status updated: {$dns} on {$runningServer}");
@@ -37,10 +38,10 @@ class DnsPollStatusCommand extends Command
                 'status' => 'error',
                 'running_server' => null,
                 'updated_at' => now()->toIso8601String(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 30);
 
-            $this->error("Polling failed: " . $e->getMessage());
+            $this->error('Polling failed: ' . $e->getMessage());
         }
     }
 }

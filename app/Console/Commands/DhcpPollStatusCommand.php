@@ -1,13 +1,15 @@
 <?php
+
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Facades\RemoteSSH;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 class DhcpPollStatusCommand extends Command
 {
     protected $signature = 'dhcp:poll-status';
+
     protected $description = 'Poll DHCP service status and cache it';
 
     public function handle()
@@ -27,7 +29,7 @@ class DhcpPollStatusCommand extends Command
             Cache::put('dhcp:status', [
                 'running_server' => $runningServer,
                 'status' => $dhcpStatusRaw,
-                'updated_at' => now()->toIso8601String()
+                'updated_at' => now()->toIso8601String(),
             ], 30); // cache for 30 seconds
 
             $this->info("DHCP status updated: {$dhcpStatusRaw} on {$runningServer}");
@@ -36,11 +38,10 @@ class DhcpPollStatusCommand extends Command
                 'status' => 'error',
                 'running_server' => null,
                 'updated_at' => now()->toIso8601String(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 30);
 
-            $this->error("Polling failed: " . $e->getMessage());
+            $this->error('Polling failed: ' . $e->getMessage());
         }
     }
 }
-

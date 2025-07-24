@@ -27,7 +27,7 @@ class OVirtSerialNumberGenerator extends Component
         // Clean encoding and remove invalid characters
 
         // Validate MAC address
-        if (! preg_match('/^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/', $mac)) {
+        if (!preg_match('/^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/', $mac)) {
             $this->error = "? Die Eingabe '{$mac}' ist fehlerhaft!";
             $this->showResultsModal = true;
 
@@ -38,7 +38,7 @@ class OVirtSerialNumberGenerator extends Component
         $servernameHex = bin2hex($servername);
 
         // Validate the generated hex string
-        if (! mb_check_encoding($servernameHex, 'UTF-8')) {
+        if (!mb_check_encoding($servernameHex, 'UTF-8')) {
             $this->error = '? Fehler bei der Hex-Kodierung des Servernamens.';
             $this->showResultsModal = true;
 

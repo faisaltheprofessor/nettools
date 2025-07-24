@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Facades\RemoteSSH;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use App\Facades\RemoteSSH;
 
 class DnsRestartCommand extends Command
 {
     protected $signature = 'dns:restart-service';
+
     protected $description = 'Restart the DNS service via SSH';
 
     public function handle()
@@ -20,6 +21,7 @@ class DnsRestartCommand extends Command
         if (!$lock->get()) {
             $this->warn('Ein anderer Neustart läuft bereits.');
             Cache::put($cacheKey, 'locked', 60);
+
             return 1;
         }
 
@@ -39,7 +41,7 @@ class DnsRestartCommand extends Command
             $runningServer = trim(RemoteSSH::getOutput());
 
             if (!str_starts_with($runningServer, 'vs')) {
-                throw new \Exception("DNS läuft derzeit auf keinem bekannten Server.");
+                throw new \Exception('DNS läuft derzeit auf keinem bekannten Server.');
             }
 
             RemoteSSH::connect($runningServer, $sshUser, $sshPass);
@@ -69,18 +71,20 @@ echo "Failed after 10 attempts at $(date)" >> $log
 exit 1
 BASH;
 
-            RemoteSSH::execute("echo " . escapeshellarg($script) . " > {$tmpFile}");
+            RemoteSSH::execute('echo ' . escapeshellarg($script) . " > {$tmpFile}");
             RemoteSSH::execute("chmod +x {$tmpFile}");
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
             RemoteSSH::execute("rm -f {$tmpFile}");
 
             Cache::put($cacheKey, 'success', 60);
             $this->info("DNS wurde erfolgreich auf {$runningServer} neugestartet.");
+
             return 0;
 
         } catch (\Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            $this->error("Fehler beim Neustart: " . $e->getMessage());
+            $this->error('Fehler beim Neustart: ' . $e->getMessage());
+
             return 1;
         } finally {
             $lock->release();

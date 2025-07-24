@@ -79,14 +79,14 @@ class Bookmarks extends Component
 
         $baseQuery = Bookmark::query();
 
-        if (! $this->globalSearch) {
+        if (!$this->globalSearch) {
             $baseQuery->where('parent_id', $this->currentFolderId);
         }
 
         if ($query !== '') {
             $baseQuery->where(function ($q) use ($query) {
-                $q->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($query).'%'])
-                    ->orWhereRaw('LOWER(url) LIKE ?', ['%'.strtolower($query).'%']);
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
+                    ->orWhereRaw('LOWER(url) LIKE ?', ['%' . strtolower($query) . '%']);
             });
         } elseif ($this->globalSearch) {
             $baseQuery->where('parent_id', null);

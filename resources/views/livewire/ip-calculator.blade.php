@@ -12,12 +12,13 @@
                 class="flux-input"
                 style="width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 0.375rem; border: 1px solid #ccc;"
             />
-            <flux:error name="ip" />
+            <flux:error name="ip"/>
         </flux:field>
 
         <flux:field>
             <flux:label>Subnetzmaske</flux:label>
-            <flux:description>Verwenden Sie CIDR-Notation (z.B. 24) oder Punkt-Notation (z.B. 255.255.255.0)</flux:description>
+            <flux:description>Verwenden Sie CIDR-Notation (z.B. 24) oder Punkt-Notation (z.B. 255.255.255.0)
+            </flux:description>
             <input
                 type="text"
                 wire:model.defer="subnet"
@@ -26,7 +27,7 @@
                 class="flux-input"
                 style="width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 0.375rem; border: 1px solid #ccc;"
             />
-            <flux:error name="subnet" />
+            <flux:error name="subnet"/>
         </flux:field>
 
         <flux:button
@@ -54,10 +55,12 @@
                 <div class="overflow-auto max-h-[30rem]">
                     <flux:table class="w-full border-collapse">
                         <flux:table.columns>
-                            <flux:table.column class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            <flux:table.column
+                                class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 Eigenschaft
                             </flux:table.column>
-                            <flux:table.column class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            <flux:table.column
+                                class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 Wert
                             </flux:table.column>
                         </flux:table.columns>
@@ -65,7 +68,8 @@
                         <flux:table.rows>
                             @foreach ($results as $key => $value)
                                 @if ($key !== 'Binary' && $key !== 'Type')
-                                    <flux:table.row class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <flux:table.row
+                                        class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                         <flux:table.cell class="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                                             @switch($key)
                                                 @case('Address') Adresse @break

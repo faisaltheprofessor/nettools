@@ -23,20 +23,22 @@
                                     <svg xmlns="http://www.w3.org/2000/svg"
                                          class="h-6 w-6 text-emerald-600 bg-white rounded-full"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
                             @endif
                         </div>
 
                         <flux:menu>
-                            <flux:menu.item icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin migrieren</flux:menu.item>
+                            <flux:menu.item icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin
+                                migrieren
+                            </flux:menu.item>
                         </flux:menu>
                     </flux:context>
                 @endforeach
             </div>
 
-            <hr class="bg-gray-200 mt-4 mb-4" />
+            <hr class="bg-gray-200 mt-4 mb-4"/>
 
             <div class="flex items-center gap-2 justify-center">
                 <flux:button
@@ -46,7 +48,8 @@
                     :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
                     x-on:click="$flux.toast({heading: 'Erfolg', text: 'DNS gestartet 🎉', variant: 'success', duration: 3000})"
                     class="cursor-pointer"
-                >Start</flux:button>
+                >Start
+                </flux:button>
 
                 <flux:modal.trigger name="confirm-dns-restart">
                     <flux:button
@@ -55,7 +58,8 @@
                         icon="arrow-path"
                         class="cursor-pointer"
                         :loading="$beingRestarted"
-                    >Neustart</flux:button>
+                    >Neustart
+                    </flux:button>
                 </flux:modal.trigger>
             </div>
         </div>
@@ -65,12 +69,13 @@
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach
+                            neugestartet werden?</p>
                     </flux:text>
                 </div>
 
                 <div class="flex gap-2">
-                    <flux:spacer />
+                    <flux:spacer/>
 
                     <flux:modal>
                         <flux:button variant="ghost">Abbrechen</flux:button>

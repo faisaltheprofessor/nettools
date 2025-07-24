@@ -27,7 +27,7 @@ class IpCalculator extends Component
         $ip = trim($this->ip);
         $subnet = trim($this->subnet);
 
-        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             $this->results = ['error' => 'Ungültige IP-Adresse.'];
 
             return;
@@ -41,12 +41,12 @@ class IpCalculator extends Component
                 return;
             }
         } else {
-            if (! is_numeric($subnet)) {
+            if (!is_numeric($subnet)) {
                 $this->results = ['error' => 'Die Subnetzmaske muss eine Zahl oder Punktnotation sein.'];
 
                 return;
             }
-            $cidr = (int) $subnet;
+            $cidr = (int)$subnet;
             if ($cidr < 1 || $cidr > 32) {
                 $this->results = ['error' => 'CIDR muss zwischen 1 und 32 liegen.'];
 
@@ -95,7 +95,7 @@ class IpCalculator extends Component
 
     private function maskToCidr($mask)
     {
-        if (! filter_var($mask, FILTER_VALIDATE_IP)) {
+        if (!filter_var($mask, FILTER_VALIDATE_IP)) {
             return null;
         }
         $long = ip2long($mask);
@@ -117,7 +117,7 @@ class IpCalculator extends Component
 
     private function getClass($ip)
     {
-        $firstOctet = (int) explode('.', $ip)[0];
+        $firstOctet = (int)explode('.', $ip)[0];
 
         return match (true) {
             $firstOctet >= 1 && $firstOctet <= 126 => 'A',

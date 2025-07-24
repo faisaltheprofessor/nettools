@@ -3,16 +3,20 @@
 namespace App\Livewire;
 
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class DNS extends Component
 {
     public array $servers = ['vs002', 'vs003', 'vs004'];
+
     public ?string $dnsStatus = null;
+
     public ?string $runningServer = null;
+
     public bool $loading = false;
+
     public bool $beingRestarted = false;
 
     public function render()
@@ -27,7 +31,9 @@ class DNS extends Component
 
     public function getDnsStatus(): void
     {
-        if ($this->loading || $this->beingRestarted) return;
+        if ($this->loading || $this->beingRestarted) {
+            return;
+        }
 
         $this->loading = true;
 
@@ -71,7 +77,9 @@ class DNS extends Component
 
     public function restartDns(): void
     {
-        if ($this->beingRestarted || $this->loading) return;
+        if ($this->beingRestarted || $this->loading) {
+            return;
+        }
 
         if (Cache::get('dns:restart:queued')) {
             Flux::toast(
@@ -79,6 +87,7 @@ class DNS extends Component
                 heading: 'Bereits in Warteschlange',
                 variant: 'warning'
             );
+
             return;
         }
 

@@ -28,7 +28,7 @@ Route::get('ip-calculator', IpCalculator::class)
     ->name('ip-calculator.index');
 
 Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
-        ->name('ovirt-serialnumber-generator.index');
+    ->name('ovirt-serialnumber-generator.index');
 
 // Password Generator
 Route::get('password-generator', PasswordGenerator::class)
