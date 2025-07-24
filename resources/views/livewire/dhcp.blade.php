@@ -45,23 +45,22 @@
             <hr class="bg-gray-200 mt-4 mb-4"/>
 
             <div class="flex items-center gap-2 justify-center">
+                <flux:modal.trigger name="select-vs">
                 <flux:button
                     variant="primary"
                     color="green"
                     icon="play"
                     :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
-                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
                     class="cursor-pointer"
                 >Start
                 </flux:button>
-
+                </flux:modal.trigger>
                 <flux:modal.trigger name="confirm-restart">
                     <flux:button
                         variant="primary"
                         color="teal"
                         icon="arrow-path"
                         class="cursor-pointer"
-                        :loading="$beingRestarted"
                     >Neustart
                     </flux:button>
                 </flux:modal.trigger>
@@ -87,6 +86,33 @@
 
                     <flux:button variant="danger" type="submit" wire:click.prevent="restartDhcp" class="cursor-pointer">
                         Ja! Neustart
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+
+        <flux:modal name="select-vs" variant="flyout">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Choose one...</flux:heading>
+                    <flux:text class="mt-2">
+                        <flux:radio.group label="" variant="cards" class="flex-col">
+                            @foreach($servers as $server)
+                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
+                            @endforeach
+                        </flux:radio.group>
+                    </flux:text>
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:spacer/>
+
+                    <flux:modal>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal>
+
+                    <flux:button  color="green" type="submit" wire:click.prevent="" class="cursor-pointer">
+                        Start
                     </flux:button>
                 </div>
             </div>

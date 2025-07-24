@@ -93,7 +93,7 @@
         {{ $slot }}
     </div>
     @persist('toast')
-    <flux:toast position="top right" class="pt-24"/>
+    <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
 
 </flux:main>
