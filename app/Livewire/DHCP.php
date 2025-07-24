@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Livewire;
 
 use Flux\Flux;
@@ -95,7 +94,6 @@ class DHCP extends Component
                 variant: 'success'
             );
 
-            // Close modal after triggering restart
             Flux::modals()->close();
         } catch (\Throwable $e) {
             Flux::toast(
@@ -134,42 +132,40 @@ class DHCP extends Component
     }
 
     public function migrateDhcp(string $node): void
-{
-    if ($this->loading) return;
+    {
+        if ($this->loading) return;
 
-    $cacheKey = 'dhcp:migrate:status';
+        $cacheKey = 'dhcp:migrate:status';
 
-    try {
-        if (Cache::lock('dhcp_migrate_lock', 30)->get() === false) {
+        try {
+            if (Cache::lock('dhcp_migrate_lock', 30)->get() === false) {
+                Flux::toast(
+                    text: 'Eine andere Migration ist gerade aktiv.',
+                    heading: 'Migration blockiert',
+                    variant: 'warning'
+                );
+                return;
+            }
+
+            Artisan::queue('dhcp:migrate-service', [
+                'targetNode' => $node,
+            ]);
+
             Flux::toast(
-                text: 'Eine andere Migration ist gerade aktiv.',
-                heading: 'Migration blockiert',
-                variant: 'warning'
+                text: "Migration nach {$node} gestartet.",
+                heading: 'DHCP Migration',
+                variant: 'success'
             );
-            return;
+        } catch (\Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Migrationsfehler',
+                variant: 'danger'
+            );
+        } finally {
+            Flux::modals()->close();
         }
-
-        Artisan::queue('dhcp:migrate-service', [
-            'targetNode' => $node,
-        ]);
-
-        Flux::toast(
-            text: "Migration nach {$node} gestartet.",
-            heading: 'DHCP Migration',
-            variant: 'success'
-        );
-
-    } catch (\Throwable $e) {
-        Flux::toast(
-            text: $e->getMessage(),
-            heading: 'Migrationsfehler',
-            variant: 'danger'
-        );
-    } finally {
-        Flux::modals()->close();
     }
-}
-
 
     public function getButtonColorProperty(): string
     {
@@ -193,3 +189,4 @@ class DHCP extends Component
         };
     }
 }
+

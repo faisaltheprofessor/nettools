@@ -8,7 +8,7 @@
                 @foreach($servers as $server)
                     <flux:context>
                         <div
-                            class="flex flex-col items-center rounded-md cursor-context-menu relative""
+                            class="flex flex-col items-center rounded-md cursor-context-menu relative"
                             style="width: 80px;"
                         >
                             <flux:icon.computer-desktop
@@ -19,7 +19,6 @@
                             <flux:text>{{ $server }}</flux:text>
 
                             @if($runningServer === $server && $dhcpStatus === 'running')
-                                {{-- Active status icon below the computer icon --}}
                                 <div class="mt-2 flex justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg"
                                          class="h-6 w-6 text-emerald-600 bg-white rounded-full"
@@ -31,7 +30,13 @@
                         </div>
 
                         <flux:menu>
-                            <flux:menu.item wire:click="migrateDhcp('{{ $server }}')" icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin migrieren</flux:menu.item>
+                            <flux:menu.item
+                                wire:click="migrateDhcp('{{ $server }}')"
+                                icon="git-compare-arrows"
+                                x-bind:disabled="'{{ $runningServer }}' === '{{ $server }}'"
+                            >
+                                Hierhin migrieren
+                            </flux:menu.item>
                         </flux:menu>
                     </flux:context>
                 @endforeach
@@ -44,11 +49,10 @@
                     variant="primary"
                     color="green"
                     icon="play"
-                :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
-                x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
-                class="cursor-pointer"
-            >Start</flux:button>
-
+                    :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
+                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'Erledigt 🎉', variant: 'success', duration: 3000})"
+                    class="cursor-pointer"
+                >Start</flux:button>
 
                 <flux:modal.trigger name="confirm-restart">
                     <flux:button
@@ -59,7 +63,6 @@
                         :loading="$beingRestarted"
                     >Neustart</flux:button>
                 </flux:modal.trigger>
-
             </div>
         </div>
 

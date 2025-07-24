@@ -6,10 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use App\Facades\RemoteSSH;
 use Illuminate\Contracts\Queue\ShouldQueue;
+
 class DhcpMigrateCommand extends Command implements ShouldQueue
 {
     protected $signature = 'dhcp:migrate-service {targetNode}';
-    protected $description = 'Migriert den laufenden DHCP-Dienst zu einem anderen Cluster-Knote';
+    protected $description = 'Migriert den laufenden DHCP-Dienst zu einem anderen Cluster-Knoten';
 
     public function handle()
     {
@@ -44,10 +45,16 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
 
             \Log::info("DHCP läuft aktuell auf {$currentNode}. Migriere nach {$targetNode}...");
 
-            RemoteSSH::connect($clusterHost, $sshUser, $sshPass); // Reconnect optional
+            RemoteSSH::connect($clusterHost, $sshUser, $sshPass); // Optional reconnect
             RemoteSSH::execute("cluster migrate DHCP_SERVER {$targetNode}");
 
+            Cache::put('dhcp:status', [
+                'running_server' => $targetNode,
+                'status' => 'Running',
+            ], 60);
+
             Cache::put($cacheKey, 'success', 60);
+
             \Log::info("DHCP wurde erfolgreich nach {$targetNode} migriert.");
             return 0;
 
