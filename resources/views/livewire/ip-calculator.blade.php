@@ -44,7 +44,7 @@
         <p class="text-red-600 mt-6 font-semibold text-center">{{ $results['error'] }}</p>
     @endif
 
-    <flux:modal name="results-modal" wire:model="showResultsModal" class="md:w-[48rem]">
+    <flux:modal name="results-modal" wire:model="showResultsModal" class="md:w-[48rem]" :dismissible="false">
         @if ($results && !isset($results['error']))
             <div class="space-y-6">
                 <div>
@@ -54,16 +54,14 @@
 
                 <div class="overflow-auto max-h-[30rem]">
                     <flux:table class="w-full border-collapse">
-                        <flux:table.columns>
-                            <flux:table.column
-                                class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                Eigenschaft
-                            </flux:table.column>
-                            <flux:table.column
-                                class="text-left px-4 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                Wert
-                            </flux:table.column>
-                        </flux:table.columns>
+                        <flux:table.column
+                            class="text-left px-4 py-3 border-b-2 border-gray-200 ark:bg-zinc-900/70 text-sm font-semibold text-gray-700 dark:text-gray-100">
+                            Eigenschaft
+                        </flux:table.column>
+                        <flux:table.column
+                            class="text-left px-4 py-3 border-b-2 border-gray-200 ark:bg-zinc-900/70 text-sm font-semibold text-gray-700 dark:text-gray-100">
+                            Wert
+                        </flux:table.column>
 
                         <flux:table.rows>
                             @foreach ($results as $key => $value)
