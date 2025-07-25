@@ -33,7 +33,7 @@
                             <flux:menu.item
                                 wire:click="migrateDhcp('{{ $server }}')"
                                 icon="git-compare-arrows"
-                                x-bind:disabled="'{{ $runningServer }}' === '{{ $server }}'"
+                                x-bind :disabled="'{{ $runningServer }}' === '{{ $server }}'"
                             >
                                 Hierhin migrieren
                             </flux:menu.item>
@@ -50,7 +50,7 @@
                     variant="primary"
                     color="green"
                     icon="play"
-                    :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
+                    dis-abled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
                     class="cursor-pointer"
                 >Start
                 </flux:button>
