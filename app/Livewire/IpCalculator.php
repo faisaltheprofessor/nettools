@@ -8,12 +8,27 @@ use Livewire\Component;
 class IpCalculator extends Component
 {
     public $ip = '';
-
     public $subnet = '';
-
     public $results = null;
-
     public bool $showResultsModal = false;
+
+    public function rules()
+    {
+        return [
+            'ip' => ['required', 'ip'],
+            'subnet' => ['required', 'regex:/^\d{1,2}$|^\d{1,3}(\.\d{1,3}){3}$/'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'ip.required' => 'Die IP-Adresse ist erforderlich.',
+            'ip.ip' => 'Bitte geben Sie eine gültige IPv4-Adresse ein.',
+            'subnet.required' => 'Die Subnetzmaske ist erforderlich.',
+            'subnet.regex' => 'Bitte geben Sie eine gültige Subnetzmaske ein (z.B. 24 oder 255.255.255.0).',
+        ];
+    }
 
     public function render()
     {
@@ -23,33 +38,21 @@ class IpCalculator extends Component
     public function calculate()
     {
         $this->reset('results', 'showResultsModal');
+        $this->validate();
 
         $ip = trim($this->ip);
         $subnet = trim($this->subnet);
-
-        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
-            $this->results = ['error' => 'Ungültige IP-Adresse.'];
-
-            return;
-        }
 
         if (Str::contains($subnet, '.')) {
             $cidr = $this->maskToCidr($subnet);
             if ($cidr === null) {
                 $this->results = ['error' => 'Ungültige Subnetzmaske.'];
-
                 return;
             }
         } else {
-            if (!is_numeric($subnet)) {
-                $this->results = ['error' => 'Die Subnetzmaske muss eine Zahl oder Punktnotation sein.'];
-
-                return;
-            }
             $cidr = (int)$subnet;
             if ($cidr < 1 || $cidr > 32) {
                 $this->results = ['error' => 'CIDR muss zwischen 1 und 32 liegen.'];
-
                 return;
             }
         }
@@ -98,6 +101,7 @@ class IpCalculator extends Component
         if (!filter_var($mask, FILTER_VALIDATE_IP)) {
             return null;
         }
+
         $long = ip2long($mask);
         if ($long === false) {
             return null;
@@ -129,3 +133,4 @@ class IpCalculator extends Component
         };
     }
 }
+
