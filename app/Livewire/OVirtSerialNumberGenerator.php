@@ -56,3 +56,4 @@ class OVirtSerialNumberGenerator extends Component
         return view('livewire.o-virt-serial-number-generator');
     }
 }
+
