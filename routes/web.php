@@ -3,6 +3,7 @@
 use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
+use App\Livewire\Signature;
 use App\Livewire\IpCalculator;
 use App\Livewire\OVirtSerialNumberGenerator;
 use App\Livewire\PasswordGenerator;
@@ -33,6 +34,10 @@ Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
 
 // Password Generator
 Route::get('password-generator', PasswordGenerator::class)
+    ->name('signature.generator');
+//
+// Signature
+Route::get('signature-generator', Signature::class)
     ->name('password.generator');
 });
 
