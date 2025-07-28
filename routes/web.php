@@ -9,10 +9,11 @@ use App\Livewire\PasswordGenerator;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
+
+Route::middleware(['auth'])->group(function () {
 Route::get('/', function () {
     return redirect('/dashboard');
 })->name('home');
-
 // Dashboard
 Route::get('dashboard', Dashboard::class)
     ->name('dashboard');
@@ -33,6 +34,7 @@ Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
 // Password Generator
 Route::get('password-generator', PasswordGenerator::class)
     ->name('password.generator');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');

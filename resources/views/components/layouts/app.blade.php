@@ -42,12 +42,13 @@
     </flux:navlist>
     <flux:spacer/>
 
-
     <flux:navlist variant="outline">
-        <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
+            Logout
+        </flux:menu.item>
     </flux:navlist>
-
 </flux:sidebar>
+
 <flux:header class="lg:hidden">
     <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left"/>
     <flux:spacer/>
@@ -56,15 +57,18 @@
             <flux:menu.radio.group>
             </flux:menu.radio.group>
             <flux:menu.separator/>
-            <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+            <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
+                Logout
+            </flux:menu.item>
         </flux:menu>
     </flux:dropdown>
 </flux:header>
+
 <flux:main>
     <flux:heading size="xl" level="1">
         <div class="flex justify-between">
             <div>
-                Hallo
+                Hallo, {{ Auth::user()->name }}
             </div>
             <div>
                 <flux:dropdown x-data align="end">
@@ -95,8 +99,14 @@
     @persist('toast')
     <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
-
 </flux:main>
+
+<!-- Logout Form -->
+<form id="logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
+    @csrf
+</form>
+
 @fluxScripts
 </body>
 </html>
+
