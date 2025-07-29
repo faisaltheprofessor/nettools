@@ -33,7 +33,11 @@
             </div>
         </flux:navlist.item>
 
-        <flux:navlist.item icon="user-group" href="#" wire:navigate>ID-Tools</flux:navlist.item>
+
+        <flux:navlist.group expandable heading="ID Tools" class="grid">
+            <flux:navlist.item icon="mail-search" href="/next-free-pid" wire:navigate>Nächste freie PID</flux:navlist.item>
+        </flux:navlist.group>
+
 
         <flux:navlist.group expandable heading="Generatoren" class="grid">
             <flux:navlist.item icon="dices" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>

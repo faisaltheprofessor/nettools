@@ -5,6 +5,7 @@ use App\Livewire\DHCP;
 use App\Livewire\DNS;
 use App\Livewire\Signature;
 use App\Livewire\IpCalculator;
+use App\Livewire\NextFreePid;
 use App\Livewire\OVirtSerialNumberGenerator;
 use App\Livewire\PasswordGenerator;
 use Illuminate\Support\Facades\Route;
@@ -36,9 +37,15 @@ Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
 Route::get('password-generator', PasswordGenerator::class)
     ->name('signature.generator');
 //
+
 // Signature
 Route::get('signature-generator', Signature::class)
     ->name('password.generator');
+
+// Next Free Mailbox pid
+Route::get('next-free-pid', NextFreePid::class)
+    ->name('next-free-pid');
+
 });
 
 Route::middleware(['auth'])->group(function () {
