@@ -4,5 +4,5 @@ use LdapRecord\Models\Entry;
 
 class User extends Entry
 {
-    protected string $guidKey = 'gidNumber';
+    protected string $guidKey = 'uid';
 }
