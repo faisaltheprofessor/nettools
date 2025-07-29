@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use Exception;
 use Flux\Flux;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
+use Throwable;
 
 class DHCP extends Component
 {
@@ -41,7 +43,7 @@ class DHCP extends Component
             $status = Cache::get('dhcp:status');
 
             if (!$status) {
-                throw new \Exception('Kein Status im Cache gefunden.');
+                throw new Exception('Kein Status im Cache gefunden.');
             }
 
             $this->runningServer = $status['running_server'] ?? null;
@@ -62,7 +64,7 @@ class DHCP extends Component
                     variant: $this->dhcpStatus === 'offline' ? 'danger' : 'warning'
                 );
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->dhcpStatus = 'error';
             $this->runningServer = null;
 
@@ -104,7 +106,7 @@ class DHCP extends Component
             );
 
             Flux::modals()->close();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Neustart-Fehler',
@@ -165,7 +167,7 @@ class DHCP extends Component
                 heading: 'DHCP Migration',
                 variant: 'success'
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Migrationsfehler',
@@ -209,7 +211,7 @@ class DHCP extends Component
 
             $this->selectedServer = null;
             Flux::modals()->close();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Fehler beim Start',

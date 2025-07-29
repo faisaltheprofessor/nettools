@@ -47,19 +47,6 @@ class Bookmarks extends Component
         $this->setBreadcrumbs();
     }
 
-    public function openFolder(int $id): void
-    {
-        $this->currentFolderId = $id;
-        $this->setBreadcrumbs();
-    }
-
-    public function goBackTo(int $index): void
-    {
-        $this->breadcrumbs = array_slice($this->breadcrumbs, 0, $index + 1);
-        $this->currentFolderId = $this->breadcrumbs[$index]['id'] ?? null;
-        $this->setBreadcrumbs();
-    }
-
     protected function setBreadcrumbs(): void
     {
         $this->breadcrumbs = [];
@@ -71,6 +58,19 @@ class Bookmarks extends Component
         }
 
         array_unshift($this->breadcrumbs, ['id' => null, 'name' => 'Start']);
+    }
+
+    public function openFolder(int $id): void
+    {
+        $this->currentFolderId = $id;
+        $this->setBreadcrumbs();
+    }
+
+    public function goBackTo(int $index): void
+    {
+        $this->breadcrumbs = array_slice($this->breadcrumbs, 0, $index + 1);
+        $this->currentFolderId = $this->breadcrumbs[$index]['id'] ?? null;
+        $this->setBreadcrumbs();
     }
 
     public function getFilteredItemsProperty()

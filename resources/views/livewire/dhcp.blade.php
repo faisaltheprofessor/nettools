@@ -5,7 +5,7 @@
     class="w-1/2 mx-auto space-y-6"
 >
     <h2 class="text-lg font-bold flex justify-center items-center">
-        DHCP Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dhcp" /></span>
+        DHCP Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dhcp"/></span>
     </h2>
 
     <div class="flex mt-32 items-center justify-center">
@@ -14,7 +14,8 @@
                 @foreach($servers as $server)
                     @php $disabled = $runningServer === $server @endphp
                     <flux:context :disabled="$disabled">
-                        <div class="flex flex-col items-center rounded-md cursor-context-menu relative" style="width: 80px;">
+                        <div class="flex flex-col items-center rounded-md cursor-context-menu relative"
+                             style="width: 80px;">
                             <flux:icon.computer-desktop
                                 class="size-20 {{ $runningServer === $server && $dhcpStatus === 'running' ? 'text-emerald-600' : 'text-gray-400' }}"
                                 variant="solid"
@@ -34,14 +35,14 @@
                         </div>
 
                         <flux:menu>
-                        <flux:menu.item
-    wire:click="migrateDhcp('{{ $server }}')"
-    icon="git-compare-arrows"
-    :disabled="$runningServer === $server && $dhcpStatus === 'running'"
-    wire:key="migrate-{{ $server }}"
->
-    Hierhin migrieren
-</flux:menu.item>
+                            <flux:menu.item
+                                wire:click="migrateDhcp('{{ $server }}')"
+                                icon="git-compare-arrows"
+                                :disabled="$runningServer === $server && $dhcpStatus === 'running'"
+                                wire:key="migrate-{{ $server }}"
+                            >
+                                Hierhin migrieren
+                            </flux:menu.item>
                         </flux:menu>
                     </flux:context>
                 @endforeach
@@ -81,7 +82,8 @@
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DHCP Server wirklich gestoppt und danach neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DHCP Server wirklich gestoppt und danach
+                            neugestartet werden?</p>
                     </flux:text>
                 </div>
 
@@ -104,7 +106,7 @@
                     <flux:text class="mt-2">
                         <flux:radio.group label="" variant="cards" class="flex-col" wire:model="selectedServer">
                             @foreach($servers as $server)
-                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
+                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description=""/>
                             @endforeach
                         </flux:radio.group>
                     </flux:text>

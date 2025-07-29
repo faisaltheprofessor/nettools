@@ -6,9 +6,9 @@
                 <flux:label>PID</flux:label>
                 <flux:input.group>
                     <flux:input.group.prefix>P</flux:input.group.prefix>
-                    <flux:input wire:model.defer="pkennung" placeholder="16184" />
+                    <flux:input wire:model.defer="pkennung" placeholder="16184"/>
                 </flux:input.group>
-                <flux:error name="pkennung" />
+                <flux:error name="pkennung"/>
             </flux:field>
 
             <flux:button type="submit" icon="signature" variant="primary" color="green" class="cursor-pointer">

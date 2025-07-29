@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use Exception;
 use Flux\Flux;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
+use Throwable;
 
 class DNS extends Component
 {
@@ -43,7 +45,7 @@ class DNS extends Component
             $status = Cache::get('dns:status');
 
             if (!$status) {
-                throw new \Exception('Kein Status im Cache gefunden.');
+                throw new Exception('Kein Status im Cache gefunden.');
             }
 
             $this->runningServer = $status['running_server'] ?? null;
@@ -64,7 +66,7 @@ class DNS extends Component
                     variant: $this->dnsStatus === 'offline' ? 'danger' : 'warning'
                 );
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->dnsStatus = 'error';
             $this->runningServer = null;
             Flux::toast(
@@ -110,7 +112,7 @@ class DNS extends Component
 
             $this->selectedServer = null;
             Flux::modals()->close();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Fehler beim Start',
@@ -146,7 +148,7 @@ class DNS extends Component
                 variant: 'success'
             );
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
                 heading: 'Neustart-Fehler',
@@ -160,41 +162,41 @@ class DNS extends Component
 
 
     public function migrateDns(string $node): void
-{
-    if ($this->loading) {
-        return;
-    }
-
-    try {
-        if (Cache::lock('dns_migrate_lock', 30)->get() === false) {
-            Flux::toast(
-                text: 'Eine andere Migration ist gerade aktiv.',
-                heading: 'Migration blockiert',
-                variant: 'warning'
-            );
-
+    {
+        if ($this->loading) {
             return;
         }
 
-        Artisan::queue('dns:migrate-service', [
-            'targetNode' => $node,
-        ]);
+        try {
+            if (Cache::lock('dns_migrate_lock', 30)->get() === false) {
+                Flux::toast(
+                    text: 'Eine andere Migration ist gerade aktiv.',
+                    heading: 'Migration blockiert',
+                    variant: 'warning'
+                );
 
-        Flux::toast(
-            text: "Migration nach {$node} gestartet.",
-            heading: 'DNS Migration',
-            variant: 'success'
-        );
-    } catch (\Throwable $e) {
-        Flux::toast(
-            text: $e->getMessage(),
-            heading: 'Migrationsfehler',
-            variant: 'danger'
-        );
-    } finally {
-        Flux::modals()->close();
+                return;
+            }
+
+            Artisan::queue('dns:migrate-service', [
+                'targetNode' => $node,
+            ]);
+
+            Flux::toast(
+                text: "Migration nach {$node} gestartet.",
+                heading: 'DNS Migration',
+                variant: 'success'
+            );
+        } catch (Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Migrationsfehler',
+                variant: 'danger'
+            );
+        } finally {
+            Flux::modals()->close();
+        }
     }
-}
 
 
     public function getButtonColorProperty(): string

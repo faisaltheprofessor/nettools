@@ -27,7 +27,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         $this->ensureIsNotRateLimited();
 
         $credentials = ['cn' => $this->pkennung, 'password' => $this->password];
-        if (! Auth::attempt($credentials, $this->remember)) {
+        if (!Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -43,7 +43,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -61,16 +61,17 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->pkennung).'|'.request()->ip());
+        return Str::transliterate(Str::lower($this->pkennung) . '|' . request()->ip());
     }
 };
 ?>
 
 <div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Log in with your P-Kennung')" :description="__('Enter your P-Kennung and password to log in')" />
+    <x-auth-header :title="__('Log in with your P-Kennung')"
+                   :description="__('Enter your P-Kennung and password to log in')"/>
 
     <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
+    <x-auth-session-status class="text-center" :status="session('status')"/>
 
     <form wire:submit="login" class="flex flex-col gap-6">
         <!-- P-Kennung -->
@@ -104,7 +105,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         </div>
 
         <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" :label="__('Remember me')" />
+        <flux:checkbox wire:model="remember" :label="__('Remember me')"/>
 
         <div class="flex items-center justify-end">
             <flux:button variant="primary" type="submit" class="w-full">

@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Facades\RemoteSSH;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class DnsRestartCommand extends Command
 {
@@ -41,7 +43,7 @@ class DnsRestartCommand extends Command
             $runningServer = trim(RemoteSSH::getOutput());
 
             if (!str_starts_with($runningServer, 'vs')) {
-                throw new \Exception('DNS läuft derzeit auf keinem bekannten Server.');
+                throw new Exception('DNS läuft derzeit auf keinem bekannten Server.');
             }
 
             RemoteSSH::connect($runningServer, $sshUser, $sshPass);
@@ -81,7 +83,7 @@ BASH;
 
             return 0;
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
             $this->error('Fehler beim Neustart: ' . $e->getMessage());
 

@@ -82,6 +82,27 @@ class RemoteServerService
     }
 
     /**
+     * Start a service on the remote server using a command.
+     *
+     * @param string $command The command to start the service.
+     * @return string Output of the executed command.
+     *
+     * @throws Exception
+     */
+    public function startService(string $command): string
+    {
+        return $this->execute($command)->getOutput();
+    }
+
+    /**
+     * Get the output of the last executed command.
+     */
+    public function getOutput(): ?string
+    {
+        return $this->lastOutput;
+    }
+
+    /**
      * Run a shell command on the remote server.
      *
      * @param string $command The command to execute.
@@ -107,32 +128,11 @@ class RemoteServerService
     }
 
     /**
-     * Get the output of the last executed command.
-     */
-    public function getOutput(): ?string
-    {
-        return $this->lastOutput;
-    }
-
-    /**
      * Get the error output of the last executed command.
      */
     public function getError(): ?string
     {
         return $this->lastError;
-    }
-
-    /**
-     * Start a service on the remote server using a command.
-     *
-     * @param string $command The command to start the service.
-     * @return string Output of the executed command.
-     *
-     * @throws Exception
-     */
-    public function startService(string $command): string
-    {
-        return $this->execute($command)->getOutput();
     }
 
     /**

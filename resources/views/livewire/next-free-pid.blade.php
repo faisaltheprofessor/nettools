@@ -16,18 +16,18 @@
             @if ($mailboxError)
                 <p class="text-red-600">{{ $mailboxError }}</p>
             @else
-            <div class="flex gap-2 mt-2 items-center">
-                <p>Die nächste freie ID für Mailboxen ist:</p>
-                <flux:field>
-                    <flux:input
-                        readonly
-                        copyable
-                        variant="filled"
-                        :value="$mailBoxPid"
-                        class="text-green-700"
-                    />
-                </flux:field>
-            </div>
+                <div class="flex gap-2 mt-2 items-center">
+                    <p>Die nächste freie ID für Mailboxen ist:</p>
+                    <flux:field>
+                        <flux:input
+                            readonly
+                            copyable
+                            variant="filled"
+                            :value="$mailBoxPid"
+                            class="text-green-700"
+                        />
+                    </flux:field>
+                </div>
             @endif
         @endif
     </flux:card>
@@ -50,18 +50,18 @@
             @if ($userError)
                 <p class="text-red-600">{{ $userError }}</p>
             @else
-            <div class="flex gap-2 mt-2 items-center">
-                <p>Die nächste freie ID für User ist:</p>
-                <flux:field>
-                    <flux:input
-                        readonly
-                        copyable
-                        variant="filled"
-                        :value="$userPid"
-                        class="text-green-700"
-                    />
-                </flux:field>
-            </div>
+                <div class="flex gap-2 mt-2 items-center">
+                    <p>Die nächste freie ID für User ist:</p>
+                    <flux:field>
+                        <flux:input
+                            readonly
+                            copyable
+                            variant="filled"
+                            :value="$userPid"
+                            class="text-green-700"
+                        />
+                    </flux:field>
+                </div>
             @endif
         @endif
     </flux:card>

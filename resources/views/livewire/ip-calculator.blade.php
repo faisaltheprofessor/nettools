@@ -16,7 +16,8 @@
 
         <flux:field>
             <flux:label>Subnetzmaske</flux:label>
-            <flux:description>Verwenden Sie CIDR-Notation (z.B. 24) oder Punkt-Notation (z.B. 255.255.255.0)</flux:description>
+            <flux:description>Verwenden Sie CIDR-Notation (z.B. 24) oder Punkt-Notation (z.B. 255.255.255.0)
+            </flux:description>
             <input
                 type="text"
                 wire:model.defer="subnet"

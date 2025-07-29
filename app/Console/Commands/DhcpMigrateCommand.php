@@ -6,6 +6,8 @@ use App\Facades\RemoteSSH;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Cache;
+use Log;
+use Throwable;
 
 class DhcpMigrateCommand extends Command implements ShouldQueue
 {
@@ -15,7 +17,7 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
 
     public function handle()
     {
-        \Log::info('Migration Started');
+        Log::info('Migration Started');
         $cacheKey = 'dhcp:migrate:status';
         $lock = Cache::lock('dhcp_migrate_lock', 30);
 
@@ -28,7 +30,7 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
             $sshPass = config('remote.dhcp.password');
             $clusterHost = config('remote.dhcp.host');
 
-            \Log::info("Verbinde mit Cluster-Host {$clusterHost}...");
+            Log::info("Verbinde mit Cluster-Host {$clusterHost}...");
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
 
@@ -45,7 +47,7 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
                 return 1;
             }
 
-            \Log::info("DHCP läuft aktuell auf {$currentNode}. Migriere nach {$targetNode}...");
+            Log::info("DHCP läuft aktuell auf {$currentNode}. Migriere nach {$targetNode}...");
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass); // Optional reconnect
             RemoteSSH::execute("cluster migrate DHCP_SERVER {$targetNode}");
@@ -57,13 +59,13 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
 
             Cache::put($cacheKey, 'success', 60);
 
-            \Log::info("DHCP wurde erfolgreich nach {$targetNode} migriert.");
+            Log::info("DHCP wurde erfolgreich nach {$targetNode} migriert.");
 
             return 0;
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            \Log::error('Fehler bei der Migration: ' . $e->getMessage());
+            Log::error('Fehler bei der Migration: ' . $e->getMessage());
 
             return 1;
         } finally {

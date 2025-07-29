@@ -16,7 +16,7 @@
                     />
                 </flux:field>
                 <div style="min-height: 1.5rem; padding-top: 0.25rem;">
-                    <flux:error name="servername" />
+                    <flux:error name="servername"/>
                 </div>
             </div>
 
@@ -34,7 +34,7 @@
                     />
                 </flux:field>
                 <div style="min-height: 1.5rem; padding-top: 0.25rem;">
-                    <flux:error name="mac" />
+                    <flux:error name="mac"/>
                 </div>
             </div>
 

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Ldap\User;
+use Livewire\Component;
 
 class Signature extends Component
 {

@@ -13,11 +13,6 @@ class Dashboard extends Component
         $this->quote = $this->getRandomQuote();
     }
 
-    public function render()
-    {
-        return view('livewire.dashboard');
-    }
-
     public function getRandomQuote()
     {
         $path = 'zitate.txt';
@@ -34,5 +29,10 @@ class Dashboard extends Component
         $random = $lines[array_rand($lines)];
 
         return trim($random);
+    }
+
+    public function render()
+    {
+        return view('livewire.dashboard');
     }
 }

@@ -69,11 +69,11 @@ return [
                 'sync_attributes' => [
                     'name' => 'givenName',
                     'email' => 'email',
-                     'username' => 'sAMAccountName',
-                    ],
+                    'username' => 'sAMAccountName',
+                ],
                 'sync_existing' => [
                     'username' => 'sAMAccountName'
-                 ],
+                ],
             ]
         ],
 

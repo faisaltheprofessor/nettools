@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Facades\RemoteSSH;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class DnsPollStatusCommand extends Command
 {
@@ -33,7 +34,7 @@ class DnsPollStatusCommand extends Command
             ], 30); // cache for 30 seconds
 
             $this->info("DNS status updated: {$dns} on {$runningServer}");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put('dns:status', [
                 'status' => 'error',
                 'running_server' => null,

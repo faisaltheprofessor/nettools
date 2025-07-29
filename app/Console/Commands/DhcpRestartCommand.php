@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Facades\RemoteSSH;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class DhcpRestartCommand extends Command
 {
@@ -43,12 +45,12 @@ class DhcpRestartCommand extends Command
 
             if ($status === 'Offline') {
                 $this->warn('DHCP ist offline. Starte stattdessen den Dienst.');
-                $startCommand = app(\App\Console\Commands\DhcpStartCommand::class);
+                $startCommand = app(DhcpStartCommand::class);
                 return $startCommand->handle();
             }
 
             if (!str_starts_with($runningServer, 'vs')) {
-                throw new \Exception('DHCP läuft derzeit auf keinem bekannten Server.');
+                throw new Exception('DHCP läuft derzeit auf keinem bekannten Server.');
             }
 
             RemoteSSH::connect($runningServer, $sshUser, $sshPass);
@@ -87,7 +89,7 @@ BASH;
             $this->info("DHCP wurde erfolgreich auf {$runningServer} neugestartet.");
             return 0;
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
             $this->error('Fehler beim Neustart: ' . $e->getMessage());
             return 1;

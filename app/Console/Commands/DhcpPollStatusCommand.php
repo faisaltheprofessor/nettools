@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Facades\RemoteSSH;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class DhcpPollStatusCommand extends Command
 {
@@ -33,7 +34,7 @@ class DhcpPollStatusCommand extends Command
             ], 30); // cache for 30 seconds
 
             $this->info("DHCP status updated: {$dhcpStatusRaw} on {$runningServer}");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put('dhcp:status', [
                 'status' => 'error',
                 'running_server' => null,

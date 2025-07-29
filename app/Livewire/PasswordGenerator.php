@@ -46,6 +46,89 @@ class PasswordGenerator extends Component
         $this->updateEntropy();
     }
 
+    private function generateReadablePassword(): string
+    {
+        $words = $this->getWordList();
+        $symbols = ['.', '_', '-', '+', '!'];
+
+        if (empty($words)) {
+            return 'Fehler123!';
+        }
+
+        if ($this->mode === 'easy') {
+            return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(100, 999);
+        }
+
+        if ($this->mode === 'hard') {
+            $word1 = ucfirst($this->randomItem($words));
+            $word2 = ucfirst($this->randomItem($words));
+
+            return "{$word1}{$this->randomItem($symbols)}{$word2}{$this->randomItem($symbols)}" .
+                rand(10, 99) . "{$this->randomItem($symbols)}";
+        }
+
+        return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(10, 99);
+    }
+
+    private function getWordList(): array
+    {
+        if (!empty($this->wordListCache)) {
+            return $this->wordListCache;
+        }
+
+        $filePath = public_path('wordlist/german.txt');
+        if (!file_exists($filePath)) {
+            return ['Fehler']; // this is fallck word
+        }
+
+        $words = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        // Filter for word length (6–12)
+        $words = array_filter($words, fn($w) => strlen($w) >= 6 && strlen($w) <= 12);
+
+        // Cache and return
+        $this->wordListCache = array_values($words);
+
+        return $this->wordListCache;
+    }
+
+    private function randomItem(array $array)
+    {
+        return $array[array_rand($array)];
+    }
+
+    private function generateDefaultPassword(): string
+    {
+        $charPool = '';
+
+        if ($this->useLowercase) {
+            $charPool .= 'abcdefghijkmnopqrstuvwxyz';
+        }
+        if ($this->useUppercase) {
+            $charPool .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
+        }
+        if ($this->useNumbers) {
+            $charPool .= '1234567890';
+        }
+        if ($this->useSymbols) {
+            $charPool .= '!@#$%^&*()-_=+[]{};:,.<>?';
+        }
+        if ($this->useCommonSymbols) {
+            $charPool .= '!$%.,';
+        }
+
+        if (empty($charPool)) {
+            return 'Bitte Option wählen';
+        }
+
+        $chars = str_split($charPool);
+        $repeats = ceil($this->length / count($chars));
+        $extendedPool = array_merge(...array_fill(0, $repeats, $chars));
+        shuffle($extendedPool);
+
+        return implode('', array_slice($extendedPool, 0, $this->length));
+    }
+
     private function updateEntropy(): void
     {
         $charSet = '';
@@ -87,89 +170,6 @@ class PasswordGenerator extends Component
             $this->strengthLabel = 'Sehr stark';
             $this->strengthColor = 'bg-emerald-600';
         }
-    }
-
-    private function getWordList(): array
-    {
-        if (! empty($this->wordListCache)) {
-            return $this->wordListCache;
-        }
-
-        $filePath = public_path('wordlist/german.txt');
-        if (! file_exists($filePath)) {
-            return ['Fehler']; // this is fallck word
-        }
-
-        $words = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        // Filter for word length (6–12)
-        $words = array_filter($words, fn ($w) => strlen($w) >= 6 && strlen($w) <= 12);
-
-        // Cache and return
-        $this->wordListCache = array_values($words);
-
-        return $this->wordListCache;
-    }
-
-    private function generateReadablePassword(): string
-    {
-        $words = $this->getWordList();
-        $symbols = ['.', '_', '-', '+', '!'];
-
-        if (empty($words)) {
-            return 'Fehler123!';
-        }
-
-        if ($this->mode === 'easy') {
-            return ucfirst($this->randomItem($words)).$this->randomItem($symbols).rand(100, 999);
-        }
-
-        if ($this->mode === 'hard') {
-            $word1 = ucfirst($this->randomItem($words));
-            $word2 = ucfirst($this->randomItem($words));
-
-            return "{$word1}{$this->randomItem($symbols)}{$word2}{$this->randomItem($symbols)}".
-                rand(10, 99)."{$this->randomItem($symbols)}";
-        }
-
-        return ucfirst($this->randomItem($words)).$this->randomItem($symbols).rand(10, 99);
-    }
-
-    private function generateDefaultPassword(): string
-    {
-        $charPool = '';
-
-        if ($this->useLowercase) {
-            $charPool .= 'abcdefghijkmnopqrstuvwxyz';
-        }
-        if ($this->useUppercase) {
-            $charPool .= 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
-        }
-        if ($this->useNumbers) {
-            $charPool .= '1234567890';
-        }
-        if ($this->useSymbols) {
-            $charPool .= '!@#$%^&*()-_=+[]{};:,.<>?';
-        }
-        if ($this->useCommonSymbols) {
-            $charPool .= '!$%.,';
-        }
-
-        if (empty($charPool)) {
-            return 'Bitte Option wählen';
-        }
-
-        $chars = str_split($charPool);
-        $repeats = ceil($this->length / count($chars));
-        $extendedPool = array_merge(...array_fill(0, $repeats, $chars));
-        shuffle($extendedPool);
-
-        return implode('', array_slice($extendedPool, 0, $this->length));
-    }
-
-    private function randomItem(array $array)
-    {
-        return $array[array_rand($array)];
     }
 
     public function render()

@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Facades\RemoteSSH;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class DnsStartCommand extends Command
 {
@@ -44,7 +46,7 @@ class DnsStartCommand extends Command
             $parts = preg_split('/\s+/', $fullOutput);
 
             if (count($parts) < 3) {
-                throw new \Exception("Unbekanntes Ausgabeformat vom DNS Status: '{$fullOutput}'");
+                throw new Exception("Unbekanntes Ausgabeformat vom DNS Status: '{$fullOutput}'");
             }
 
             $dnsStatus = $parts[0];     // e.g. Running, Offline
@@ -69,7 +71,7 @@ class DnsStartCommand extends Command
             Cache::put($cacheKey, 'error: unknown DNS status', 60);
             return 1;
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
             $this->error('Fehler beim Starten: ' . $e->getMessage());
             return 1;

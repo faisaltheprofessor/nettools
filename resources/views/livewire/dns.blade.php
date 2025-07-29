@@ -1,5 +1,6 @@
 <flux:card wire:poll.5s="getDnsStatus" class="w-1/2 mx-auto space-y-6">
-    <h2 class="text-lg font-bold flex justify-center items-center">DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dns" /> </span></h2>
+    <h2 class="text-lg font-bold flex justify-center items-center">DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator
+                service="dns"/> </span></h2>
 
     <div class="flex mt-32 items-center justify-center">
         <div>
@@ -46,14 +47,14 @@
 
             <div class="flex items-center gap-2 justify-center">
                 <flux:modal.trigger name="select-vs">
-                <flux:button
-                    variant="primary"
-                    color="green"
-                    icon="play"
-                    :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
-                    class="cursor-pointer"
-                >Start
-                </flux:button>
+                    <flux:button
+                        variant="primary"
+                        color="green"
+                        icon="play"
+                        :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
+                        class="cursor-pointer"
+                    >Start
+                    </flux:button>
                 </flux:modal.trigger>
                 <flux:modal.trigger name="confirm-restart">
                     <flux:button
@@ -72,7 +73,8 @@
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach
+                            neugestartet werden?</p>
                     </flux:text>
                 </div>
 
@@ -97,7 +99,7 @@
                     <flux:text class="mt-2">
                         <flux:radio.group label="" variant="cards" class="flex-col" wire:model="selectedServer">
                             @foreach($servers as $server)
-                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
+                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description=""/>
                             @endforeach
                         </flux:radio.group>
                     </flux:text>
@@ -110,7 +112,7 @@
                         <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal>
 
-                    <flux:button  color="green" type="submit" wire:click.prevent="startDns" class="cursor-pointer">
+                    <flux:button color="green" type="submit" wire:click.prevent="startDns" class="cursor-pointer">
                         Start
                     </flux:button>
                 </div>
