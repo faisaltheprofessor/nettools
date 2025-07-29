@@ -6,7 +6,8 @@
 
             <div class="flex gap-12 mt-3">
                 @foreach($servers as $server)
-                    <flux:context>
+                    @php $disabled = $runningServer === $server @endphp
+                    <flux:context :disabled="$disabled">
                         <div
                             class="flex flex-col items-center rounded-md cursor-context-menu relative"
                             style="width: 80px;"
@@ -29,12 +30,11 @@
                             @endif
                         </div>
 
-                        <flux:menu>
+                        <flux:menu >
                             <flux:menu.item
                                 wire:click="migrateDhcp('{{ $server }}')"
                                 icon="git-compare-arrows"
-                                x-bind :disabled="'{{ $runningServer }}' === '{{ $server }}'"
-                            >
+                                                            >
                                 Hierhin migrieren
                             </flux:menu.item>
                         </flux:menu>
