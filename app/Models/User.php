@@ -14,7 +14,7 @@ use LdapRecord\Laravel\Auth\LdapAuthenticatable;
 class User extends Authenticatable implements LdapAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, AuthenticatesWithLdap;
+    use AuthenticatesWithLdap, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +25,7 @@ class User extends Authenticatable implements LdapAuthenticatable
         'name',
         'email',
         'password',
-        'username'
+        'username',
     ];
 
     /**
@@ -46,7 +46,7 @@ class User extends Authenticatable implements LdapAuthenticatable
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn($word) => Str::substr($word, 0, 1))
+            ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
 

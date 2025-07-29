@@ -3,14 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Facades\RemoteSSH;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Exception;
 use Throwable;
 
 class DhcpStartCommand extends Command
 {
     protected $signature = 'dhcp:start-service {server : The cluster node to start DHCP on}';
+
     protected $description = 'Start the DHCP service on a given server via SSH';
 
     public function handle()
@@ -21,9 +22,10 @@ class DhcpStartCommand extends Command
         $cacheKey = "dhcp:start:status:{$server}";
         $lock = Cache::lock($cacheLockName, 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->warn("Ein anderer Startvorgang läuft bereits für {$server}.");
             Cache::put($cacheKey, 'locked', 60);
+
             return 1;
         }
 
@@ -59,6 +61,7 @@ class DhcpStartCommand extends Command
             if ($dhcpStatus === 'Running') {
                 $this->error("DHCP kann nicht gestartet werden. DHCP läuft bereits auf {$runningServer}.");
                 Cache::put($cacheKey, "error: DHCP already running on {$runningServer}", 60);
+
                 return 1;
             }
 
@@ -67,20 +70,22 @@ class DhcpStartCommand extends Command
                 RemoteSSH::execute("cluster online {$service} {$server}");
                 $this->info("DHCP Start auf {$server} durchgeführt.");
                 Cache::put($cacheKey, 'success', 60);
+
                 return 0;
             }
 
             $this->error("DHCP kann nicht gestartet werden. Der DHCP-Status ist unbekannt: '{$dhcpStatus}'. Bitte später erneut versuchen.");
             Cache::put($cacheKey, 'error: unknown DHCP status', 60);
+
             return 1;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            $this->error('Fehler beim Starten: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            $this->error('Fehler beim Starten: '.$e->getMessage());
+
             return 1;
         } finally {
             $lock->release();
         }
     }
 }
-

@@ -16,7 +16,7 @@ class Dashboard extends Component
     public function getRandomQuote()
     {
         $path = 'zitate.txt';
-        if (!file_exists('zitate.txt')) {
+        if (! file_exists('zitate.txt')) {
             return 'Kein Zitat gefunden.';
         }
 

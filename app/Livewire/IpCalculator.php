@@ -8,8 +8,11 @@ use Livewire\Component;
 class IpCalculator extends Component
 {
     public $ip = '';
+
     public $subnet = '';
+
     public $results = null;
+
     public bool $showResultsModal = false;
 
     public function rules()
@@ -47,12 +50,14 @@ class IpCalculator extends Component
             $cidr = $this->maskToCidr($subnet);
             if ($cidr === null) {
                 $this->results = ['error' => 'Ungültige Subnetzmaske.'];
+
                 return;
             }
         } else {
-            $cidr = (int)$subnet;
+            $cidr = (int) $subnet;
             if ($cidr < 1 || $cidr > 32) {
                 $this->results = ['error' => 'CIDR muss zwischen 1 und 32 liegen.'];
+
                 return;
             }
         }
@@ -98,7 +103,7 @@ class IpCalculator extends Component
 
     private function maskToCidr($mask)
     {
-        if (!filter_var($mask, FILTER_VALIDATE_IP)) {
+        if (! filter_var($mask, FILTER_VALIDATE_IP)) {
             return null;
         }
 
@@ -121,7 +126,7 @@ class IpCalculator extends Component
 
     private function getClass($ip)
     {
-        $firstOctet = (int)explode('.', $ip)[0];
+        $firstOctet = (int) explode('.', $ip)[0];
 
         return match (true) {
             $firstOctet >= 1 && $firstOctet <= 126 => 'A',
@@ -133,4 +138,3 @@ class IpCalculator extends Component
         };
     }
 }
-

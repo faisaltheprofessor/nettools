@@ -56,35 +56,35 @@ class PasswordGenerator extends Component
         }
 
         if ($this->mode === 'easy') {
-            return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(100, 999);
+            return ucfirst($this->randomItem($words)).$this->randomItem($symbols).rand(100, 999);
         }
 
         if ($this->mode === 'hard') {
             $word1 = ucfirst($this->randomItem($words));
             $word2 = ucfirst($this->randomItem($words));
 
-            return "{$word1}{$this->randomItem($symbols)}{$word2}{$this->randomItem($symbols)}" .
-                rand(10, 99) . "{$this->randomItem($symbols)}";
+            return "{$word1}{$this->randomItem($symbols)}{$word2}{$this->randomItem($symbols)}".
+                rand(10, 99)."{$this->randomItem($symbols)}";
         }
 
-        return ucfirst($this->randomItem($words)) . $this->randomItem($symbols) . rand(10, 99);
+        return ucfirst($this->randomItem($words)).$this->randomItem($symbols).rand(10, 99);
     }
 
     private function getWordList(): array
     {
-        if (!empty($this->wordListCache)) {
+        if (! empty($this->wordListCache)) {
             return $this->wordListCache;
         }
 
         $filePath = public_path('wordlist/german.txt');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return ['Fehler']; // this is fallck word
         }
 
         $words = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
         // Filter for word length (6–12)
-        $words = array_filter($words, fn($w) => strlen($w) >= 6 && strlen($w) <= 12);
+        $words = array_filter($words, fn ($w) => strlen($w) >= 6 && strlen($w) <= 12);
 
         // Cache and return
         $this->wordListCache = array_values($words);

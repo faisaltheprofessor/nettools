@@ -20,7 +20,7 @@ class DnsRestartCommand extends Command
         $queuedKey = 'dns:restart:queued';
         $lock = Cache::lock('dns_restart_lock', 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->warn('Ein anderer Neustart läuft bereits.');
             Cache::put($cacheKey, 'locked', 60);
 
@@ -42,7 +42,7 @@ class DnsRestartCommand extends Command
             RemoteSSH::execute("cluster status DNS_SERVER | grep Lives | awk '{print \$3}'");
             $runningServer = trim(RemoteSSH::getOutput());
 
-            if (!str_starts_with($runningServer, 'vs')) {
+            if (! str_starts_with($runningServer, 'vs')) {
                 throw new Exception('DNS läuft derzeit auf keinem bekannten Server.');
             }
 
@@ -73,7 +73,7 @@ echo "Failed after 10 attempts at $(date)" >> $log
 exit 1
 BASH;
 
-            RemoteSSH::execute('echo ' . escapeshellarg($script) . " > {$tmpFile}");
+            RemoteSSH::execute('echo '.escapeshellarg($script)." > {$tmpFile}");
             RemoteSSH::execute("chmod +x {$tmpFile}");
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
             RemoteSSH::execute("rm -f {$tmpFile}");
@@ -84,8 +84,8 @@ BASH;
             return 0;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            $this->error('Fehler beim Neustart: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            $this->error('Fehler beim Neustart: '.$e->getMessage());
 
             return 1;
         } finally {

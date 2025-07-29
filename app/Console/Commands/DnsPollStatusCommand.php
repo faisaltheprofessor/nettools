@@ -42,7 +42,7 @@ class DnsPollStatusCommand extends Command
                 'error' => $e->getMessage(),
             ], 30);
 
-            $this->error('Polling failed: ' . $e->getMessage());
+            $this->error('Polling failed: '.$e->getMessage());
         }
     }
 }

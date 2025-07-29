@@ -10,8 +10,11 @@ use Livewire\Component;
 class NextFreePid extends Component
 {
     public string $mailBoxPid = '';
+
     public string $userPid = '';
+
     public string $mailboxError = '';
+
     public string $userError = '';
 
     public function getNextMailboxPid()
@@ -20,8 +23,9 @@ class NextFreePid extends Component
 
         $lock = Cache::lock('ldap:next-free-mailbox-pid', 10);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->mailboxError = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -32,8 +36,8 @@ class NextFreePid extends Component
                 ->get()
                 ->pluck('uid')
                 ->filter()
-                ->map(fn($uid) => strtolower($uid[0]))
-                ->filter(fn($uid) => preg_match('/^p7\d{4}$/i', $uid))
+                ->map(fn ($uid) => strtolower($uid[0]))
+                ->filter(fn ($uid) => preg_match('/^p7\d{4}$/i', $uid))
                 ->unique()
                 ->sort()
                 ->values();
@@ -44,7 +48,7 @@ class NextFreePid extends Component
 
             // Get the last one and increment
             $lastPid = $uids->last();
-            $nextPid = 'p' . ((int)substr($lastPid, 1) + 1);
+            $nextPid = 'p'.((int) substr($lastPid, 1) + 1);
 
             $this->mailBoxPid = $nextPid;
         } catch (Exception $e) {
@@ -54,15 +58,15 @@ class NextFreePid extends Component
         }
     }
 
-
     public function getNextUserPid()
     {
         $this->reset(['userPid', 'userError']);
 
         $lock = Cache::lock('ldap:next-free-user-pid', 10);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->userError = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -73,25 +77,25 @@ class NextFreePid extends Component
             $uids = $results->pluck('uid')
                 ->filter()
                 ->flatten()
-                ->map(fn($uid) => trim($uid))
+                ->map(fn ($uid) => trim($uid))
                 ->implode("\n");
 
             $uids = preg_replace('/^\n+|^[\t\s]*\n+/m', '', $uids);
 
-            preg_match_all("/([pP]{1})([012]{1})([0-9]{4})/i", $uids, $matches);
+            preg_match_all('/([pP]{1})([012]{1})([0-9]{4})/i', $uids, $matches);
 
-            if (!empty($matches[0])) {
+            if (! empty($matches[0])) {
                 $pids = $matches[0];
                 natcasesort($pids);
                 $lastPid = end($pids);
 
-                $numericPart = (int)substr($lastPid, 1);
-                $this->userPid = 'p' . ($numericPart + 1);
+                $numericPart = (int) substr($lastPid, 1);
+                $this->userPid = 'p'.($numericPart + 1);
             } else {
                 $this->userError = 'Kein Treffer – es wurden keine passenden P-IDs gefunden.';
             }
         } catch (Exception $e) {
-            $this->userError = 'Fehler bei der LDAP-Suche: ' . $e->getMessage();
+            $this->userError = 'Fehler bei der LDAP-Suche: '.$e->getMessage();
         } finally {
             $lock->release();
         }
@@ -102,4 +106,3 @@ class NextFreePid extends Component
         return view('livewire.next-free-pid');
     }
 }
-

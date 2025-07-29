@@ -72,9 +72,9 @@ return [
                     'username' => 'sAMAccountName',
                 ],
                 'sync_existing' => [
-                    'username' => 'sAMAccountName'
+                    'username' => 'sAMAccountName',
                 ],
-            ]
+            ],
         ],
 
         // 'users' => [

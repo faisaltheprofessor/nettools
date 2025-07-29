@@ -8,6 +8,7 @@ use Livewire\Component;
 class ServiceStatusIndicator extends Component
 {
     public string $service;    // e.g. 'dhcp' or 'dns'
+
     public string $display = 'text'; // default to text if not provided
 
     public function render()
@@ -37,4 +38,3 @@ class ServiceStatusIndicator extends Component
         ]);
     }
 }
-

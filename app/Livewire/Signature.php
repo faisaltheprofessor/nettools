@@ -8,7 +8,9 @@ use Livewire\Component;
 class Signature extends Component
 {
     public string $pkennung = '';
+
     public string $signatureContent = '';
+
     protected ?User $ldapUser = null;
 
     public function generate()
@@ -19,13 +21,14 @@ class Signature extends Component
             'pkennung' => 'required|numeric',
         ]);
 
-        $pid = 'p' . ltrim($this->pkennung, 'pP');
+        $pid = 'p'.ltrim($this->pkennung, 'pP');
         $user = User::where('cn', '=', $pid)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->addError('pkennung', 'Benutzer nicht gefunden.');
             $this->ldapUser = null;
             $this->signatureContent = '';
+
             return;
         }
 
@@ -35,13 +38,13 @@ class Signature extends Component
         $lines = array_filter([
             'Freundliche Grüße',
             'Im Auftrag',
-            ($user->givenName[0] ?? '') . ' ' . ($user->sn[0] ?? ''),
+            ($user->givenName[0] ?? '').' '.($user->sn[0] ?? ''),
             $user->company[0] ?? '',
             $user->description[0] ?? '',
             $user->title[0] ?? '',
-            'Post: ' . ($user->physicalDeliveryOfficeName[0] ?? ''),
-            'Telefon: +49 30 90295-' . ($user->telephonenumber[0] ?? ''),
-            'Fax: +49 30 90295-' . ($user->facsimiletelephonenumber[0] ?? ''),
+            'Post: '.($user->physicalDeliveryOfficeName[0] ?? ''),
+            'Telefon: +49 30 90295-'.($user->telephonenumber[0] ?? ''),
+            'Fax: +49 30 90295-'.($user->facsimiletelephonenumber[0] ?? ''),
             substr($user->emailAddress[0] ?? '', 2),
             'Web:',
         ]);
@@ -49,7 +52,7 @@ class Signature extends Component
         $htmlContent = '';
 
         foreach ($lines as $line) {
-            $htmlContent .= '<p>' . e($line) . '</p>';
+            $htmlContent .= '<p>'.e($line).'</p>';
         }
 
         $this->signatureContent = $htmlContent;
@@ -60,4 +63,3 @@ class Signature extends Component
         return view('livewire.signature');
     }
 }
-

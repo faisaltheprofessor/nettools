@@ -64,8 +64,8 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
             return 0;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            Log::error('Fehler bei der Migration: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            Log::error('Fehler bei der Migration: '.$e->getMessage());
 
             return 1;
         } finally {

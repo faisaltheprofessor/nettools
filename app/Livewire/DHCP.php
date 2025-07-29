@@ -14,9 +14,11 @@ class DHCP extends Component
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
+
     public ?string $runningServer = null;
 
     public bool $loading = false;
+
     public bool $beingRestarted = false;
 
     public ?string $selectedServer = null;
@@ -42,7 +44,7 @@ class DHCP extends Component
         try {
             $status = Cache::get('dhcp:status');
 
-            if (!$status) {
+            if (! $status) {
                 throw new Exception('Kein Status im Cache gefunden.');
             }
 
@@ -155,6 +157,7 @@ class DHCP extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
+
                 return;
             }
 
@@ -180,12 +183,13 @@ class DHCP extends Component
 
     public function startDhcp(): void
     {
-        if (!$this->selectedServer) {
+        if (! $this->selectedServer) {
             Flux::toast(
                 text: 'Bitte einen Server auswählen.',
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -195,6 +199,7 @@ class DHCP extends Component
                 heading: 'Start blockiert',
                 variant: 'info'
             );
+
             return;
         }
 

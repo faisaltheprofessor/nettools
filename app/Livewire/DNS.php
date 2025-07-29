@@ -44,7 +44,7 @@ class DNS extends Component
         try {
             $status = Cache::get('dns:status');
 
-            if (!$status) {
+            if (! $status) {
                 throw new Exception('Kein Status im Cache gefunden.');
             }
 
@@ -81,12 +81,13 @@ class DNS extends Component
 
     public function startDns(): void
     {
-        if (!$this->selectedServer) {
+        if (! $this->selectedServer) {
             Flux::toast(
                 text: 'Bitte einen Server auswählen.',
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -96,6 +97,7 @@ class DNS extends Component
                 heading: 'Start blockiert',
                 variant: 'info'
             );
+
             return;
         }
 
@@ -160,7 +162,6 @@ class DNS extends Component
         }
     }
 
-
     public function migrateDns(string $node): void
     {
         if ($this->loading) {
@@ -197,7 +198,6 @@ class DNS extends Component
             Flux::modals()->close();
         }
     }
-
 
     public function getButtonColorProperty(): string
     {
@@ -246,4 +246,3 @@ class DNS extends Component
         };
     }
 }
-

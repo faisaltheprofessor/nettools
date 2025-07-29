@@ -7,9 +7,13 @@ use Livewire\Component;
 class OVirtSerialNumberGenerator extends Component
 {
     public $servername = '';
+
     public $mac = '';
+
     public $serial = '';
+
     public $error = '';
+
     public $showResultsModal = false;
 
     public function rules()
@@ -42,9 +46,10 @@ class OVirtSerialNumberGenerator extends Component
         $macPlain = str_replace(':', '', $mac);
         $servernameHex = bin2hex($servername);
 
-        if (!mb_check_encoding($servernameHex, 'UTF-8')) {
+        if (! mb_check_encoding($servernameHex, 'UTF-8')) {
             $this->error = '? Fehler bei der Hex-Kodierung des Servernamens.';
             $this->showResultsModal = true;
+
             return;
         }
 
@@ -57,4 +62,3 @@ class OVirtSerialNumberGenerator extends Component
         return view('livewire.o-virt-serial-number-generator');
     }
 }
-

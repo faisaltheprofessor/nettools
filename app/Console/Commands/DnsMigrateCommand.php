@@ -64,8 +64,8 @@ class DnsMigrateCommand extends Command implements ShouldQueue
             return 0;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            Log::error('Fehler bei der DNS-Migration: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            Log::error('Fehler bei der DNS-Migration: '.$e->getMessage());
 
             return 1;
         } finally {
@@ -73,4 +73,3 @@ class DnsMigrateCommand extends Command implements ShouldQueue
         }
     }
 }
-

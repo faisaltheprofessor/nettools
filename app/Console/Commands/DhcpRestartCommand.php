@@ -11,6 +11,7 @@ use Throwable;
 class DhcpRestartCommand extends Command
 {
     protected $signature = 'dhcp:restart-service';
+
     protected $description = 'Restart the DHCP service on the current cluster node or start it if it\'s offline';
 
     public function handle()
@@ -19,9 +20,10 @@ class DhcpRestartCommand extends Command
         $queuedKey = 'dhcp:restart:queued';
         $lock = Cache::lock('dhcp_restart_lock', 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->warn('Ein anderer Neustart läuft bereits.');
             Cache::put($cacheKey, 'locked', 60);
+
             return 1;
         }
 
@@ -46,10 +48,11 @@ class DhcpRestartCommand extends Command
             if ($status === 'Offline') {
                 $this->warn('DHCP ist offline. Starte stattdessen den Dienst.');
                 $startCommand = app(DhcpStartCommand::class);
+
                 return $startCommand->handle();
             }
 
-            if (!str_starts_with($runningServer, 'vs')) {
+            if (! str_starts_with($runningServer, 'vs')) {
                 throw new Exception('DHCP läuft derzeit auf keinem bekannten Server.');
             }
 
@@ -80,18 +83,20 @@ echo "Failed after 10 attempts at $(date)" >> $log
 exit 1
 BASH;
 
-            RemoteSSH::execute('echo ' . escapeshellarg($script) . " > {$tmpFile}");
+            RemoteSSH::execute('echo '.escapeshellarg($script)." > {$tmpFile}");
             RemoteSSH::execute("chmod +x {$tmpFile}");
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
             RemoteSSH::execute("rm -f {$tmpFile}");
 
             Cache::put($cacheKey, 'success', 60);
             $this->info("DHCP wurde erfolgreich auf {$runningServer} neugestartet.");
+
             return 0;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            $this->error('Fehler beim Neustart: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            $this->error('Fehler beim Neustart: '.$e->getMessage());
+
             return 1;
 
         } finally {
@@ -100,4 +105,3 @@ BASH;
         }
     }
 }
-

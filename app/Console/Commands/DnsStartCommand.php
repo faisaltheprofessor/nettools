@@ -11,6 +11,7 @@ use Throwable;
 class DnsStartCommand extends Command
 {
     protected $signature = 'dns:start-service {server : The cluster node to start DNS on}';
+
     protected $description = 'Start the DNS service on a given server via SSH';
 
     public function handle()
@@ -21,9 +22,10 @@ class DnsStartCommand extends Command
         $cacheKey = "dns:start:status:{$server}";
         $lock = Cache::lock($cacheLockName, 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->warn("Ein anderer Startvorgang läuft bereits für {$server}.");
             Cache::put($cacheKey, 'locked', 60);
+
             return 1;
         }
 
@@ -57,6 +59,7 @@ class DnsStartCommand extends Command
             if ($dnsStatus === 'Running') {
                 $this->error("DNS kann nicht gestartet werden. DNS läuft bereits auf {$runningServer}.");
                 Cache::put($cacheKey, "error: DNS already running on {$runningServer}", 60);
+
                 return 1;
             }
 
@@ -64,20 +67,22 @@ class DnsStartCommand extends Command
                 RemoteSSH::execute("cluster online {$service} {$server}");
                 $this->info("DNS Start auf {$server} durchgeführt.");
                 Cache::put($cacheKey, 'success', 60);
+
                 return 0;
             }
 
             $this->error("DNS kann nicht gestartet werden. Der DNS-Status ist unbekannt: '{$dnsStatus}'. Bitte später erneut versuchen.");
             Cache::put($cacheKey, 'error: unknown DNS status', 60);
+
             return 1;
 
         } catch (Throwable $e) {
-            Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
-            $this->error('Fehler beim Starten: ' . $e->getMessage());
+            Cache::put($cacheKey, 'error: '.$e->getMessage(), 60);
+            $this->error('Fehler beim Starten: '.$e->getMessage());
+
             return 1;
         } finally {
             $lock->release();
         }
     }
 }
-
