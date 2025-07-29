@@ -146,8 +146,6 @@ class DHCP extends Component
             return;
         }
 
-        $cacheKey = 'dhcp:migrate:status';
-
         try {
             if (Cache::lock('dhcp_migrate_lock', 30)->get() === false) {
                 Flux::toast(
@@ -155,7 +153,6 @@ class DHCP extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
-
                 return;
             }
 
@@ -243,4 +240,3 @@ class DHCP extends Component
         };
     }
 }
-
