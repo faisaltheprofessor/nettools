@@ -19,6 +19,8 @@ class DNS extends Component
 
     public bool $beingRestarted = false;
 
+    public ?string $selectedServer = null;
+
     public function render()
     {
         return view('livewire.dns');
@@ -75,6 +77,48 @@ class DNS extends Component
         }
     }
 
+    public function startDns(): void
+    {
+        if (!$this->selectedServer) {
+            Flux::toast(
+                text: 'Bitte einen Server auswählen.',
+                heading: 'Keine Auswahl',
+                variant: 'warning'
+            );
+            return;
+        }
+
+        if ($this->loading || $this->dnsStatus === 'running') {
+            Flux::toast(
+                text: 'DNS ist bereits aktiv oder wird geladen.',
+                heading: 'Start blockiert',
+                variant: 'info'
+            );
+            return;
+        }
+
+        try {
+            Artisan::queue('dns:start-service', [
+                'server' => $this->selectedServer,
+            ]);
+
+            Flux::toast(
+                text: "Start des DNS-Dienstes auf {$this->selectedServer} wurde eingeleitet.",
+                heading: 'Start gestartet',
+                variant: 'success'
+            );
+
+            $this->selectedServer = null;
+            Flux::modals()->close();
+        } catch (\Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Fehler beim Start',
+                variant: 'danger'
+            );
+        }
+    }
+
     public function restartDns(): void
     {
         if ($this->beingRestarted || $this->loading) {
@@ -113,6 +157,45 @@ class DNS extends Component
             Flux::modals()->close();
         }
     }
+
+
+    public function migrateDns(string $node): void
+{
+    if ($this->loading) {
+        return;
+    }
+
+    try {
+        if (Cache::lock('dns_migrate_lock', 30)->get() === false) {
+            Flux::toast(
+                text: 'Eine andere Migration ist gerade aktiv.',
+                heading: 'Migration blockiert',
+                variant: 'warning'
+            );
+
+            return;
+        }
+
+        Artisan::queue('dns:migrate-service', [
+            'targetNode' => $node,
+        ]);
+
+        Flux::toast(
+            text: "Migration nach {$node} gestartet.",
+            heading: 'DNS Migration',
+            variant: 'success'
+        );
+    } catch (\Throwable $e) {
+        Flux::toast(
+            text: $e->getMessage(),
+            heading: 'Migrationsfehler',
+            variant: 'danger'
+        );
+    } finally {
+        Flux::modals()->close();
+    }
+}
+
 
     public function getButtonColorProperty(): string
     {
@@ -161,3 +244,4 @@ class DNS extends Component
         };
     }
 }
+

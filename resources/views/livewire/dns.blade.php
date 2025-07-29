@@ -1,12 +1,13 @@
 <flux:card wire:poll.5s="getDnsStatus" class="w-1/2 mx-auto space-y-6">
-    <h2 class="text-lg font-bold">DNS Dienst</h2>
+    <h2 class="text-lg font-bold flex justify-center items-center">DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dns" /> </span></h2>
 
     <div class="flex mt-32 items-center justify-center">
         <div>
 
             <div class="flex gap-12 mt-3">
                 @foreach($servers as $server)
-                    <flux:context>
+                    @php $disabled = $runningServer === $server @endphp
+                    <flux:context :disabled="$disabled">
                         <div
                             class="flex flex-col items-center rounded-md cursor-context-menu relative"
                             style="width: 80px;"
@@ -30,8 +31,11 @@
                         </div>
 
                         <flux:menu>
-                            <flux:menu.item icon="git-compare-arrows" :disabled="$runningServer === $server">Hierhin
-                                migrieren
+                            <flux:menu.item
+                                wire:click="migrateDns('{{ $server }}')"
+                                icon="git-compare-arrows"
+                            >
+                                Hierhin migrieren
                             </flux:menu.item>
                         </flux:menu>
                     </flux:context>
@@ -41,36 +45,34 @@
             <hr class="bg-gray-200 mt-4 mb-4"/>
 
             <div class="flex items-center gap-2 justify-center">
+                <flux:modal.trigger name="select-vs">
                 <flux:button
                     variant="primary"
                     color="green"
                     icon="play"
                     :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
-                    x-on:click="$flux.toast({heading: 'Erfolg', text: 'DNS gestartet 🎉', variant: 'success', duration: 3000})"
                     class="cursor-pointer"
                 >Start
                 </flux:button>
-
-                <flux:modal.trigger name="confirm-dns-restart">
+                </flux:modal.trigger>
+                <flux:modal.trigger name="confirm-restart">
                     <flux:button
                         variant="primary"
                         color="teal"
                         icon="arrow-path"
                         class="cursor-pointer"
-                        :loading="$beingRestarted"
                     >Neustart
                     </flux:button>
                 </flux:modal.trigger>
             </div>
         </div>
 
-        <flux:modal name="confirm-dns-restart">
+        <flux:modal name="confirm-restart">
             <div class="space-y-6">
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach
-                            neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach neugestartet werden?</p>
                     </flux:text>
                 </div>
 
@@ -78,7 +80,7 @@
                     <flux:spacer/>
 
                     <flux:modal>
-                        <flux:button variant="ghost">Abbrechen</flux:button>
+                        <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal>
 
                     <flux:button variant="danger" type="submit" wire:click.prevent="restartDns" class="cursor-pointer">
@@ -87,5 +89,33 @@
                 </div>
             </div>
         </flux:modal>
+
+        <flux:modal name="select-vs" variant="flyout">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Choose one...</flux:heading>
+                    <flux:text class="mt-2">
+                        <flux:radio.group label="" variant="cards" class="flex-col" wire:model="selectedServer">
+                            @foreach($servers as $server)
+                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
+                            @endforeach
+                        </flux:radio.group>
+                    </flux:text>
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:spacer/>
+
+                    <flux:modal>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal>
+
+                    <flux:button  color="green" type="submit" wire:click.prevent="startDns" class="cursor-pointer">
+                        Start
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
     </div>
 </flux:card>
+

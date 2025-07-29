@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Cache;
 class DhcpRestartCommand extends Command
 {
     protected $signature = 'dhcp:restart-service';
-
-    protected $description = 'Restart the DHCP service via SSH';
+    protected $description = 'Restart the DHCP service on the current cluster node or start it if it\'s offline';
 
     public function handle()
     {
@@ -21,7 +20,6 @@ class DhcpRestartCommand extends Command
         if (!$lock->get()) {
             $this->warn('Ein anderer Neustart läuft bereits.');
             Cache::put($cacheKey, 'locked', 60);
-
             return 1;
         }
 
@@ -39,6 +37,15 @@ class DhcpRestartCommand extends Command
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$3}'");
             $runningServer = trim(RemoteSSH::getOutput());
+
+            RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$1}'");
+            $status = trim(RemoteSSH::getOutput());
+
+            if ($status === 'Offline') {
+                $this->warn('DHCP ist offline. Starte stattdessen den Dienst.');
+                $startCommand = app(\App\Console\Commands\DhcpStartCommand::class);
+                return $startCommand->handle();
+            }
 
             if (!str_starts_with($runningServer, 'vs')) {
                 throw new \Exception('DHCP läuft derzeit auf keinem bekannten Server.');
@@ -78,17 +85,17 @@ BASH;
 
             Cache::put($cacheKey, 'success', 60);
             $this->info("DHCP wurde erfolgreich auf {$runningServer} neugestartet.");
-
             return 0;
 
         } catch (\Throwable $e) {
             Cache::put($cacheKey, 'error: ' . $e->getMessage(), 60);
             $this->error('Fehler beim Neustart: ' . $e->getMessage());
-
             return 1;
+
         } finally {
             $lock->release();
             Cache::forget($queuedKey);
         }
     }
 }
+

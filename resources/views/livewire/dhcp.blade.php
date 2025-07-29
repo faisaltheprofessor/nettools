@@ -1,5 +1,5 @@
 <flux:card wire:poll.5s="getDhcpStatus" class="w-1/2 mx-auto space-y-6">
-    <h2 class="text-lg font-bold">DHCP Dienst</h2>
+    <h2 class="text-lg font-bold flex justify-center items-center">DHCP Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dhcp" /> </span></h2>
 
     <div class="flex mt-32 items-center justify-center">
         <div>
@@ -50,7 +50,7 @@
                     variant="primary"
                     color="green"
                     icon="play"
-                    dis-abled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
+                    :disabled="$dhcpStatus === 'running' || $dhcpStatus === 'loading'"
                     class="cursor-pointer"
                 >Start
                 </flux:button>
@@ -91,32 +91,32 @@
             </div>
         </flux:modal>
 
-        <flux:modal name="select-vs" variant="flyout">
-            <div class="space-y-6">
-                <div>
-                    <flux:heading size="lg">Choose one...</flux:heading>
-                    <flux:text class="mt-2">
-                        <flux:radio.group label="" variant="cards" class="flex-col">
-                            @foreach($servers as $server)
-                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
-                            @endforeach
-                        </flux:radio.group>
-                    </flux:text>
-                </div>
+    <flux:modal name="select-vs" variant="flyout">
+    <div class="space-y-6">
+        <div>
+            <flux:heading size="lg">Choose one...</flux:heading>
+            <flux:text class="mt-2">
+                <flux:radio.group label="" variant="cards" class="flex-col" wire:model="selectedServer">
+                    @foreach($servers as $server)
+                        <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description="" />
+                    @endforeach
+                </flux:radio.group>
+            </flux:text>
+        </div>
 
-                <div class="flex gap-2">
-                    <flux:spacer/>
+        <div class="flex gap-2">
+            <flux:spacer/>
 
-                    <flux:modal>
-                        <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal>
+            <flux:modal>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal>
 
-                    <flux:button  color="green" type="submit" wire:click.prevent="" class="cursor-pointer">
-                        Start
-                    </flux:button>
-                </div>
-            </div>
-        </flux:modal>
+            <flux:button color="green" type="submit" wire:click.prevent="startDhcp" class="cursor-pointer">
+                Start
+            </flux:button>
+        </div>
+    </div>
+</flux:modal>
     </div>
 </flux:card>
 

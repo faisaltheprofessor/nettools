@@ -32,7 +32,7 @@
 
             <div class="flex items-center gap-2">
                 <flux:field variant="inline" class="flex items-center gap-2">
-                    <flux:label class="whitespace-nowrap">Global</flux:label>
+                    <flux:label class="whitespace-nowrap">In allen Ordnern suchen</flux:label>
                     <flux:switch wire:model.live="globalSearch"/>
                 </flux:field>
             </div>

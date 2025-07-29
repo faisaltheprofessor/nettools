@@ -12,12 +12,12 @@ class DHCP extends Component
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
-
     public ?string $runningServer = null;
 
     public bool $loading = false;
-
     public bool $beingRestarted = false;
+
+    public ?string $selectedServer = null;
 
     public function render()
     {
@@ -179,6 +179,48 @@ class DHCP extends Component
         }
     }
 
+    public function startDhcp(): void
+    {
+        if (!$this->selectedServer) {
+            Flux::toast(
+                text: 'Bitte einen Server auswählen.',
+                heading: 'Keine Auswahl',
+                variant: 'warning'
+            );
+            return;
+        }
+
+        if ($this->loading || $this->dhcpStatus === 'running') {
+            Flux::toast(
+                text: 'DHCP ist bereits aktiv oder wird geladen.',
+                heading: 'Start blockiert',
+                variant: 'info'
+            );
+            return;
+        }
+
+        try {
+            Artisan::queue('dhcp:start-service', [
+                'server' => $this->selectedServer,
+            ]);
+
+            Flux::toast(
+                text: "Start des DHCP-Dienstes auf {$this->selectedServer} wurde eingeleitet.",
+                heading: 'Start gestartet',
+                variant: 'success'
+            );
+
+            $this->selectedServer = null;
+            Flux::modals()->close();
+        } catch (\Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Fehler beim Start',
+                variant: 'danger'
+            );
+        }
+    }
+
     public function getButtonColorProperty(): string
     {
         return match ($this->dhcpStatus) {
@@ -201,3 +243,4 @@ class DHCP extends Component
         };
     }
 }
+

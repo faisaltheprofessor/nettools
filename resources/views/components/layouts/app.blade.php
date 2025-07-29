@@ -21,7 +21,7 @@
         <flux:navlist.item icon="satellite-dish" href="/dhcp" wire:navigate>
             <div class="flex items-center justify-between">
                 <span>DHCP</span>
-                <livewire:service-status-indicator service="dhcp"/>
+                <livewire:service-status-indicator service="dhcp" display="icon"/>
             </div>
         </flux:navlist.item>
 
@@ -29,7 +29,7 @@
         <flux:navlist.item icon="earth-lock" href="{{ route('dns.index') }}" wire:navigate>
             <div class="flex items-center justify-between">
                 <span>DNS</span>
-                <livewire:service-status-indicator service="dns"/>
+                <livewire:service-status-indicator service="dns" display="icon"/>
             </div>
         </flux:navlist.item>
 
