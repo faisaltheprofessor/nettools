@@ -26,7 +26,7 @@ class IdTools extends Component
 
     public string $lastPidsError = '';
 
-    public int|string $pidCount = '';
+    public int|string $pidCount = 20;
 
     public ?string $allPidsError = null;
 
@@ -162,6 +162,66 @@ public function getLastPids()
         ]);
     } catch (\Exception $e) {
         $this->lastPidsError = 'Fehler: ' . $e->getMessage();
+    } finally {
+        $lock->release();
+    }
+}
+
+public function getFreeUserPids()
+{
+    $this->reset(['freePids', 'freePidsError']);
+
+    $lock = Cache::lock('ldap:free-user-pids', 15);
+
+    if (! $lock->get()) {
+        $this->freePidsError = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
+        return;
+    }
+
+    try {
+        // Step 1: Fetch all UIDs using LDAP Record
+
+        $entries = User::where('uid', '!=', null)->limit(10000)->get('uid');
+
+
+        $uids = $entries
+            ->map(fn ($entry) => $entry->getFirstAttribute('uid'))
+            ->filter()
+            ->map(fn ($uid) => trim($uid))
+            ->implode("\n");
+
+        // Step 2: Extract all valid P-IDs using regex
+        preg_match_all('/([pP]{1})([012]{1})([0-9]{4})/i', $uids, $matches);
+
+        if (! empty($matches[0])) {
+            $rawPids = $matches[0];
+            $numeric = collect($rawPids)
+                ->map(fn ($pid) => (int) substr(strtolower($pid), 1))
+                ->unique()
+                ->sort()
+                ->values();
+
+            $max = $numeric->last() ?? 10000;
+            $range = range(1, $max);
+            $missing = array_values(array_diff($range, $numeric->all()));
+
+            $free = collect($missing)
+                ->filter(fn ($n) => $n >= 10000)
+                ->sortDesc()
+                ->take(10)
+                ->map(fn ($n) => 'p' . $n)
+                ->values();
+
+            if ($free->isEmpty()) {
+                $this->freePidsError = 'Keine freien P-IDs ab 10000 gefunden.';
+            } else {
+                $this->freePids = implode(", ", $free->all());
+            }
+        } else {
+            $this->freePidsError = 'Keine passenden P-IDs gefunden.';
+        }
+    } catch (\Exception $e) {
+        $this->freePidsError = 'Fehler bei der LDAP-Abfrage: ' . $e->getMessage();
     } finally {
         $lock->release();
     }
