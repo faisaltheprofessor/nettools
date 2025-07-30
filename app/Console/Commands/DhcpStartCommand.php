@@ -36,7 +36,7 @@ class DhcpStartCommand extends Command
 
             $sshUser = config('remote.dhcp.user');
             $sshPass = config('remote.dhcp.password');
-            $clusterHost = config('remote.dhcp.host');
+            $clusterHost = config('remote.dhcp.cluster.hostname');
 
             // Connect to cluster host to check DHCP service status
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);

@@ -35,7 +35,7 @@ class DhcpRestartCommand extends Command
 
             $sshUser = config('remote.dhcp.user');
             $sshPass = config('remote.dhcp.password');
-            $clusterHost = config('remote.dhcp.host');
+            $clusterHost = config('remote.dhcp.cluster.hostname');
             $tmpFile = '/tmp/dhcprestart.sh';
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);

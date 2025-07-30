@@ -28,7 +28,7 @@ class DnsMigrateCommand extends Command implements ShouldQueue
 
             $sshUser = config('remote.dns.user');
             $sshPass = config('remote.dns.password');
-            $clusterHost = config('remote.dns.host');
+            $clusterHost = config('remote.dns.cluster.hostname');
 
             Log::info("Verbinde mit Cluster-Host {$clusterHost}...");
 

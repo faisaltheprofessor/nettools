@@ -1,7 +1,8 @@
 <div>
     <!-- Input Form -->
     <flux:card class="w-1/2 mx-auto space-y-6">
-        <form wire:submit.prevent="generate" class="flex w-full items-end gap-2">
+        <form wire:submit.prevent="generate" class="w-full items-center gap-2">
+
             <flux:field class="w-full">
                 <flux:label>PID</flux:label>
                 <flux:input.group>
@@ -11,10 +12,14 @@
                 <flux:error name="pkennung"/>
             </flux:field>
 
-            <flux:button type="submit" icon="signature" variant="primary" color="green" class="cursor-pointer">
+
+            <div class="w-full flex justify-end mt-4">
+                 <flux:button type="submit" icon="signature" variant="primary" color="green" class="cursor-pointer">
                 Generieren
             </flux:button>
-        </form>
+
+            </div>
+                   </form>
     </flux:card>
 
     <!-- Output Signature -->

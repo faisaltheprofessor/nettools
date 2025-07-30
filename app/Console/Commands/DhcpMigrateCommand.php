@@ -28,7 +28,7 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
 
             $sshUser = config('remote.dhcp.user');
             $sshPass = config('remote.dhcp.password');
-            $clusterHost = config('remote.dhcp.host');
+            $clusterHost = config('remote.dhcp.hostname');
 
             Log::info("Verbinde mit Cluster-Host {$clusterHost}...");
 

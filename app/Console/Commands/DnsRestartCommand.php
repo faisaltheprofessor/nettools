@@ -35,7 +35,7 @@ class DnsRestartCommand extends Command
 
             $sshUser = config('remote.dns.user');
             $sshPass = config('remote.dns.password');
-            $clusterHost = config('remote.dns.host');
+            $clusterHost = config('remote.dns.cluster.hostname');
             $tmpFile = '/tmp/dnsrestart.sh';
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);

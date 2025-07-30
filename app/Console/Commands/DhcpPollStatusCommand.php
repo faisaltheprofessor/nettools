@@ -18,7 +18,7 @@ class DhcpPollStatusCommand extends Command
         try {
             $sshUser = config('remote.dhcp.user');
             $sshPass = config('remote.dhcp.password');
-            $clusterHost = config('remote.dhcp.host');
+            $clusterHost = config('remote.dhcp.cluster.hostname');
 
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Running | awk '{print \$3}'");

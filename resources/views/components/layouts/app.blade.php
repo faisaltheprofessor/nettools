@@ -36,10 +36,12 @@
         </flux:navlist.item>
 
 
-        <flux:navlist.group expandable heading="ID Tools" class="grid">
-            <flux:navlist.item icon="mail-search" href="/next-free-pid" wire:navigate>Nächste freie PID
-            </flux:navlist.item>
-        </flux:navlist.group>
+        {{-- ID Tools --}}
+        <flux:navlist.item icon="id-card-lanyard" href="id-tools" wire:navigate>
+            <div class="flex items-center justify-between">
+                <span>ID Tools</span>
+            </div>
+        </flux:navlist.item>
 
 
         <flux:navlist.group expandable heading="Generatoren" class="grid">

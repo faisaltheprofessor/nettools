@@ -4,7 +4,7 @@ use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
 use App\Livewire\IpCalculator;
-use App\Livewire\NextFreePid;
+use App\Livewire\IdTools;
 use App\Livewire\OVirtSerialNumberGenerator;
 use App\Livewire\PasswordGenerator;
 use App\Livewire\Signature;
@@ -41,9 +41,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('signature-generator', Signature::class)
         ->name('password.generator');
 
-    // Next Free Mailbox pid
-    Route::get('next-free-pid', NextFreePid::class)
-        ->name('next-free-pid');
+    // ID Tools
+    Route::get('id-tools', IdTools::class)
+        ->name('id-tools.index');
 
 });
 
