@@ -36,16 +36,17 @@
         </flux:navlist.item>
 
 
-        {{-- ID Tools --}}
-        <flux:navlist.item icon="id-card-lanyard" href="id-tools" wire:navigate>
+
+        {{-- DNS --}}
+        <flux:navlist.item icon="identification" href="{{ route('id-tools.index') }}" wire:navigate>
             <div class="flex items-center justify-between">
-                <span>ID Tools</span>
+                <span>ID-Tools</span>
             </div>
         </flux:navlist.item>
 
 
-        <flux:navlist.group expandable heading="Generatoren" class="grid">
-            <flux:navlist.item icon="dices" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
+        <flux:navlist.group expandable icon="generators" heading="Generatoren" :expanded="false" class="grid">
+            <flux:navlist.item icon="key" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
             <flux:navlist.item icon="numbered-list" href="/ovirt-serialnumber-generator" wire:navigate>oVirt
                 Seriennummer
             </flux:navlist.item>

@@ -5,11 +5,14 @@ use App\Livewire\DHCP;
 use App\Livewire\DNS;
 use App\Livewire\IpCalculator;
 use App\Livewire\IdTools;
+use App\Livewire\Ldap\NextMailboxPid;
+use App\Livewire\Ldap\NextUserPid;
 use App\Livewire\OVirtSerialNumberGenerator;
 use App\Livewire\PasswordGenerator;
 use App\Livewire\Signature;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', function () {
@@ -44,6 +47,18 @@ Route::middleware(['auth'])->group(function () {
     // ID Tools
     Route::get('id-tools', IdTools::class)
         ->name('id-tools.index');
+
+    // ID Tools
+    Route::get('next-mailbox-pid', NextMailboxPid::class)
+        ->name('next-mailbox-pid.index');
+
+    Route::get('next-user-pid', NextUserPid::class)
+        ->name('next-user-pid.index');
+    Route::get('next-user-pid', NextUserPid::class)
+        ->name('next-user-pid.index');
+
+
+
 
 });
 
