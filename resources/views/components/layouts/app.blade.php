@@ -44,8 +44,7 @@
             </div>
         </flux:navlist.item>
 
-
-        <flux:navlist.group expandable icon="generators" heading="Generatoren" :expanded="false" class="grid">
+        <flux:navlist.group expandable icon="generators" heading="Generatoren" class="grid">
             <flux:navlist.item icon="key" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
             <flux:navlist.item icon="numbered-list" href="/ovirt-serialnumber-generator" wire:navigate>oVirt
                 Seriennummer

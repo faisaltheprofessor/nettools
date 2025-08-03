@@ -38,7 +38,7 @@ class UserExport extends Component
                 ->get();
 
             if ($entries->isEmpty()) {
-                $this->error = '☐ Keine P-IDs im LDAP gefunden.';
+                $this->error = ' Keine P-IDs im LDAP gefunden.';
                 return;
             }
 
@@ -153,7 +153,7 @@ class UserExport extends Component
 
             $this->error = 'Unbekannter Export-Modus.';
         } catch (\Exception $e) {
-            $this->error = 'Fehler: ' . $e->getMessage();
+            $this->error = $e->getMessage();
         } finally {
             $lock->release();
         }

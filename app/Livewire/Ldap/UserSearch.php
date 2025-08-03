@@ -64,7 +64,7 @@ class UserSearch extends Component
             $this->searchResults = $results;
 
         } catch (\Exception $e) {
-            $this->error = 'Fehler bei der Suche: ' . $e->getMessage();
+            $this->error =  $e->getMessage();
         }
     }
 
@@ -86,7 +86,7 @@ class UserSearch extends Component
 
         } catch (\Exception $e) {
             $this->selectedUserGroups = [];
-            $this->error = 'Fehler beim Laden der Gruppen: ' . $e->getMessage();
+            $this->error = $e->getMessage();
         }
     }
 

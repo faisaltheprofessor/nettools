@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Services\RemoteServerService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (config('app.env') === 'local') {
+            $user = \App\Models\User::newModelInstance([
+                'name' => 'Faisal Khan',
+                'email' => 'faisal@example.com',
+                'password' => Hash::make('secretpass'),
+            ]);
+            Auth::login($user);
+        }
     }
 }

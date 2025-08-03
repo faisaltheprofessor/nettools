@@ -47,7 +47,7 @@ class NextUserPid extends Component
                 $this->error = 'keine passenden P-IDs gefunden.';
             }
         } catch (Exception $e) {
-            $this->error = 'Fehler bei der LDAP-Suche: '.$e->getMessage();
+            $this->error = $e->getMessage();
         } finally {
             $lock->release();
         }

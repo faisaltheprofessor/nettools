@@ -71,7 +71,7 @@ class UserPidGap extends Component
                 $this->error = 'Keine passenden P-IDs gefunden.';
             }
         } catch (\Exception $e) {
-            $this->error = 'Fehler bei der LDAP-Abfrage: ' . $e->getMessage();
+            $this->error = $e->getMessage();
         } finally {
             $lock->release();
         }
