@@ -29,14 +29,14 @@ class InactiveUsers extends Component
 
             return response()->streamDownload(function () use ($results) {
                 $output = fopen('php://output', 'w');
-                fputs($output, "P-ID;Nachname;Vorname;Stellenzeichen;Kontext;Letzter Login;Fachbereich;\n");
+                fwrite($output, "P-ID;Nachname;Vorname;Stellenzeichen;Kontext;Letzter Login;Fachbereich;\n");
 
                 foreach ($results as $entry) {
-                    $uid       = $entry->getFirstAttribute('uid');
-                    $surname   = $entry->getFirstAttribute('surname') ?? '';
+                    $uid = $entry->getFirstAttribute('uid');
+                    $surname = $entry->getFirstAttribute('surname') ?? '';
                     $givenname = $entry->getFirstAttribute('givenname') ?? '';
-                    $title     = $entry->getFirstAttribute('title') ?? '';
-                    $acls      = $entry->getAttribute('acl') ?? [];
+                    $title = $entry->getFirstAttribute('title') ?? '';
+                    $acls = $entry->getAttribute('acl') ?? [];
                     $logintime = $entry->getFirstAttribute('logintime');
 
                     if (! $uid || ! is_array($acls) || ! $logintime) {
@@ -64,21 +64,21 @@ class InactiveUsers extends Component
                     // Clean first ACL for export (or leave blank)
                     $rawAcl = $acls[0] ?? '';
                     $cleaned = str_replace([
-                        "6#entry#cn=$uid,", "2#subtree#cn=", "6#entry#cn=",
-                        "#[All Attributes Rights]", "#loginScript",
-                        ",ou=", "ou=", ",o=", "$uid."
+                        "6#entry#cn=$uid,", '2#subtree#cn=', '6#entry#cn=',
+                        '#[All Attributes Rights]', '#loginScript',
+                        ',ou=', 'ou=', ',o=', "$uid.",
                     ], '', $rawAcl);
                     $cleaned = trim($cleaned);
 
                     // Output single CSV row
-                    fputs($output, "$uid;$surname;$givenname;$title;$cleaned;$lastLogin;;\n");
+                    fwrite($output, "$uid;$surname;$givenname;$title;$cleaned;$lastLogin;;\n");
                 }
 
                 fclose($output);
-            }, time() . '_P-ID-180-Tage-alt.csv');
+            }, time().'_P-ID-180-Tage-alt.csv');
 
         } catch (\Exception $e) {
-            Log::error('LDAP Inactive Export Error: ' . $e->getMessage());
+            Log::error('LDAP Inactive Export Error: '.$e->getMessage());
             abort(500, 'Fehler beim Erstellen des Exports.');
         } finally {
             $lock->release();

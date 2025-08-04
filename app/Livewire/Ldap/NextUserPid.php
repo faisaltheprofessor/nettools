@@ -9,7 +9,9 @@ use Livewire\Component;
 class NextUserPid extends Component
 {
     public $pid;
+
     public $error;
+
     public function getNextUserPid(): void
     {
         $this->reset(['pid', 'error']);
@@ -52,6 +54,7 @@ class NextUserPid extends Component
             $lock->release();
         }
     }
+
     public function render()
     {
         return view('livewire.ldap.next-user-pid');

@@ -7,13 +7,15 @@ use Livewire\Component;
 
 class UserExport extends Component
 {
-
     public string|int $pidCount = 20;
-    public string $exportMode = 'view'; // 'txt', 'csv', 'view'
-    public bool $includeNames = false;
-    public ?string $error = null;
-    public $exportOutput = null;
 
+    public string $exportMode = 'view'; // 'txt', 'csv', 'view'
+
+    public bool $includeNames = false;
+
+    public ?string $error = null;
+
+    public $exportOutput = null;
 
     public function exportPids()
     {
@@ -23,6 +25,7 @@ class UserExport extends Component
 
         if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell durch jemand anderes verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -39,6 +42,7 @@ class UserExport extends Component
 
             if ($entries->isEmpty()) {
                 $this->error = ' Keine P-IDs im LDAP gefunden.';
+
                 return;
             }
 
@@ -50,6 +54,7 @@ class UserExport extends Component
 
             if (empty($matches[0])) {
                 $this->error = 'Keine gültigen P-IDs durch Regex gefunden.';
+
                 return;
             }
 
@@ -83,6 +88,7 @@ class UserExport extends Component
                 }
 
                 $this->exportOutput = nl2br(implode("\n", $lines));
+
                 return;
             }
 

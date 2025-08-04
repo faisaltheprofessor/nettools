@@ -8,12 +8,15 @@ use Livewire\Component;
 class UserSearch extends Component
 {
     public $searchAttribute = 'PID';
+
     public $searchTerm = '';
 
     public $searchResults;
+
     public $error = null;
 
     public $selectedUserGroups = null;
+
     public $selectedUserInfo = [];
 
     public function search()
@@ -22,6 +25,7 @@ class UserSearch extends Component
 
         if (trim($this->searchTerm) === '') {
             $this->error = 'Bitte geben Sie einen Suchbegriff ein.';
+
             return;
         }
 
@@ -47,6 +51,7 @@ class UserSearch extends Component
 
             if ($users->isEmpty()) {
                 $this->error = 'Keine Benutzer gefunden.';
+
                 return;
             }
 
@@ -65,21 +70,19 @@ class UserSearch extends Component
             $this->searchResults = $results;
 
         } catch (\Exception $e) {
-            $this->error =  $e->getMessage();
+            $this->error = $e->getMessage();
         }
     }
-
-
-
 
     public function loadGroupsAndInfo(string $pid)
     {
         try {
             $user = User::query()->where('uid', '=', $pid)->first();
 
-            if (!$user) {
+            if (! $user) {
                 $this->selectedUserGroups = [];
                 $this->selectedUserInfo = [];
+
                 return;
             }
 
@@ -104,15 +107,14 @@ class UserSearch extends Component
         }
     }
 
-
     private function formatGroups(array $groups): array
     {
         $cleanGroups = [];
 
         foreach ($groups as $group) {
             $g = str_replace(
-                [",o=ba", "cn=", ",ou=", ",o=", ","],
-                [".ba", "", ".", ".", "."],
+                [',o=ba', 'cn=', ',ou=', ',o=', ','],
+                ['.ba', '', '.', '.', '.'],
                 $group
             );
 

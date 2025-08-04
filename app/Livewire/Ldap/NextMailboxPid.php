@@ -9,11 +9,9 @@ use Livewire\Component;
 
 class NextMailboxPid extends Component
 {
-
     public string $mailBoxPid = '';
 
     public string $mailboxError = '';
-
 
     public function getNextMailboxPid(): void
     {
