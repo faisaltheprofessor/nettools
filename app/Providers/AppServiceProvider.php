@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (config('app.env') === 'local') {
+        if (config('app.env') === 'local-dev') {
             $user = \App\Models\User::newModelInstance([
                 'name' => 'Faisal Khan',
                 'email' => 'faisal@example.com',
