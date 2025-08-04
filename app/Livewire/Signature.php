@@ -46,7 +46,7 @@ class Signature extends Component
             'Telefon: +49 30 90295-'.($user->telephonenumber[0] ?? ''),
             'Fax: +49 30 90295-'.($user->facsimiletelephonenumber[0] ?? ''),
             substr($user->emailAddress[0] ?? '', 2),
-            'Web:',
+            'Web: ' . env('SIGNATURE_WEBSITE', "https://"),
         ]);
 
         $htmlContent = '';

@@ -10,7 +10,7 @@ class User extends Entry
 
     public function getContext(): string
     {
-        return preg_replace(['/[a-zA-Z]+=/','/,/'], ['.'], $this->getDn());
+        return substr(preg_replace(['/[a-zA-Z]+=/','/,/'], ['.'], $this->getDn()), 1);
     }
 }
 
