@@ -3,7 +3,6 @@
 namespace App\Livewire\Ldap;
 
 use App\Ldap\User;
-use Exception;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
@@ -15,63 +14,72 @@ class UserPidGap extends Component
     public string $error = '';
     public string $pIdsInTextEditor = '';
 
-
     public function getUserIdGap(): void
     {
         $this->reset(['pIds', 'error', 'pIdsInTextEditor']);
 
         $lock = Cache::lock('ldap:free-user-pids', 15);
 
-        if (! $lock->get()) {
+        if (!$lock->get()) {
             $this->error = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
             return;
         }
 
         try {
-            // Step 1: Fetch all UIDs using LDAP Record
-
-            $entries = User::where('uid', '!=', null)->limit(10000)->get('uid');
-
-
+            $entries = User::limit(100000)->get('uid');
+            // 2. Collect UIDs
             $uids = $entries
-                ->map(fn ($entry) => $entry->getFirstAttribute('uid'))
+                ->map(fn($entry) => $entry->getFirstAttribute('uid'))
                 ->filter()
-                ->map(fn ($uid) => trim($uid))
-                ->implode("\n");
+                ->map(fn($uid) => trim($uid))
+                ->toArray();
 
-            // Step 2: Extract all valid P-IDs using regex
-            preg_match_all('/([pP]{1})([012]{1})([0-9]{4})/i', $uids, $matches);
+            // 3. Combine into one string to apply regex like in original code
+            $uidText = implode("\n", $uids);
 
-            if (! empty($matches[0])) {
+            // 4. Match all valid P-IDs
+            preg_match_all('/([pP]{1})([012]{1})([0-9]{4})/i', $uidText, $matches);
+
+            if (!empty($matches[0])) {
                 $rawPids = $matches[0];
-                $numeric = collect($rawPids)
-                    ->map(fn ($pid) => (int) substr(strtolower($pid), 1))
+
+                // Remove "p" or "P", cast to int
+                $numbers = collect($rawPids)
+                    ->map(fn($pid) => (int)substr(strtolower($pid), 1))
                     ->unique()
                     ->sort()
                     ->values();
 
-                $max = $numeric->last() ?? 10000;
-                $range = range(1, $max);
-                $missing = array_values(array_diff($range, $numeric->all()));
+                // Full range from 1 to max existing PID
+                $range = range(1, $numbers->last());
 
-                $free = collect($missing)
-                    ->filter(fn ($n) => $n >= 10000)
+                // Find missing
+                $missing = array_values(array_diff($range, $numbers->all()));
+
+                // Filter for >= 10000
+                $filtered = array_filter($missing, fn($n) => $n >= 10000);
+
+                if (empty($filtered)) {
+                    $this->error = 'Keine freien P-IDs ab 10000 gefunden.';
+                    return;
+                }
+
+                // Get last 10 missing values in descending order
+                $lastMissing = collect($filtered)
                     ->sortDesc()
                     ->take(10)
-                    ->map(fn ($n) => 'p' . $n)
+                    ->map(fn($n) => 'p' . $n)
                     ->values();
 
-                if ($free->isEmpty()) {
-                    $this->error = 'Keine freien P-IDs ab 10000 gefunden.';
-                } else {
-                    $this->pIds = implode(", ", $free->all());
-                    $this->pIdsInTextEditor = nl2br(implode("\n ", $free->all()));
-                }
+                $this->pIds = $lastMissing->implode(', ');
+                $this->pIdsInTextEditor = nl2br($lastMissing->implode("\n "));
             } else {
                 $this->error = 'Keine passenden P-IDs gefunden.';
             }
+
         } catch (\Exception $e) {
             $this->error = $e->getMessage();
+            Log::error('LDAP P-ID Gap Error: ' . $e->getMessage());
         } finally {
             $lock->release();
         }

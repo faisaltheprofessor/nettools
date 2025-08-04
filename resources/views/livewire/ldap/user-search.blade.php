@@ -7,8 +7,8 @@
     @endphp
     <flux:card>
         <div class="flex flex-col items-center gap-2">
-            <flux:icon.square-user-round class="size-12" />
-            <p>User PID & Namenssuche</p>
+            <flux:icon.square-user-round class="size-12"/>
+            <p>User Suchen</p>
 
             <div class="flex justify-center w-full space-x-2">
                 <flux:input.group class="flex-1">
@@ -18,7 +18,7 @@
                         <flux:select.option value="Vollst. Name">Vollst. Name</flux:select.option>
                     </flux:select>
 
-                    <flux:input wire:model.defer="searchTerm" placeholder="Suchbegriff eingeben..." />
+                    <flux:input wire:model.defer="searchTerm"  wire:keydown.enter="search" placeholder="Suchbegriff eingeben..."/>
                 </flux:input.group>
             </div>
 
@@ -40,22 +40,23 @@
 
     @if ($searchResults && $searchResults->count() > 0)
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-6">
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-auto max-h-72 overflow-auto bg-gray-50 rounded p-2">
+            <table
+                class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-auto max-h-72 overflow-auto bg-gray-50 rounded p-2">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">PID</th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Nachname</th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Vorname</th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Email</th>
-                    <th class="px-4 py-3 whitespace-nowrap w-auto">Gruppen</th>
+                    <th class="px-4 py-3 whitespace-nowrap w-auto">Gruppen und Details</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($searchResults as $user)
-                    <tr class="{{ $loop->odd ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800' }} border-b dark:border-gray-700 border-gray-200">
-                        <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ $user['pid'] }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap">{{ $user['surname'] ?? '–' }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap">{{ $user['givenname'] ?? '–' }}</td>
+                    <tr class="{{ $loop->odd ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700' }} border-b border-gray-200 dark:border-gray-600">
+                        <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">{{ $user['pid'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">{{ $user['surname'] ?? '–' }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">{{ $user['givenname'] ?? '–' }}</td>
                         <td class="px-4 py-3">
                             @foreach ($user['emails'] as $index => $email)
                                 <flux:badge variant="pill" class="mt-1" color="{{ $colors[$index % count($colors)] }}">
@@ -64,21 +65,43 @@
                             @endforeach
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <flux:button size="xs" wire:click="loadGroups('{{ $user['pid'] }}')">
+                            <flux:button size="xs" variant="primary" color="green" class="cursor-pointer" wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
                                 Anzeigen
                             </flux:button>
                         </td>
                     </tr>
                 @endforeach
+
                 </tbody>
             </table>
         </div>
     @endif
 
-    <flux:modal name="groups" class="w-fit">
-        @if ($selectedUserGroups !== null)
+    <flux:modal name="groups" class="w-fit" :dismissible="false">
+        @if ($selectedUserInfo)
+            <flux:heading class="flex justify-center">{{ $selectedUserInfo['pid'] }}</flux:heading>
 
-
+            <flux:text class="mt-2">
+                Nachname: {{ $selectedUserInfo['surname'] ?? '—' }}
+            </flux:text>
+            <flux:text class="mt-2">
+                Vorname: {{ $selectedUserInfo['givenname'] ?? '—' }}
+            </flux:text>
+            <flux:text class="mt-2">
+                Info: {{ $selectedUserInfo['info'] ?? '—' }}
+            </flux:text>
+            <flux:text class="mt-2">
+                Letzter Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
+            </flux:text>
+            <flux:text class="mt-2">
+                Kontext: {{ $selectedUserInfo['context'] ?? '—' }}
+            </flux:text>
+        @endif
+        <hr class="mt-2">
+    @if ($selectedUserGroups !== null)
+            <flux:heading class="mt-2 flex justify-center">
+                Gruppenzugehörigkeiten
+            </flux:heading>
             @if(count($selectedUserGroups) > 0)
                 <div class="flex flex-wrap gap-2 mt-4">
                     @foreach ($selectedUserGroups as $index => $group)
@@ -91,5 +114,6 @@
                 <p>Keine Gruppen gefunden.</p>
             @endif
         @endif
-    </flux:modal>
+    </flux:accordion.item>
+
 </div>

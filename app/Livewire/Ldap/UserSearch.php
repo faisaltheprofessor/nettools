@@ -13,7 +13,8 @@ class UserSearch extends Component
     public $searchResults;
     public $error = null;
 
-    public $selectedUserGroups = null; // holds groups of clicked user
+    public $selectedUserGroups = null;
+    public $selectedUserInfo = [];
 
     public function search()
     {
@@ -28,7 +29,7 @@ class UserSearch extends Component
             $attributeMap = [
                 'PID' => 'uid',
                 'Nachname' => 'sn',
-                'Vollst. Name' => 'cn',
+                'Vollst. Name' => 'fullname',
             ];
 
             $ldapAttribute = $attributeMap[$this->searchAttribute] ?? 'uid';
@@ -69,15 +70,27 @@ class UserSearch extends Component
     }
 
 
-    public function loadGroups(string $pid)
+
+
+    public function loadGroupsAndInfo(string $pid)
     {
         try {
             $user = User::query()->where('uid', '=', $pid)->first();
 
             if (!$user) {
                 $this->selectedUserGroups = [];
+                $this->selectedUserInfo = [];
                 return;
             }
+
+            $this->selectedUserInfo = [
+                'pid' => $user->getFirstAttribute('uid') ?? '',
+                'surname' => $user->getFirstAttribute('sn') ?? '',
+                'givenname' => $user->getFirstAttribute('givenname') ?? '',
+                'info' => $user->getFirstAttribute('description') ?? '',
+                'lastLogin' => $user->getFirstAttribute('logintime') ?? '—',
+                'context' => $user->getContext() ?? '—',
+            ];
 
             $rawGroups = $user->getAttribute('groupmembership') ?? [];
 
@@ -86,9 +99,11 @@ class UserSearch extends Component
 
         } catch (\Exception $e) {
             $this->selectedUserGroups = [];
+            $this->selectedUserInfo = [];
             $this->error = $e->getMessage();
         }
     }
+
 
     private function formatGroups(array $groups): array
     {
