@@ -63,7 +63,8 @@ class UserSearch extends Component
                     'fullname' => $user->getFirstAttribute('cn') ?? '',
                     'surname' => $user->getFirstAttribute('sn') ?? '',
                     'givenname' => $user->getFirstAttribute('givenname') ?? '',
-                    'emails' => $user->getAttribute('mail') ?? [],
+                    'email' => $user->getFirstAttribute('mail') ?? '',
+                    'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
                 ]);
             }
 

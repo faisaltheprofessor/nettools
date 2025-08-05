@@ -2,7 +2,7 @@
     wire:poll.5s="getDhcpStatus"
     x-data
     x-on:start-polling.window="Livewire.dispatch('getDhcpStatus')"
-    class="w-1/2 mx-auto space-y-6"
+    class="w-1/2 mx-auto space-y-6 relative"
 >
     <h2 class="text-lg font-bold flex justify-center items-center">
         DHCP Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dhcp"/></span>
@@ -62,7 +62,6 @@
                         Start
                     </flux:button>
                 </flux:modal.trigger>
-
                 <flux:modal.trigger name="confirm-restart">
                     <flux:button
                         variant="primary"
@@ -74,6 +73,11 @@
                         Neustart
                     </flux:button>
                 </flux:modal.trigger>
+
+                <div class="absolute right-2 bottom-2 text-xs">
+                    @php $dhcpNets = config("urls.dhcp_nets") @endphp
+                    <flux:link target="_blank" :href="$dhcpNets">DHCP Netze anzeigen <flux:icon.arrow-top-right-on-square class="inline size-4"/></flux:link>
+                </div>
             </div>
         </div>
 

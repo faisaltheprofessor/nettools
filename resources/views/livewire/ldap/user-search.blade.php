@@ -1,4 +1,4 @@
-<div class="w-1/2 mx-auto">
+<div class="w-[80%] md:w-[70%] mx-auto">
     @php
         $colors = [
             'zinc', 'green',  'emerald', 'teal', 'amber', 'yellow', 'lime',
@@ -18,7 +18,8 @@
                         <flux:select.option value="Vollst. Name">Vollst. Name</flux:select.option>
                     </flux:select>
 
-                    <flux:input wire:model.defer="searchTerm"  wire:keydown.enter="search" placeholder="Suchbegriff eingeben..."/>
+                    <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
+                                placeholder="Suchbegriff eingeben..."/>
                 </flux:input.group>
             </div>
 
@@ -47,7 +48,9 @@
                     <th class="px-4 py-3 whitespace-nowrap w-auto">PID</th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Nachname</th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Vorname</th>
-                    <th class="px-4 py-3 whitespace-nowrap w-auto">Email</th>
+                    <th class="px-4 py-3 whitespace-nowrap w-auto">Email
+
+                    </th>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">Gruppen und Details</th>
                 </tr>
                 </thead>
@@ -58,14 +61,29 @@
                         <td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">{{ $user['surname'] ?? '–' }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">{{ $user['givenname'] ?? '–' }}</td>
                         <td class="px-4 py-3">
-                            @foreach ($user['emails'] as $index => $email)
-                                <flux:badge variant="pill" class="mt-1" color="{{ $colors[$index % count($colors)] }}">
-                                    {{ $email }}
+                            @if(!empty($user['email']))
+                                <flux:badge variant="pill" class="mt-1" color="green">
+                                    {{ $user['email'] }}
                                 </flux:badge>
-                            @endforeach
+                                @else
+                                <flux:text variant="subtle">nicht vorhanden</flux:text>
+                            @endif
+
+                            @if(!empty($user['external_email']))
+                                <flux:badge variant="pill" class="mt-1" color="teal">
+                                    {{ $user['external_email'] }}
+                                    <flux:tooltip toggleable>
+                                        <flux:button icon="information-circle" size="sm" variant="ghost"/>
+                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">extern
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                </flux:badge>
+                            @endif
+
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <flux:button size="xs" variant="primary" color="green" class="cursor-pointer" wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
+                            <flux:button size="xs" variant="primary" color="green" class="cursor-pointer"
+                                         wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
                                 Anzeigen
                             </flux:button>
                         </td>
@@ -91,23 +109,24 @@
                 Info: {{ $selectedUserInfo['info'] ?? '—' }}
             </flux:text>
             <flux:text class="mt-2">
-                Letzter Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
+                Letzter
+                Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
             </flux:text>
             <flux:text class="mt-2">
                 Kontext: {{ $selectedUserInfo['context'] ?? '—' }}
             </flux:text>
         @endif
         <hr class="mt-2">
-    @if ($selectedUserGroups !== null)
+        @if ($selectedUserGroups !== null)
             <flux:heading class="mt-2 flex justify-center">
-                Gruppenzugehörigkeiten
+                Gruppenzugehörigkeiten <flux:badge color="lime" size="sm" inset="top bottom" class="ml-2">{{ count($selectedUserGroups) }}</flux:badge>
             </flux:heading>
             @if(count($selectedUserGroups) > 0)
-                <div class="flex flex-wrap gap-2 mt-4">
+                <div class="grid grid-cols-1 gap-1 mt-2">
                     @foreach ($selectedUserGroups as $index => $group)
-                        <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}">
-                            {{ $group }}
-                        </flux:badge>
+                            <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}">
+                                {{ $group }}
+                            </flux:badge>
                     @endforeach
                 </div>
             @else
