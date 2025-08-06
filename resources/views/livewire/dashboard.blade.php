@@ -1,6 +1,5 @@
 <div>
     <div class="grid mt-8">
-
         <blockquote class="mb-4 text-center italic font-semibold text-gray-500 dark:text-gray-400 text-xl">
             <svg class="mx-auto w-8 h-8 mb-4 text-gray-400 dark:text-gray-600 relative z-10" aria-hidden="true"
                  xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 14">
