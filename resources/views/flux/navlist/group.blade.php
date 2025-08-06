@@ -9,10 +9,10 @@
     <ui-disclosure {{ $attributes->class('group/disclosure') }} @if ($expanded === true) open @endif data-flux-navlist-group>
         <button type="button" class="w-full h-10 lg:h-8 flex items-center group/disclosure-button mb-[2px] rounded-lg hover:bg-zinc-800/5 dark:hover:bg-white/[7%] text-zinc-500 hover:text-zinc-800 dark:text-white/80 dark:hover:text-white">
             <div class="ps-3 pe-4">
-                <?php if ($icon && $icon === 'id-tools'): ?>
+                <?php if ($icon && $icon === 'bookmark'): ?>
                     <!-- Render the provided icon dynamically -->
-                    <flux:icon.user-minus class="size-4! hidden group-data-open/disclosure-button:block" />
-                    <flux:icon.user-plus class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />
+                    <flux:icon.bookmark class="size-4! hidden group-data-open/disclosure-button:block" />
+                    <flux:icon.bookmark-slash class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />
                 <?php elseif ($icon && $icon === 'generators'): ?>
                     <flux:icon.dices class="size-4! hidden group-data-open/disclosure-button:block" />
                     <flux:icon.dice-6 class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />

@@ -52,6 +52,11 @@
             <flux:navlist.item icon="network" href="/ip-calculator" wire:navigate>Subnetting</flux:navlist.item>
             <flux:navlist.item icon="signature" href="/signature-generator" wire:navigate>Signatur</flux:navlist.item>
         </flux:navlist.group>
+
+
+        <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
+        <flux:navlist.item icon="home" href="/bookmarks" wire:navigate>Hauptseite</flux:navlist.item>
+    </flux:navlist.group>
     </flux:navlist>
 
     <flux:spacer/>

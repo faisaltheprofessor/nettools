@@ -1,7 +1,7 @@
 <div class="w-[80%] md:w-[70%] mx-auto">
     @php
         $colors = [
-            'zinc', 'green',  'emerald', 'teal', 'amber', 'yellow', 'lime',
+            'green',  'emerald', 'teal', 'amber', 'yellow', 'lime',
             'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'orange'
         ];
     @endphp
@@ -65,7 +65,7 @@
                                 <flux:badge variant="pill" class="mt-1" color="green">
                                     {{ $user['email'] }}
                                 </flux:badge>
-                                @else
+                            @else
                                 <flux:text variant="subtle">nicht vorhanden</flux:text>
                             @endif
 
@@ -95,7 +95,7 @@
         </div>
     @endif
 
-    <flux:modal name="groups" class="w-fit" :dismissible="false">
+    <flux:modal name="groups" class="w-content max-w-content max-h-full" :dismissible="false">
         @if ($selectedUserInfo)
             <flux:heading class="flex justify-center">{{ $selectedUserInfo['pid'] }}</flux:heading>
 
@@ -110,29 +110,31 @@
             </flux:text>
             <flux:text class="mt-2">
                 Letzter
-                Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
+                Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->format("d.m.Y H:i") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
             </flux:text>
             <flux:text class="mt-2">
                 Kontext: {{ $selectedUserInfo['context'] ?? '—' }}
             </flux:text>
         @endif
-        <hr class="mt-2">
+        <flux:separator class="mt-3 mb-3">
+            Gruppenzugehörigkeiten @if($selectedUserGroups != null)<flux:badge size="sm" color="lime">{{ count($selectedUserGroups) }}</flux:badge>@endif
+        </flux:separator>
         @if ($selectedUserGroups !== null)
-            <flux:heading class="mt-2 flex justify-center">
-                Gruppenzugehörigkeiten <flux:badge color="lime" size="sm" inset="top bottom" class="ml-2">{{ count($selectedUserGroups) }}</flux:badge>
-            </flux:heading>
+                <div class="flex justify-center">
+
+                </div>
             @if(count($selectedUserGroups) > 0)
-                <div class="grid grid-cols-1 gap-1 mt-2">
+                <div class="grid  gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
-                            <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}">
-                                {{ $group }}
-                            </flux:badge>
+                        <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}" class="w-fit">
+                            {{ $group }}
+                        </flux:badge>
                     @endforeach
                 </div>
             @else
                 <p>Keine Gruppen gefunden.</p>
             @endif
         @endif
-    </flux:accordion.item>
+    </flux:modal>
 
 </div>

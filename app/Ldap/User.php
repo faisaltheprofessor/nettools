@@ -11,7 +11,7 @@ class User extends Entry
 
     public function getContext(): string
     {
-        return substr(preg_replace(['/[a-zA-Z]+=/', '/,/'], ['.'], $this->getDn()), 1);
+        return substr(preg_replace(['/[a-zA-Z]+=/', '/,/'], ['.'], $this->getDn()), 8);
     }
 
     public function scopeStartingWithP1(Builder $query): void

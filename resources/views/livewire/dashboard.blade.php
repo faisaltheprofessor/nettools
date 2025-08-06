@@ -1,8 +1,4 @@
 <div>
-
-    <livewire:bookmarks/>
-
-
     <div class="grid mt-8">
 
         <blockquote class="mb-4 text-center italic font-semibold text-gray-500 dark:text-gray-400 text-xl">

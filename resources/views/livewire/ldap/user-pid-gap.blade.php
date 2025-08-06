@@ -1,4 +1,4 @@
-<div class="w-1/2 mx-auto">
+<div class="w-[80%] md:w-[70%] mx-auto">
     <flux:card>
         <div class="flex flex-col items-center gap-2">
             <flux:icon.list-ordered class="size-12" />

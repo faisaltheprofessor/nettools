@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Bookmarks;
 use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
@@ -56,6 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('next-user-pid', NextUserPid::class)
         ->name('next-user-pid.index');
 
+    // Bookmarks
+    Route::get('bookmarks', Bookmarks::class)
+        ->name('bookmarks.index');
+
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -66,4 +71,4 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
