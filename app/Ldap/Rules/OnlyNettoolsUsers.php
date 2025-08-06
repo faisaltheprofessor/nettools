@@ -18,5 +18,5 @@ class OnlyNettoolsUsers implements Rule
 
         return $allowedGroup && $user->groups()->recursive()->exists($allowedGroup);
     }
-    }
+
 }

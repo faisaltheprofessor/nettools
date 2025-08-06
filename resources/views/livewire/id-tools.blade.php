@@ -7,7 +7,6 @@
                 <flux:tab name="pid-gaps" icon="user">User PID Lücken</flux:tab>
                 <flux:tab name="user-export" icon="file-up">PIDs Exportieren</flux:tab>
                 <flux:tab name="user-search" icon="user-round-search">Usersuche</flux:tab>
-                <flux:tab name="inactive-users" icon="user-x">User-ID Karteileichen</flux:tab>
             </flux:tabs>
         </div>
 
@@ -29,9 +28,5 @@
 
         <flux:tab.panel name="user-search">
             <livewire:ldap.user-search />
-        </flux:tab.panel>
-
-        <flux:tab.panel name="inactive-users">
-           <livewire:ldap.inactive-users />
         </flux:tab.panel>
     </flux:tab.group>
