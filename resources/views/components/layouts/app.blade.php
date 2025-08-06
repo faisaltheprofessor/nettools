@@ -36,7 +36,6 @@
         </flux:navlist.item>
 
 
-
         {{-- DNS --}}
         <flux:navlist.item icon="identification" href="{{ route('id-tools.index') }}" wire:navigate>
             <div class="flex items-center justify-between">
@@ -54,9 +53,9 @@
         </flux:navlist.group>
 
 
-        <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
-        <flux:navlist.item icon="home" href="/bookmarks" wire:navigate>Hauptseite</flux:navlist.item>
-    </flux:navlist.group>
+        {{--<flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
+            <flux:navlist.item icon="home" href="/bookmarks" wire:navigate>Hauptseite</flux:navlist.item>
+        </flux:navlist.group>--}}
     </flux:navlist>
 
     <flux:spacer/>
