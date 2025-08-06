@@ -21,8 +21,8 @@
 
     @if ($pIdsInTextEditor)
         <div x-data="{ copied: false }" class="relative group mt-4" data-flux-input="">
-
-            <div class="absolute top-0 right-0 flex items-center gap-x-1.5 pe-3 end-0 text-xs text-zinc-400">
+            <div
+                class="absolute top-0 right-0 flex items-center gap-x-1.5 pe-3 end-0 text-xs text-zinc-400 dark:text-gray-100">
                 <button type="button"
                         class="relative items-center font-medium justify-center gap-2 whitespace-nowrap disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none h-8 text-sm rounded-md w-8 inline-flex -ms-1.5 -me-1.5 bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white      -me-1"
                         data-flux-button="data-flux-button" x-data="{ copied: false }"
@@ -52,14 +52,14 @@
                 </button>
             </div>
 
-            <textarea
+            <flux:textarea
                 readonly
-                class="w-full text-sm font-mono whitespace-pre rounded-xl bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 px-4 py-3 pr-12"
                 rows="10"
                 x-ref="copyTarget"
-            >{{ $pIdsInTextEditor }}</textarea>
+            >{{ $pIdsInTextEditor }}</flux:textarea>
 
-
+        </div>
             @endif
 
         </div>
+
