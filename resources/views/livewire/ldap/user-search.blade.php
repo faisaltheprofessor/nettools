@@ -121,16 +121,15 @@
         </flux:separator>
         @if ($selectedUserGroups !== null)
                 <div class="flex justify-center">
-
                 </div>
             @if(count($selectedUserGroups) > 0)
-                <div class="grid  gap-1 mt-2 min-w-fit">
+                <flux:div copyable class="grid  gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
                         <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}" class="w-fit">
                             {{ $group }}
                         </flux:badge>
                     @endforeach
-                </div>
+                </flux:div>
             @else
                 <p>Keine Gruppen gefunden.</p>
             @endif
