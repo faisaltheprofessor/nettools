@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nettools</title>
     @vite("resources/css/app.css")
+    @vite("resources/js/app.js")
     @fluxAppearance
 </head>
 <body class="min-h-screen bg-white dark:bg-zinc-800">
@@ -61,10 +62,15 @@
     <flux:spacer/>
 
     <flux:navlist variant="outline">
-        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer"
-                        x-on:click.prevent="document.getElementById('logout-form').submit()">
+        <flux:menu.item icon="message-circle-more" class="cursor-pointer" x:on-click="$flux.modal('submit-feedback').show()">
+            Anliegen Melden
+        </flux:menu.item>
+
+        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
             Logout
         </flux:menu.item>
+
+
     </flux:navlist>
 </flux:sidebar>
 
@@ -87,7 +93,7 @@
     <flux:heading size="xl" level="1">
         <div class="flex justify-between">
             <div>
-                Hallo, {{ Auth::user()->name }}
+                Hallo, {{ Str::title(Auth::user()->name) }}
             </div>
             <div>
                 <flux:dropdown x-data align="end">
@@ -121,6 +127,8 @@
     @persist('toast')
     <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
+
+    <livewire:feedback name="submit-feedback"></livewire:feedback>
 </flux:main>
 
 <!-- Logout Form -->

@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         if (config('app.env') === 'local-dev') {
             $user = \App\Models\User::newModelInstance([
-                'name' => 'Faisal Khan',
+                'name' => 'faisal khan',
                 'email' => 'faisal@example.com',
                 'password' => Hash::make('secretpass'),
             ]);
