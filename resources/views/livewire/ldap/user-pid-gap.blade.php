@@ -20,8 +20,9 @@
     </flux:card>
 
     @if ($pIdsInTextEditor)
-        <flux:textarea2 copyable rows="10">
-            {{ $pIdsInTextEditor }}
+        <flux:textarea2 copyable readonly disabled rows="10" class="mt-4" x-init="$el.value = $el.value.trim().split('\n').map(s => s.trim()).join('\n')">
+            {!! trim($pIdsInTextEditor)!!}
+
         </flux:textare2>
     @endif
 

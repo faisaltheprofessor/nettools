@@ -154,7 +154,7 @@
             </textarea>
 
 
-        <div class="absolute top-0 bottom-0 flex items-center gap-x-1.5 pe-3 end-0 text-xs text-zinc-400">
+        <div class="absolute top-0 bottom-0 flex items-start gap-x-1.5 pe-3 end-0 text-xs text-zinc-400">
             {{-- Icon should be text-zinc-400/75 --}}
                 <?php if ($loading): ?>
             <flux:icon name="loading" :variant="$iconVariant" :class="$iconClasses" wire:loading
