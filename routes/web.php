@@ -62,8 +62,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('bookmarks', Bookmarks::class)
         ->name('bookmarks.index');
 
-    Route::get('feedback', Feedback::class)
-        ->name('feedback.index');
+    Route::get('feedbacks', \App\Livewire\FeedbackViewer::class)
+        ->name('feedbacks.index');
 });
 
 Route::middleware(['auth'])->group(function () {

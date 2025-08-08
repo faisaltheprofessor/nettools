@@ -66,7 +66,8 @@
             Anliegen Melden
         </flux:menu.item>
 
-        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
+        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer"
+                        x-on:click.prevent="document.getElementById('logout-form').submit()">
             Logout
         </flux:menu.item>
 
@@ -128,7 +129,26 @@
     <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
 
-    <livewire:feedback name="submit-feedback"> </livewire:feedback>
+    <flux:modal name="feedback-submitted" class="min-w-[22rem]">
+        <div class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.check-circle variant="solid" class="text-green-700 w-6 h-6"/>
+                <flux:heading size="lg">Deine Rückmeldung wurde erfolgreich gesendet</flux:heading>
+            </div>
+            <div>
+                <p>Vielen Dank {{ Auth::user()->name }}!</p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="primary" class="cursor-pointer">Schließen</flux:button>
+                </flux:modal.close>
+            </div>
+        </div>
+    </flux:modal>
+
+
+
+    <livewire:feedback name="submit-feedback"></livewire:feedback>
 </flux:main>
 
 <!-- Logout Form -->

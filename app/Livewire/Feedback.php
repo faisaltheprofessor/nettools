@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Feedback as FeedbackModel;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -44,8 +45,8 @@ class Feedback extends Component
 
         // Tell FileUploader to reset itself
         $this->dispatch('reset-file-uploader');
-
-        session()->flash('message', 'Feedback erfolgreich gesendet!');
+        $this->dispatch('feedback-submitted');
+        Flux::modal("feedback-submitted")->show();
     }
 
     public function render()

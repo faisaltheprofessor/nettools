@@ -24,13 +24,15 @@ class FileUploader extends Component
         $this->validate();
 
         foreach ($this->newFiles as $file) {
-            $storedPath = $file->store('feedback', 'public');
+            $timestampedName = time() . '_' . $file->getClientOriginalName();
+            $storedPath = $file->storeAs('feedback', $timestampedName, 'public');
             $this->allFiles[] = [
                 'path' => $storedPath,
                 'name' => $file->getClientOriginalName(),
             ];
         }
 
+        // Pass paths only to parent component
         $this->dispatch('filesUploaded', collect($this->allFiles)->pluck('path')->toArray());
 
         $this->reset('newFiles');

@@ -24,6 +24,6 @@ class Feedback extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'guid');
+        return $this->belongsTo(User::class, 'user_guid', 'guid');
     }
 }
