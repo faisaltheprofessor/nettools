@@ -62,7 +62,7 @@
     <flux:spacer/>
 
     <flux:navlist variant="outline">
-        <flux:menu.item icon="message-circle-more" class="cursor-pointer" x:on-click="$flux.modal('submit-feedback').show()">
+        <flux:menu.item icon="message-circle-more" class="cursor-pointer" @click="Flux.modal('submit-feedback').show()">
             Anliegen Melden
         </flux:menu.item>
 
@@ -128,7 +128,7 @@
     <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
 
-    <livewire:feedback name="submit-feedback"></livewire:feedback>
+    <livewire:feedback name="submit-feedback"> </livewire:feedback>
 </flux:main>
 
 <!-- Logout Form -->

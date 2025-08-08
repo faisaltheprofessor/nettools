@@ -1,12 +1,7 @@
-@props([
-    'name' => null,
-])
-
-<flux:modal :name="$name" variant="flyout" position="left">
-    <div class="space-y-6">
+<flux:modal name="submit-feedback" variant="flyout" position="left">
+    <div class="mt-10 justify-center space-y-6">
         <div>
-            <flux:heading size="lg">Feedback</flux:heading>
-            <flux:text class="mt-2">Ich möchte</flux:text>
+            <flux:heading size="lg">Ich möchte</flux:heading>
         </div>
         <flux:radio.group label="" variant="cards" class="flex-col">
             <flux:radio value="feature" label="Funktion vorschlagen" description="Hast du eine Idee? Immer her damit!"/>
@@ -21,6 +16,10 @@
         <flux:textarea label="Beschreibung" resize="none"/>
         <flux:input type="file" wire:model="logo" label="📸 Screenshots oder unterstützende Dateien " multiple
                     accept=".jpg,.jpeg,.png,.webp,.pdf"/>
+
+        <div class="flex justify-end">
+            <flux:button variant="primary" color="green" class="cursor-pointer">Submit</flux:button>
+        </div>
     </div>
 </flux:modal>
 
