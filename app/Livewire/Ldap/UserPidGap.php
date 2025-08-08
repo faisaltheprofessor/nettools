@@ -23,6 +23,7 @@ class UserPidGap extends Component
 
         if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -39,7 +40,7 @@ class UserPidGap extends Component
 
             preg_match_all('/([pP]{1})([012]{1})([0-9]{4})/i', $uidText, $matches);
 
-            if (!empty($matches[0])) {
+            if (! empty($matches[0])) {
                 $rawPids = $matches[0];
 
                 $numbers = collect($rawPids)
@@ -56,6 +57,7 @@ class UserPidGap extends Component
 
                 if (empty($filtered)) {
                     $this->error = 'Keine freien P-IDs ab 10000 gefunden.';
+
                     return;
                 }
 

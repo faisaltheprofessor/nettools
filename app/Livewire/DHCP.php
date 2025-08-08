@@ -95,9 +95,7 @@ class DHCP extends Component
 
             return;
         }
-
         $this->beingRestarted = true;
-
         try {
             Artisan::queue('dhcp:restart-service');
 
@@ -160,7 +158,6 @@ class DHCP extends Component
 
                 return;
             }
-
             Artisan::queue('dhcp:migrate-service', [
                 'targetNode' => $node,
             ]);

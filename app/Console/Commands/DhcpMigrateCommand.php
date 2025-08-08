@@ -30,12 +30,10 @@ class DhcpMigrateCommand extends Command implements ShouldQueue
             $sshPass = config('remote.dhcp.password');
             $clusterHost = config('remote.dhcp.cluster.hostname');
 
-            Log::info("Verbinde mit Cluster-Host {$clusterHost}...");
-
-            $this->info("Verbinde mit Cluster-Host {$clusterHost}...");
+            $this->info('Connecting to the server');
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
 
-            $this->info("executing command ... {$clusterHost}...");
+            $this->info("Executing command ... {$clusterHost}...");
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$1}'");
             $status = trim(RemoteSSH::getOutput());
 

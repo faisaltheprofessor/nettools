@@ -3,18 +3,22 @@
 namespace App\Livewire\Ldap;
 
 use App\Ldap\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
-use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserExport extends Component
 {
     public string|int $pidCount = 20;
+
     public string $exportMode = 'table'; // 'txt', 'csv', 'table'
+
     public array $selectedFields = []; // LDAP attribute names
+
     public ?string $error = null;
+
     public array $exportOutput = [];
 
     public array $fieldDisplayNames = [
@@ -23,7 +27,7 @@ class UserExport extends Component
         'fullname' => 'Vollständiger Name',
         'logintime' => 'Letzter Login',
         'mail' => 'E-Mail',
-        'dn' => 'Kontext'
+        'dn' => 'Kontext',
     ];
 
     public function exportPids()
@@ -32,13 +36,15 @@ class UserExport extends Component
 
         if ($this->exportMode === '') {
             $this->error = 'Export-Modus erforderlich';
+
             return;
         }
 
         $lock = Cache::lock('ldap:pids-export', 30);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell durch jemand anderes verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -47,7 +53,7 @@ class UserExport extends Component
 
             $anzahl = $this->pidCount === 'Alle' ? 0 : (int) $this->pidCount;
 
-            $orderedFields = array_filter(array_keys($this->fieldDisplayNames), fn($field) => in_array($field, $this->selectedFields));
+            $orderedFields = array_filter(array_keys($this->fieldDisplayNames), fn ($field) => in_array($field, $this->selectedFields));
             $fieldsToSelect = array_unique(array_merge(['uid'], array_diff($orderedFields, ['dn'])));
 
             $rawEntries = \App\Ldap\User::query()
@@ -59,6 +65,7 @@ class UserExport extends Component
 
             if ($rawEntries->isEmpty()) {
                 $this->error = 'Keine P-IDs im LDAP gefunden.';
+
                 return;
             }
 
@@ -68,6 +75,7 @@ class UserExport extends Component
 
             if ($filteredEntries->isEmpty()) {
                 $this->error = 'Keine gültigen P-IDs im LDAP gefunden.';
+
                 return;
             }
 
@@ -109,6 +117,7 @@ class UserExport extends Component
                 })->toArray();
 
                 $this->exportOutput = array_reverse($this->exportOutput);
+
                 return;
             }
 
@@ -143,7 +152,7 @@ class UserExport extends Component
                         }
                     }
 
-                    return $uid . (!empty($extras) ? ' - ' . implode(' | ', $extras) : '');
+                    return $uid.(! empty($extras) ? ' - '.implode(' | ', $extras) : '');
                 })->toArray();
 
                 $lines = array_reverse($lines);
@@ -164,7 +173,7 @@ class UserExport extends Component
                     $output = fopen('php://output', 'w');
 
                     $headerLabels = array_merge(['P-ID'], array_map(
-                        fn($field) => $this->fieldDisplayNames[$field] ?? $field,
+                        fn ($field) => $this->fieldDisplayNames[$field] ?? $field,
                         $orderedFields
                     ));
 
