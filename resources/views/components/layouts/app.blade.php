@@ -54,10 +54,11 @@
         </flux:navlist.group>
 
 
-        {{--<flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
-            <flux:navlist.item icon="home" href="/bookmarks" wire:navigate>Hauptseite</flux:navlist.item>
-        </flux:navlist.group>--}}
+        <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
+            <livewire:sidebar-bookmark-folders />
+        </flux:navlist.group>
     </flux:navlist>
+
 
     <flux:spacer/>
 
