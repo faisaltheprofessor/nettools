@@ -39,7 +39,7 @@ class Bookmark extends Model
     }
 
     /** Scope: items a given user can see (their own + global) */
-    public function scopeAccessible($q, ?int $userGuid)
+    public function scopeAccessible($q, ?string $userGuid)
     {
         return $q->where(function ($qq) use ($userGuid) {
             $qq->where('user_guid', $userGuid)

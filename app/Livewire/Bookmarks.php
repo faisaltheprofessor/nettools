@@ -80,19 +80,19 @@ class Bookmarks extends Component
 
     /* ========== Admin helpers ========== */
 
-    protected function adminEmails(): array
+    protected function adminUsers(): array
     {
-        $raw = (string) env('ADMIN_EMAILS', '');
+        $raw = (string) config('users.admins');
         return array_values(array_filter(array_map('trim', explode(',', $raw))));
     }
 
     public function isAdmin(): bool
     {
         $user = Auth::user();
-        return $user && in_array($user->email, $this->adminEmails(), true);
+        return $user && in_array($user->username, $this->adminUsers(), true);
     }
 
-    protected function currentUserGuid(): ?int
+    protected function currentUserGuid(): ?string
     {
         return optional(Auth::user())->guid;
     }
