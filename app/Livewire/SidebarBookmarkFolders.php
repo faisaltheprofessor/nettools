@@ -8,7 +8,6 @@ use Livewire\Component;
 
 class SidebarBookmarkFolders extends Component
 {
-    // Live update when folders change (create/update/delete)
     protected $listeners = ['bookmarksUpdated' => '$refresh'];
 
     public function render()

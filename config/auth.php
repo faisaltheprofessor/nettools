@@ -63,6 +63,7 @@ return [
         'users' => [
             'driver' => 'ldap',
             'model' => App\Ldap\User::class,
+            'rules' => [\App\Ldap\Rules\OnlyNettoolsUsers::class],
             'database' => [
                 'model' => App\Models\User::class,
                 'sync_passwords' => false,

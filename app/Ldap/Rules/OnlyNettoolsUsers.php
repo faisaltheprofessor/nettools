@@ -14,8 +14,15 @@ class OnlyNettoolsUsers implements Rule
      */
     public function passes(LdapRecord $user, ?Eloquent $model = null): bool
     {
-        $allowedGroup = Group::find('cn=YourGroupCN,ou=Groups,dc=example,dc=org');
+        $allowedGroupDn = config('users.LDAP.group');
 
-        return $allowedGroup && $user->groups()->recursive()->exists($allowedGroup);
+        if (method_exists($user, 'inGroup')) {
+            // true = recursive (nested groups)
+            return $user->inGroup($allowedGroupDn, true);
+        }
+
+        // Fallback for directories that expose `groupMembership` (eDirectory):
+        $memberships = array_map('strtolower', (array) $user->getAttribute('groupMembership', []));
+        return in_array(strtolower($allowedGroupDn), $memberships, true);
     }
 }

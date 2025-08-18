@@ -4,6 +4,7 @@ namespace App\Support;
 
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
@@ -12,11 +13,14 @@ use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
 
 final class Markdown
 {
+    /**
+     * @throws CommonMarkException
+     */
     public static function convert(string $md): string
     {
         $config = [
-            'html_input' => 'strip',          // safer
-            'allow_unsafe_links' => false,    // safer
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
             'max_nesting_level' => 100,
             'heading_permalink' => [
                 'symbol' => '#',
@@ -25,7 +29,6 @@ final class Markdown
         ];
 
         $env = new Environment($config);
-        // Core + useful extensions (GFM includes autolinks, strikethrough, etc.)
         $env->addExtension(new CommonMarkCoreExtension());
         $env->addExtension(new GithubFlavoredMarkdownExtension());
         $env->addExtension(new TableExtension());

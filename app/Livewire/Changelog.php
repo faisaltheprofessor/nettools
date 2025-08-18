@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use App\Support\Markdown;
 
 class Changelog extends Component
 {
