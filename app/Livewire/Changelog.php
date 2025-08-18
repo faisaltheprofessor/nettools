@@ -2,16 +2,15 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Str;
 use Livewire\Component;
+use App\Support\Markdown;
 
 class Changelog extends Component
 {
     public string $version = '';
     public string $path = '';
-    public array  $entries = [];   // parsed changelog entries
-    public string $query = '';     // simple search filter
-
+    public array  $entries = [];
+    public string $query = '';
     public function mount()
     {
         $this->version = config('app.version', '');
@@ -26,8 +25,8 @@ class Changelog extends Component
         $candidates = [
             base_path('CHANGELOG.md'),
             base_path('Changelog.md'),
-            base_path('changelog.md'),
-            resource_path('changelog.md'),
+            base_path('CHANGELOG.md'),
+            resource_path('CHANGELOG.md'),
         ];
         foreach ($candidates as $p) {
             if (file_exists($p)) return $p;
@@ -38,12 +37,9 @@ class Changelog extends Component
     /**
      * Parse a Keep-a-Changelog-styled Markdown file into a structured array.
      *
-     * Format expected (flexible):
+     * Accepts headings like:
      * ## [1.2.3] - 2025-08-15
-     * ### Added
-     * - Item
-     * ### Fixed
-     * - Bug
+     * ## 1.2.3 - 2025-08-15
      */
     private function parseChangelog(string $md): array
     {
@@ -53,7 +49,6 @@ class Changelog extends Component
         $md = str_replace(["\r\n", "\r"], "\n", $md);
 
         // Find all version blocks by H2 headings:
-        // e.g. "## [1.2.3] - 2025-08-15" or "## 1.2.3 - 2025-08-15" (with/without brackets)
         $pattern = '/^##\s+\[?([^\]\n]+)\]?\s*(?:-\s*([0-9]{4}-[0-9]{2}-[0-9]{2}))?\s*$/m';
         if (!preg_match_all($pattern, $md, $matches, PREG_OFFSET_CAPTURE)) {
             return $entries;
@@ -75,8 +70,10 @@ class Changelog extends Component
             $entries[] = [
                 'version'  => $version,
                 'date'     => $date,
-                'sections' => $this->parseSections($block),
+                // Keep raw Markdown of the version block — we will render it directly to HTML in Blade
                 'raw'      => trim($block),
+                // sections kept for compatibility (not used by the Blade anymore)
+                'sections' => $this->parseSections($block),
             ];
         }
 
@@ -85,16 +82,15 @@ class Changelog extends Component
 
     /**
      * Parse ### sections and their bullet lists within a version block.
+     * (Kept for compatibility; UI now renders the full raw Markdown instead.)
      */
     private function parseSections(string $block): array
     {
         $sections = [];
         $block = ltrim($block, "\n");
 
-        // Split into sections by H3 headings like "### Added"
         $secPattern = '/^###\s+([^\n]+)\s*$/m';
         if (!preg_match_all($secPattern, $block, $secMatches, PREG_OFFSET_CAPTURE)) {
-            // No H3 sections—try to collect top-level bullets as "Other"
             $items = $this->collectBullets($block);
             if (!empty($items)) {
                 $sections[] = [
@@ -105,7 +101,6 @@ class Changelog extends Component
             return $sections;
         }
 
-        // Build ranges for each section
         $count = count($secMatches[0]);
         for ($i = 0; $i < $count; $i++) {
             $secTitle = trim($secMatches[1][$i][0]);
@@ -126,14 +121,13 @@ class Changelog extends Component
 
     /**
      * Collect bullet points (- ..., * ..., or numbered 1. ...) from a section content.
+     * (Not used in the Blade; kept for backwards compatibility.)
      */
     private function collectBullets(string $txt): array
     {
         $items = [];
         $txt = trim($txt);
 
-        // Handle GitHub-flavored lists; ignore code blocks
-        // Extract lines starting with -, *, or \d.
         $lines = preg_split('/\n/', $txt);
         $buf = [];
 
@@ -145,11 +139,9 @@ class Changelog extends Component
 
         foreach ($lines as $line) {
             if (preg_match('/^\s*([-*]|\d+\.)\s+(.+)$/', $line, $m)) {
-                // New bullet => flush previous
                 $flush();
                 $buf[] = $m[2];
             } else {
-                // Continuation of previous bullet (indented or wrapped)
                 if (!empty($buf)) {
                     $buf[] = $line;
                 }
@@ -157,7 +149,7 @@ class Changelog extends Component
         }
         $flush();
 
-        // Strip surrounding backticks from inline code if present (keep simple)
+        // Strip simple inline code backticks, keep text
         $items = array_map(function ($s) {
             return preg_replace('/`([^`]+)`/', '$1', $s);
         }, $items);
@@ -173,6 +165,9 @@ class Changelog extends Component
         return array_values(array_filter($this->entries, function ($e) use ($q) {
             if (str_contains(mb_strtolower($e['version']), $q)) return true;
             if (!empty($e['date']) && str_contains(mb_strtolower($e['date']), $q)) return true;
+            // search in raw markdown too
+            if (!empty($e['raw']) && str_contains(mb_strtolower($e['raw']), $q)) return true;
+            // sections fallback
             foreach ($e['sections'] as $sec) {
                 if (str_contains(mb_strtolower($sec['title']), $q)) return true;
                 foreach ($sec['items'] as $it) {

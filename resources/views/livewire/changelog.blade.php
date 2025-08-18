@@ -17,34 +17,28 @@
                         <div class="flex items-center justify-between">
                             <div class="font-semibold">
                                 {{ $entry['version'] }}
-                                @if ($entry['date'])
+                                @if (!empty($entry['date']))
                                     <span class="text-xs text-zinc-500 font-normal">· {{ $entry['date'] }}</span>
                                 @endif
                             </div>
                         </div>
 
-                        @if (empty($entry['sections']))
-                            <flux:text class="mt-2 text-sm">Keine Sektionen gefunden.</flux:text>
+                        @php
+                            $html = \App\Support\Markdown::convert($entry['raw'] ?? '');
+                        @endphp
+
+                        @if (empty($html))
+                            <flux:text class="mt-2 text-sm">Keine Inhalte gefunden.</flux:text>
                         @else
-                            <div class="mt-3 space-y-3">
-                                @foreach ($entry['sections'] as $section)
-                                    <div>
-                                        <div class="text-xs uppercase tracking-wide text-zinc-500 mb-1">
-                                            {{ $section['title'] }}
-                                        </div>
-                                        @if (empty($section['items']))
-                                            <div class="text-sm text-zinc-500">–</div>
-                                        @else
-                                            <ul class="list-disc pl-5 space-y-1">
-                                                @foreach ($section['items'] as $item)
-                                                    <li class="text-sm leading-relaxed">
-                                                        {{ $item }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </div>
-                                @endforeach
+                            <div
+                                class="mt-3 max-w-none prose dark:prose-invert md:prose-lg
+                                       [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl
+                                       [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
+                                       [&_li>ul]:mt-1 [&_li>ol]:mt-1
+                                       [&_ul_ul]:pl-6 [&_ul_ol]:pl-6 [&_ol_ul]:pl-6 [&_ol_ol]:pl-6
+                                       [&_li]:leading-relaxed"
+                            >
+                                {!! $html !!}
                             </div>
                         @endif
                     </div>

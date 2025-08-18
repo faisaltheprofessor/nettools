@@ -25,7 +25,6 @@ class UserSearch extends Component
 
         if (trim($this->searchTerm) === '') {
             $this->error = 'Bitte geben Sie einen Suchbegriff ein.';
-
             return;
         }
 
@@ -38,8 +37,18 @@ class UserSearch extends Component
 
             $ldapAttribute = $attributeMap[$this->searchAttribute] ?? 'uid';
 
+            $term = trim($this->searchTerm);
+
+            // 🔑 Normalize PID input
+            if ($this->searchAttribute === 'PID') {
+                $term = strtolower($term);
+                if (!str_starts_with($term, 'p')) {
+                    $term = 'p' . $term;
+                }
+            }
+
             // Convert user-friendly wildcard to LDAP syntax
-            $pattern = str_replace(['*', '?'], ['*', '?'], $this->searchTerm);
+            $pattern = str_replace(['*', '?'], ['*', '?'], $term);
 
             // Sanitize filter
             $ldapFilter = sprintf('(%s=%s)', $ldapAttribute, $pattern);
@@ -51,7 +60,6 @@ class UserSearch extends Component
 
             if ($users->isEmpty()) {
                 $this->error = 'Keine Benutzer gefunden.';
-
                 return;
             }
 
@@ -74,6 +82,7 @@ class UserSearch extends Component
             $this->error = $e->getMessage();
         }
     }
+
 
     public function loadGroupsAndInfo(string $pid)
     {

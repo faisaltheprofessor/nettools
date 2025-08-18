@@ -12,14 +12,24 @@
 
             <div class="flex justify-center w-full space-x-2">
                 <flux:input.group class="flex-1">
-                    <flux:select wire:model="searchAttribute" placeholder="Attribute..." required class="max-w-fit">
+                    <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required class="max-w-fit">
                         <flux:select.option value="PID">PID</flux:select.option>
                         <flux:select.option value="Nachname">Nachname</flux:select.option>
                         <flux:select.option value="Vollst. Name">Vollst. Name</flux:select.option>
                     </flux:select>
 
-                    <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
-                                placeholder="Suchbegriff eingeben..."/>
+
+                    @if ($searchAttribute === 'PID')
+                        <flux:input.group class="ml-2">
+                            <flux:input.group.prefix>p</flux:input.group.prefix>
+                            <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
+                                        placeholder="16184"
+                                        inputmode="numeric" pattern="[0-9]*"/>
+                        </flux:input.group>
+                    @else
+                        <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
+                                    placeholder="Suchbegriff eingeben..."/>
+                    @endif
                 </flux:input.group>
             </div>
 
@@ -109,8 +119,17 @@
                 Info: {{ $selectedUserInfo['info'] ?? '—' }}
             </flux:text>
             <flux:text class="mt-2">
-                Letzter
-                Login: {{ \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->format("d.m.Y H:i") . " ("  . \Carbon\Carbon::parse($selectedUserInfo['lastLogin'])->setTimezone("Europe/Berlin")->diffForHumans() . ")" ?? '—' }}
+                Letzter Login:
+                @php
+                    $lastLogin = $selectedUserInfo['lastLogin'] ?? null;
+                    try {
+                        $loginTime = $lastLogin ? \Carbon\Carbon::parse($lastLogin)->setTimezone('Europe/Berlin') : null;
+                    } catch (\Exception $e) {
+                        $loginTime = null;
+                    }
+                @endphp
+
+                {{ $loginTime ? $loginTime->format('d.m.Y H:i') . ' (' . $loginTime->diffForHumans() . ')' : '--' }}
             </flux:text>
             <flux:text class="mt-2">
                 Kontext: {{ $selectedUserInfo['context'] ?? '—' }}
