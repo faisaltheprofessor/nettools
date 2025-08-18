@@ -70,7 +70,7 @@
 
 
         <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
-            <livewire:sidebar-bookmark-folders />
+            <livewire:sidebar-bookmark-folders/>
         </flux:navlist.group>
     </flux:navlist>
 
@@ -163,9 +163,8 @@
     </flux:modal>
 
 
-
     <livewire:feedback name="submit-feedback"></livewire:feedback>
-    <livewire:changelog />
+    <livewire:changelog/>
 </flux:main>
 
 <!-- Logout Form -->
