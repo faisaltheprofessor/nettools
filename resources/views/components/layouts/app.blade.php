@@ -14,9 +14,7 @@
     <flux:sidebar.toggle class="lg:hidden" icon="x-mark"/>
     <div class="flex">
         <flux:brand href="/dashboard" logo="{{ asset('logo.png') }}" wire:navigate name="{{ config('app.name') }}"
-                    class="px-2 dark:hidden"/>
-
-
+                    class="px-2"/>
         <flux:badge
             color="lime"
             size="sm"
@@ -27,8 +25,6 @@
         >
             {{ config('app.version') }}
         </flux:badge>
-
-
     </div>
 
 
