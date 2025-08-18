@@ -6,7 +6,7 @@
             <input
                 type="text"
                 wire:model.defer="ip"
-                placeholder="z.B. 10.93.14.15"
+                placeholder="z.B. 10.93.203.64"
                 autocomplete="off"
                 class="flux-input"
                 style="width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 0.375rem; border: 1px solid #ccc;"
