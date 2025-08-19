@@ -11,6 +11,7 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
     - Anliegen besitzen jetzt einen **Status** (open, in progress, resolved, closed, wontfix)
     - Filtermöglichkeiten für Anliegen nach **Typ**, **Status**, **User** und **Volltextsuche**
     - Filter sind in einem **Accordion** organisiert für bessere Übersicht
+    - Reaktionen
 - Gruppen- und Detailansicht: Nutzer können nun einzelne Gruppen kopieren
 - DNS und DHCP: Hinweis zur Service-Migration per Rechtsklick wird nun angezeigt
 
