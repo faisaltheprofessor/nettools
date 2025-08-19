@@ -56,7 +56,11 @@ class FeedbackViewer extends Component
 
     public function selectFeedback($id)
     {
-        $this->selectedFeedback = Feedback::with(['user','comments.user'])->find($id);
+        $this->selectedFeedback = Feedback::with([
+            'user',
+            'comments.user',
+            'comments.reactions.user',
+        ])->find($id);
         $this->newComment = '';
     }
 
@@ -66,7 +70,7 @@ class FeedbackViewer extends Component
         if (!in_array($status, Feedback::statuses(), true)) return;
 
         $this->selectedFeedback->update(['status' => $status]);
-        $this->selectedFeedback->refresh()->load(['user','comments.user']);
+        $this->selectedFeedback->refresh()->load(['user','comments.user','comments.reactions.user']);
     }
 
     public function addComment()
@@ -81,7 +85,43 @@ class FeedbackViewer extends Component
         ]);
 
         $this->newComment = '';
-        $this->selectedFeedback->refresh()->load(['user','comments.user']);
+        $this->selectedFeedback->refresh()->load(['user','comments.user','comments.reactions.user']);
+    }
+
+    public function toggleReaction($commentId, $emoji)
+    {
+        $comment = FeedbackComment::find($commentId);
+        if (!$comment) return;
+
+        $userGuid = Auth::user()->guid;
+
+        $existing = $comment->reactions()
+            ->where('user_guid', $userGuid)
+            ->where('emoji', $emoji)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            $comment->reactions()->create([
+                'user_guid' => $userGuid,
+                'emoji'     => $emoji,
+            ]);
+        }
+
+        // refresh the selected feedback thread
+        if ($this->selectedFeedback) {
+            $this->selectedFeedback->refresh()->load(['user','comments.user','comments.reactions.user']);
+        }
+    }
+
+    // << NEW: called from Blade on long-hover BEFORE showing popover >>
+    public function refreshReactions($commentId = null): void
+    {
+        if ($this->selectedFeedback) {
+            $this->selectedFeedback->refresh()->load(['user','comments.user','comments.reactions.user']);
+        }
+        // No return needed; Livewire action still resolves a JS Promise.
     }
 
     public function clearFilters(): void

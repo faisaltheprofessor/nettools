@@ -17,4 +17,10 @@ class FeedbackComment extends Model
     {
         return $this->belongsTo(User::class, 'user_guid', 'guid');
     }
+
+    public function reactions()
+    {
+        return $this->hasMany(FeedbackCommentReaction::class, 'comment_id');
+    }
+
 }
