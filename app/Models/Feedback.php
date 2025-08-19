@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Feedback extends Model
 {
-    use HasFactory;
+    protected $table = 'feedback';
 
     protected $fillable = [
         'user_guid',
@@ -16,14 +14,25 @@ class Feedback extends Model
         'title',
         'description',
         'attachments',
+        'status',
     ];
 
     protected $casts = [
         'attachments' => 'array',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class, 'user_guid', 'guid');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(FeedbackComment::class)->latest();
+    }
+
+    public static function statuses(): array
+    {
+        return ['open', 'in_progress', 'resolved', 'closed', 'wontfix'];
     }
 }

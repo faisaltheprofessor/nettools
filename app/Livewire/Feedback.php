@@ -32,18 +32,17 @@ class Feedback extends Component
         $this->validate();
 
         FeedbackModel::create([
-            'user_guid'   => Auth::user()->guid, // make sure this column exists in DB
+            'user_guid'   => Auth::user()->guid,
             'type'        => $this->type,
             'title'       => $this->title,
             'description' => $this->description,
             'attachments' => $this->attachments,
+            'status'      => 'open', // default
         ]);
 
-        // Reset all form fields
         $this->reset(['type', 'title', 'description', 'attachments']);
-        $this->type = 'feature'; // keep default
+        $this->type = 'feature';
 
-        // Tell FileUploader to reset itself
         $this->dispatch('reset-file-uploader');
         $this->dispatch('feedback-submitted');
         Flux::modal("feedback-submitted")->show();

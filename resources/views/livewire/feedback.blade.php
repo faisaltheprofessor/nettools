@@ -1,4 +1,4 @@
- <flux:modal name="submit-feedback" variant="flyout" position="left" :dismissible="false" @feedback-submitted="$flux.modal('submit-feedback').close();confetti()">
+ <flux:modal name="submit-feedback" variant="flyout" position="left" :dismissible="false" @feedback-submitted="$flux.modal('submit-feedback').close();confetti()" class="relative">
         <div class="mt-10 justify-center space-y-6">
             <div>
                 <flux:heading size="lg">Ich möchte</flux:heading>
@@ -33,9 +33,12 @@
                 </flux:button>
             </div>
 
-            @if (session()->has('message'))
 
-            @endif
+            <div class="absolute bottom-1 right-1">
+                <flux:button variant="primary" color="sky" href="/feedbacks" wire:navigate >Alle Anliegen anzeigen</flux:button>
+            </div>
+
+
         </div>
  </flux:modal>
 
