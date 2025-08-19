@@ -2,7 +2,19 @@
     <h2 class="text-lg font-bold flex justify-center items-center">DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator
                 service="dns"/> </span></h2>
 
-    <div class="flex mt-32 items-center justify-center">
+    <flux:callout>
+        <x-slot name="icon">
+            <flux:icon.information-circle variant="solid" class="text-lime-500"/>
+        </x-slot>
+
+        <flux:callout.heading>Service-Migration</flux:callout.heading>
+
+        <flux:callout.text>
+            <p>Zum Migrieren des Dienstes auf einen VS bitte mit der rechten Maustaste auf den gewünschten VS klicken.</p>
+        </flux:callout.text>
+    </flux:callout>
+
+    <div class="flex items-center justify-center">
         <div>
 
             <div class="flex gap-12 mt-3">
