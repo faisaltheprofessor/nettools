@@ -144,9 +144,9 @@
             @if(count($selectedUserGroups) > 0)
                 <flux:div copyable class="grid  gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
-                        <flux:badge variant="pill" color="{{ $colors[$index % count($colors)] }}" class="w-fit">
+                        <flux:badge2 variant="pill" color="{{ $colors[$index % count($colors)] }}" class="w-fit">
                             {{ $group }}
-                        </flux:badge>
+                        </flux:badge2>
                     @endforeach
                 </flux:div>
             @else

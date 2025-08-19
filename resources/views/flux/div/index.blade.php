@@ -5,7 +5,7 @@
 
 @php
 $classes = Flux::classes()
-    ->add('relative')
+    ->add('relative pt-10 ')
 
     ;
 @endphp
