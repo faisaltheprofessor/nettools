@@ -43,15 +43,30 @@
     <div class="overflow-auto" style="min-height: 300px;">
         <flux:table :paginate="$feedbacks">
             <flux:table.columns>
-                <flux:table.column wire:click="sortBy('type')" sortable :direction="$sortField === 'type' ? $sortDirection : null" class="px-2">Typ</flux:table.column>
-                <flux:table.column wire:click="sortBy('user.name')" sortable :direction="$sortField === 'user.name' ? $sortDirection : null">User</flux:table.column>
+                <flux:table.column
+                    wire:click="sortBy('type')"
+                    sortable
+                    :direction="$sortField === 'type' ? $sortDirection : null"
+                    class="px-2">Typ</flux:table.column>
+
+                <flux:table.column
+                    wire:click="sortBy('user.name')"
+                    sortable
+                    :direction="$sortField === 'user.name' ? $sortDirection : null">User</flux:table.column>
+
                 <flux:table.column>Status</flux:table.column>
-                <flux:table.column wire:click="sortBy('created_at')" sortable :direction="$sortField === 'created_at' ? $sortDirection : null">Datum</flux:table.column>
+
+                <flux:table.column
+                    wire:click="sortBy('created_at')"
+                    sortable
+                    :direction="$sortField === 'created_at' ? $sortDirection : null">Datum</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @foreach ($feedbacks as $fb)
-                    <flux:table.row wire:click="selectFeedback({{ $fb->id }})" class="cursor-pointer hover:bg-gray-100">
+                    <flux:table.row
+                        wire:click="selectFeedback({{ $fb->id }})"
+                        class="cursor-pointer hover:bg-gray-100">
                         <flux:table.cell>{{ ucfirst($fb->type) }}</flux:table.cell>
                         <flux:table.cell>{{ $fb->user->name ?? 'Unknown' }}</flux:table.cell>
                         <flux:table.cell>
@@ -123,7 +138,10 @@
                 <div class="flex flex-wrap justify-center gap-4 mb-6">
                     @foreach ($attachments as $file)
                         <div class="p-2 bg-gray-50 border rounded shadow-sm">
-                            <img src="{{ asset('storage/feedback/' . basename($file)) }}" alt="Attachment" class="w-64 object-cover rounded-md border shadow-sm">
+                            <img
+                                src="{{ asset('storage/feedback/' . basename($file)) }}"
+                                alt="Attachment"
+                                class="w-64 object-cover rounded-md border shadow-sm">
                         </div>
                     @endforeach
                 </div>
@@ -142,7 +160,7 @@
                 {{-- Kommentare --}}
                 <div class="space-y-3">
                     @forelse ($selectedFeedback->comments as $c)
-                        <div class="rounded-lg border p-3 bg-white/50 dark:bg-zinc-900/30" wire:key="comment-{{ $c->id }}">
+                        <div id="comment-{{ $c->id }}" class="rounded-lg border p-3 bg-white/50 dark:bg-zinc-900/30" wire:key="comment-{{ $c->id }}">
                             <div class="text-xs text-zinc-500 mb-1">
                                 <span class="font-medium">{{ $c->user->name ?? 'Unknown' }}</span>
                                 • {{ $c->created_at->diffForHumans() }}
