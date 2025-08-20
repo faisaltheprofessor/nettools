@@ -6,6 +6,7 @@ use App\Facades\RemoteSSH;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Log;
 use Throwable;
 
 class DhcpRestartCommand extends Command
@@ -31,6 +32,8 @@ class DhcpRestartCommand extends Command
         Cache::put($queuedKey, true, 180); // 3-minute UI flag
 
         try {
+            Log::info('Starte Neustart...');
+
             $this->info('Starte Neustart...');
 
             $sshUser = config('remote.dhcp.user');
@@ -38,7 +41,10 @@ class DhcpRestartCommand extends Command
             $clusterHost = config('remote.dhcp.cluster.hostname');
             $tmpFile = '/tmp/dhcprestart.sh';
 
+            Log::info("Connecting");
             RemoteSSH::connect($clusterHost, $sshUser, $sshPass);
+
+            Log::info("Executing");
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$3}'");
             $runningServer = trim(RemoteSSH::getOutput());
 
@@ -46,6 +52,7 @@ class DhcpRestartCommand extends Command
             $status = trim(RemoteSSH::getOutput());
 
             if ($status === 'Offline') {
+                Log::info("Offline");
                 $this->warn('DHCP ist offline. Starte stattdessen den Dienst.');
                 $startCommand = app(DhcpStartCommand::class);
 
@@ -58,6 +65,7 @@ class DhcpRestartCommand extends Command
 
             RemoteSSH::connect($runningServer, $sshUser, $sshPass);
 
+            Log::info("Generating Script");
             $script = <<<'BASH'
 #!/bin/bash
 service=DHCP_SERVER
@@ -83,6 +91,7 @@ echo "Failed after 10 attempts at $(date)" >> $log
 exit 1
 BASH;
 
+            Log::info("Executing Scripts");
             RemoteSSH::execute('echo '.escapeshellarg($script)." > {$tmpFile}");
             RemoteSSH::execute("chmod +x {$tmpFile}");
             RemoteSSH::execute("{$tmpFile} {$runningServer}");
