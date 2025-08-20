@@ -123,26 +123,30 @@
     </span>
 
         <!-- Normal content -->
-    <span
-        x-show="!copied"
-        x-cloak
-        class="absolute inset-0 inline-flex items-center justify-center px-0 overflow-hidden"
-        x-transition.opacity.duration.200ms
-    >
-        <span class="truncate max-w-full">
-            {{ $slot }}
-        </span>
+        <!-- Normal content -->
+<span
+    x-show="!copied"
+    x-cloak
+    class="absolute inset-0 inline-flex items-center justify-center px-0 overflow-hidden"
+    x-transition.opacity.duration.200ms
+>
+    <span class="truncate max-w-full" data-copy-source>
+        {{ $slot }}
     </span>
+</span>
 
-        <!-- Kopiert state -->
-    <span
-        x-show="copied"
-        x-cloak
-        class="absolute inset-0 inline-flex items-center justify-center text-center overflow-hidden"
-        x-transition.opacity.duration.200ms
-    >
-        Kopiert 🎉
-    </span>
+        <!-- Kopiert state (visible feedback only) -->
+<span
+    x-show="copied"
+    x-cloak
+    class="absolute inset-0 flex items-center justify-center text-center overflow-hidden"
+    x-transition.opacity.duration.200ms
+    data-no-copy
+    aria-hidden="true"
+>
+    Kopiert 🎉
+</span>
+
 </span>
 
 
