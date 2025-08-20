@@ -141,7 +141,7 @@
         class="absolute inset-0 inline-flex items-center justify-center text-center overflow-hidden"
         x-transition.opacity.duration.200ms
     >
-        Kopiert
+        Kopiert 🎉
     </span>
 </span>
 
