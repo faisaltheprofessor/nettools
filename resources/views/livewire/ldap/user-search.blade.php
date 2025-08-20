@@ -1,9 +1,10 @@
 <div class="w-[80%] md:w-[70%] mx-auto">
     @php
         $colors = [
-            'green',  'emerald', 'teal', 'amber', 'yellow', 'lime',
-            'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'orange'
-        ];
+    'green', 'emerald', 'teal', 'cyan', 'sky', 'blue',
+    'indigo', 'violet', 'purple', 'fuchsia', 'orange',
+    'amber', 'yellow', 'lime',
+];
     @endphp
     <flux:card>
         <div class="flex flex-col items-center gap-2">
@@ -12,7 +13,8 @@
 
             <div class="flex justify-center w-full space-x-2">
                 <flux:input.group class="flex-1">
-                    <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required class="max-w-fit">
+                    <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required
+                                 class="max-w-fit">
                         <flux:select.option value="PID">PID</flux:select.option>
                         <flux:select.option value="Nachname">Nachname</flux:select.option>
                         <flux:select.option value="Vollst. Name">Vollst. Name</flux:select.option>
@@ -23,7 +25,7 @@
                         <flux:input.group class="ml-2">
                             <flux:input.group.prefix>p</flux:input.group.prefix>
                             <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
-                                        placeholder="16184"
+                                        placeholder="12345"
                                         inputmode="numeric" pattern="[0-9]*"/>
                         </flux:input.group>
                     @else
@@ -38,11 +40,11 @@
             @endif
 
             <flux:button
-                variant="primary"
-                color="green"
-                wire:click="search"
-                type="button"
-                class="cursor-pointer mt-4"
+                    variant="primary"
+                    color="green"
+                    wire:click="search"
+                    type="button"
+                    class="cursor-pointer mt-4"
             >
                 Suchen
             </flux:button>
@@ -52,7 +54,7 @@
     @if ($searchResults && $searchResults->count() > 0)
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-6">
             <table
-                class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-auto max-h-72 overflow-auto bg-gray-50 rounded p-2">
+                    class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-auto max-h-72 overflow-auto bg-gray-50 rounded p-2">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th class="px-4 py-3 whitespace-nowrap w-auto">PID</th>
@@ -136,15 +138,18 @@
             </flux:text>
         @endif
         <flux:separator class="mt-3 mb-3">
-            Gruppenzugehörigkeiten @if($selectedUserGroups != null)<flux:badge size="sm" color="lime">{{ count($selectedUserGroups) }}</flux:badge>@endif
+            Gruppenzugehörigkeiten @if($selectedUserGroups != null)
+                <flux:badge size="sm" color="lime">{{ count($selectedUserGroups) }}</flux:badge>
+            @endif
         </flux:separator>
         @if ($selectedUserGroups !== null)
-                <div class="flex justify-center">
-                </div>
+            <div class="flex justify-center">
+            </div>
             @if(count($selectedUserGroups) > 0)
                 <flux:div copyable class="grid  gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
-                        <flux:badge2 variant="pill" color="{{ $colors[$index % count($colors)] }}" class="w-fit z-50">
+                        <flux:badge2 copyable variant="pill" color="{{ $colors[$index % count($colors)] }}"
+                                     class="w-fit z-50">
                             {{ $group }}
                         </flux:badge2>
                     @endforeach

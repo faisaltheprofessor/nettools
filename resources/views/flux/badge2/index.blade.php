@@ -82,7 +82,71 @@
     {{ $icon }}
     <?php endif; ?>
 
-    {{ $slot }}
+    <span
+        x-data="{
+        copied: false,
+        COPY_MS: 500,
+        fixSize() {
+            const r = $refs.measure.getBoundingClientRect();
+            $el.style.width  = r.width + 'px';
+            $el.style.height = r.height + 'px';
+        },
+        async doCopy() {
+            const html  = $refs.measure.innerHTML.trim();
+            const plain = $refs.measure.textContent.trim();
+            try {
+                if (navigator.clipboard && window.ClipboardItem) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'text/html':  new Blob([html],  { type: 'text/html' }),
+                            'text/plain': new Blob([plain], { type: 'text/plain' }),
+                        })
+                    ]);
+                } else {
+                    await navigator.clipboard.writeText(plain);
+                }
+                this.copied = true;
+                setTimeout(() => this.copied = false, this.COPY_MS);
+            } catch (e) { console.error(e); }
+        }
+    }"
+        x-init="fixSize()"
+        @resize.window="fixSize()"
+        @click="doCopy()"
+        class="relative inline-flex items-center justify-center align-middle cursor-pointer select-none overflow-hidden"
+        style="display:inline-flex"
+        aria-live="polite"
+    >
+    <!-- Hidden measurer to lock size -->
+    <span x-ref="measure" class="invisible pointer-events-none inline-block whitespace-nowrap">
+        {{ $slot }}
+    </span>
+
+        <!-- Normal content -->
+    <span
+        x-show="!copied"
+        x-cloak
+        class="absolute inset-0 inline-flex items-center justify-center px-0 overflow-hidden"
+        x-transition.opacity.duration.200ms
+    >
+        <span class="truncate max-w-full">
+            {{ $slot }}
+        </span>
+    </span>
+
+        <!-- Kopiert state -->
+    <span
+        x-show="copied"
+        x-cloak
+        class="absolute inset-0 inline-flex items-center justify-center text-center overflow-hidden"
+        x-transition.opacity.duration.200ms
+    >
+        Kopiert
+    </span>
+</span>
+
+
+
 
     <?php if ($iconTrailing): ?>
     <div class="ps-1 flex items-center" data-flux-badge-icon:trailing>
@@ -95,7 +159,8 @@
     <?php endif; ?>
 
 
-    <span
+{{--    COPY BUTTON--}}
+   {{-- <span
         class="ml-2"
         x-data="{ copied: false }"
         x-on:click="
@@ -137,5 +202,5 @@
         <flux:icon.clipboard-document variant="mini" class="block [[data-copyable-copied]>&]:hidden "/>
     </span>
 
-
+--}}
 </flux:button-or-div>
