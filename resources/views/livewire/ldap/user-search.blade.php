@@ -22,6 +22,7 @@
                         <flux:select.option value="PID">PID</flux:select.option>
                         <flux:select.option value="Nachname">Nachname</flux:select.option>
                         <flux:select.option value="Vollst. Name">Vollst. Name</flux:select.option>
+                        <flux:select.option value="Titel">Stellenzeichen</flux:select.option>
                     </flux:select>
 
                     @if ($searchAttribute === 'PID')
@@ -30,7 +31,11 @@
                             <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="12345" inputmode="numeric" pattern="[0-9]*"/>
                         </flux:input.group>
                     @else
-                        <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="Suchbegriff eingeben..."/>
+                        <flux:input
+                            wire:model.defer="searchTerm"
+                            wire:keydown.enter="search"
+                            placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben...' }}"
+                        />
                     @endif
                 </flux:input.group>
             </div>
@@ -55,7 +60,7 @@
                     <th class="px-4 py-3 w-auto">Vorname</th>
                     <th class="px-4 py-3 w-auto">Email</th>
                     <th class="px-4 py-3 w-auto">Gruppen</th>
-
+                </tr>
                 </thead>
                 <tbody>
                 @foreach ($searchResults as $user)
@@ -105,6 +110,7 @@
 
             <flux:text class="mt-2">Nachname: {{ $selectedUserInfo['surname'] ?? '—' }}</flux:text>
             <flux:text class="mt-2">Vorname: {{ $selectedUserInfo['givenname'] ?? '—' }}</flux:text>
+            <flux:text class="mt-2">Titel: {{ $selectedUserInfo['title'] ?? '—' }}</flux:text>
             <flux:text class="mt-2">Info: {{ $selectedUserInfo['info'] ?? '—' }}</flux:text>
             <flux:text class="mt-2">
                 Letzter Login:

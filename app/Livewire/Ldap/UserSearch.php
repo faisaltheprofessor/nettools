@@ -41,6 +41,7 @@ class UserSearch extends Component
                 'PID'          => 'uid',
                 'Nachname'     => 'sn',
                 'Vollst. Name' => 'fullname',
+                'Titel'        => 'title',   // NEW: search by job title (Stellenzeichen)
             ];
 
             $ldapAttribute = $attributeMap[$this->searchAttribute] ?? 'uid';
@@ -50,7 +51,7 @@ class UserSearch extends Component
                 $term = $this->normalizePid($term);
             }
 
-            // user-friendly wildcard passthrough
+            // wildcard passthrough allowed
             $pattern = str_replace(['*', '?'], ['*', '?'], $term);
             $ldapFilter = sprintf('(%s=%s)', $ldapAttribute, $pattern);
 
@@ -68,6 +69,7 @@ class UserSearch extends Component
                     'fullname'       => $user->getFirstAttribute('cn') ?? '',
                     'surname'        => $user->getFirstAttribute('sn') ?? '',
                     'givenname'      => $user->getFirstAttribute('givenname') ?? '',
+                    'title'          => $user->getFirstAttribute('title') ?? '',
                     'email'          => $user->getFirstAttribute('mail') ?? '',
                     'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
                 ]);
@@ -95,6 +97,7 @@ class UserSearch extends Component
                 'pid'       => $user->getFirstAttribute('uid') ?? '',
                 'surname'   => $user->getFirstAttribute('sn') ?? '',
                 'givenname' => $user->getFirstAttribute('givenname') ?? '',
+                'title'     => $user->getFirstAttribute('title') ?? '',
                 'info'      => $user->getFirstAttribute('description') ?? '',
                 'lastLogin' => $user->getFirstAttribute('logintime') ?? '—',
                 'context'   => method_exists($user, 'getContext') ? ($user->getContext() ?? '—') : '—',
@@ -249,7 +252,6 @@ class UserSearch extends Component
         // default tab
         $this->compareView          = 'common';
     }
-
 
     public function render()
     {
