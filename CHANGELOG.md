@@ -6,6 +6,7 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 ### Hinzugefügt
 - Gruppen- und Detailansicht: Inhalte können nun per Klick in die Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
 - Option zum Vergleichen von **User-Gruppen**
+- Benutzer-Suche: Benutzer können jetzt über das Kennzeichen gesucht werden.
 
 - ### Behoben / Geändert
 - Entfernen unerwünschter Zeichen beim Kopieren
