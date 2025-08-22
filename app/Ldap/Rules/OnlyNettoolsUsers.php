@@ -4,7 +4,6 @@ namespace App\Ldap\Rules;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use LdapRecord\Laravel\Auth\Rule;
-use LdapRecord\Models\ActiveDirectory\Group;
 use LdapRecord\Models\Model as LdapRecord;
 
 class OnlyNettoolsUsers implements Rule

@@ -74,10 +74,6 @@
     <flux:spacer/>
 
     <flux:navlist variant="outline">
-        <flux:menu.item icon="message-circle-more" class="cursor-pointer" @click="Flux.modal('submit-feedback').show()">
-            Anliegen Melden
-        </flux:menu.item>
-
         <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer"
                         x-on:click.prevent="document.getElementById('logout-form').submit()">
             Logout
@@ -109,6 +105,8 @@
                 Hallo, {{ Str::title(Auth::user()->name) }}
             </div>
             <div class="flex items-center gap-2">
+
+                <livewire:feedback name="submit-feedback"></livewire:feedback>
                 {{-- Notifications --}}
                 <livewire:notification-bell />
 
@@ -159,7 +157,6 @@
     </flux:modal>
 
 
-    <livewire:feedback name="submit-feedback"></livewire:feedback>
     <livewire:changelog/>
 </flux:main>
 

@@ -16,7 +16,7 @@
             <flux:icon.square-user-round class="size-12"/>
             <p>User Suchen</p>
 
-            <div class="flex justify-center w-full space-x-2">
+            <div class="flex justify-center w-full md:w-2/3 lg:w-1/3 space-x-2">
                 <flux:input.group class="flex-1">
                     <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required class="max-w-fit">
                         <flux:select.option value="PID">PID</flux:select.option>
