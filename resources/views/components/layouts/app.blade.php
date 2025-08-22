@@ -106,7 +106,7 @@
             </div>
             <div class="flex items-center gap-2">
 
-                <livewire:feedback name="submit-feedback"></livewire:feedback>
+                <livewire:feedback name="submit-feedback"></livewire:feedback">
                 {{-- Notifications --}}
                 <livewire:notification-bell />
 

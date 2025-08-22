@@ -63,6 +63,7 @@ class Feedback extends Component
 
         $this->dispatch('feedback-submitted');
         Flux::modal('feedback-submitted')->show();
+        $this->js('confetti()');
     }
 
     public function render()

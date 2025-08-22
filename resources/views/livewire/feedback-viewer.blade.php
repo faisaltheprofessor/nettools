@@ -1,7 +1,7 @@
 <flux:card class="mt-4 space-y-4">
 
     {{-- Filters --}}
-    <flux:accordion class="rounded-2xl border border-zinc-200 dark:border-zinc-700">
+    <flux:accordion class="p-2 rounded-2xl border border-zinc-200 dark:border-zinc-700">
         <flux:accordion.item open>
             <flux:accordion.heading>Filter</flux:accordion.heading>
             <flux:accordion.content>
@@ -220,7 +220,7 @@
                                 Antworten
                             </button>
 
-                            {{-- Reactions (unchanged behavior) --}}
+                            {{-- Reactions --}}
                             @php $available = ['👍','❤️','😂','🚀']; @endphp
                             <div class="flex items-center gap-2">
                                 @foreach ($available as $emoji)
