@@ -44,7 +44,7 @@
         @if ($filteredItems->isEmpty())
             <p class="text-center text-gray-500 dark:text-gray-400 text-xl">Keine Lesezeichen gefunden.</p>
         @else
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 @foreach ($filteredItems as $item)
                     @php
                         $imgUpload = $item->icon
@@ -52,47 +52,63 @@
                             : null;
                         $favicon = $imgUpload ?: ($item->favicon ?: null);
                         $canManage = ($isAdmin || ($userGuid !== null && $item->user_guid === $userGuid));
+                        $isFolder = $item->type === 'folder';
+                        $displayUrl = $isFolder ? null : (parse_url($item->url, PHP_URL_HOST) ?: $item->url);
                     @endphp
 
                     <div class="relative">
-                        @if ($item->type === 'folder')
+                        @if ($isFolder)
                             <div wire:click="openFolder({{ $item->id }})" class="cursor-pointer">
-                                <flux:card class="p-4 text-center rounded-lg space-y-2 h-44 flex flex-col justify-center">
-                                    <div class="flex justify-center items-center">
-                                        @if($item->icon_name)
-                                            <flux:icon :name="$item->icon_name" />
-                                        @else
-                                            <flux:icon.folder />
-                                        @endif
+                                <flux:card class="p-3 md:p-4 rounded-lg group hover:shadow-sm transition">
+                                    <div class="flex items-center gap-3">
+                                        <div class="shrink-0">
+                                            @if($item->icon_name)
+                                                <flux:icon :name="$item->icon_name" class="w-10 h-10 text-zinc-500 dark:text-zinc-300" />
+                                            @else
+                                                <flux:icon.folder class="w-10 h-10 text-zinc-500 dark:text-zinc-300" />
+                                            @endif
+                                        </div>
+                                        <div class="min-w-0">
+                                            <flux:heading size="sm" class="truncate dark:text-white">
+                                                {{ $item->name }}
+                                            </flux:heading>
+                                            <flux:text class="text-xs text-gray-500 dark:text-gray-300">
+                                                {{ $item->children()->count() }} Einträge
+                                            </flux:text>
+                                        </div>
                                     </div>
-                                    <flux:heading size="sm" class="truncate dark:text-white">{{ $item->name }}</flux:heading>
-                                    <flux:text class="text-xs text-gray-500 dark:text-gray-300">
-                                        {{ $item->children()->count() }} Einträge
-                                    </flux:text>
                                 </flux:card>
                             </div>
                         @else
-                            <a href="{{ $item->url }}" target="_blank" rel="noopener noreferrer">
-                                <flux:card class="p-4 text-center rounded-lg space-y-2 h-44 flex flex-col justify-center">
-                                    <div class="flex justify-center items-center relative">
-                                        @if ($favicon)
-                                            <img
-                                                src="{{ $favicon }}"
-                                                class="w-16 h-16 mr-1"
-                                                alt="Favicon"
-                                                onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');"
-                                            />
-                                        @endif
-                                        <div class="{{ $favicon ? 'hidden' : '' }}">
-                                            @if($item->icon_name)
-                                                <flux:icon :name="$item->icon_name" class="w-16 h-16" />
-                                            @else
-                                                <flux:icon.link class="w-16 h-16" />
+                            <a href="{{ $item->url }}" target="_blank" rel="noopener noreferrer" class="block">
+                                <flux:card class="p-3 md:p-4 rounded-lg group hover:shadow-sm transition">
+                                    <div class="flex items-center gap-3">
+                                        <div class="shrink-0 relative">
+                                            @if ($favicon)
+                                                <img
+                                                    src="{{ $favicon }}"
+                                                    class="w-8 h-8 rounded-md"
+                                                    alt="Favicon"
+                                                    onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');"
+                                                />
                                             @endif
+                                            <div class="{{ $favicon ? 'hidden' : '' }}">
+                                                @if($item->icon_name)
+                                                    <flux:icon :name="$item->icon_name" class="w-8 h-8 text-zinc-500 dark:text-zinc-300" />
+                                                @else
+                                                    <flux:icon.link class="w-8 h-8 text-zinc-500 dark:text-zinc-300" />
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <flux:heading size="sm" class="truncate dark:text-white">
+                                                {{ $item->name }}
+                                            </flux:heading>
+                                            <flux:text class="text-xs text-gray-500 dark:text-gray-300 truncate">
+                                                {{ $displayUrl }}
+                                            </flux:text>
                                         </div>
                                     </div>
-                                    <flux:heading size="sm" class="truncate dark:text-white">{{ $item->name }}</flux:heading>
-                                    <flux:text class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ $item->url }}</flux:text>
                                 </flux:card>
                             </a>
                         @endif
@@ -109,7 +125,6 @@
                                     <flux:icon.pencil-square class="w-4 h-4" />
                                 </flux:button>
 
-                                <!-- Delete trigger; stop bubbling -->
                                 <div @click.stop>
                                     <flux:modal.trigger name="delete-bookmark-{{ $item->id }}">
                                         <flux:button size="xs" variant="danger" title="Löschen">
@@ -160,7 +175,6 @@
             <div class="flex items-center gap-2">
                 <flux:heading size="lg">Lesezeichen hinzufügen</flux:heading>
 
-                <!-- Tooltip about root rule -->
                 <flux:tooltip toggleable>
                     <flux:button icon="information-circle" size="sm" variant="ghost" />
                     <flux:tooltip.content class="max-w-[20rem] space-y-2">

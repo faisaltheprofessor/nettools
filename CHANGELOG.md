@@ -4,6 +4,7 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 ## Unreleased
 ### Hinzugefügt
 - Synchronisierung der Benutzer-E-Mail-Adresse aus dem LDP während des Logins
+- Bessere UI für Bookmarks
 
 ## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
