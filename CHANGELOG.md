@@ -3,6 +3,8 @@ Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+
+## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
 - Gruppen- und Detailansicht: Inhalte können nun per Klick in die Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
 - Option zum Vergleichen von **User-Gruppen**
@@ -12,7 +14,7 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 - Entfernen unerwünschter Zeichen beim Kopieren
 - Platzhalter in einigen Bereichen korrigiert
 
-## [0.9.0-beta.3] - 2025-08-19
+## [0.9.0-beta.3] - 19-08-2025
 ### Hinzugefügt
 - Anliegen: Anliegen-Einträge können nun als **Diskussion/Forum** genutzt werden
     - Nutzer können Kommentare zu Anliegen schreiben
@@ -23,13 +25,13 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 - Gruppen- und Detailansicht: Nutzer können nun einzelne Gruppen kopieren
 - DNS und DHCP: Hinweis zur Service-Migration per Rechtsklick wird nun angezeigt
 
-## [0.9.0-beta.2] - 2025-08-18
+## [0.9.0-beta.2] - 18-08-2025
 ### Behoben / Geändert
 - Usersuche: PID-Suchfeld ergänzt automatisch ein führendes **"p"**, falls nicht vorhanden
 - Gruppen-Detailansicht: **Letzter Login** zeigt nun **`--`**, wenn kein gültiges Datum vorhanden ist
 - Changelog-Ansicht: Verbesserte Markdown-Render-Logik mit CommonMark und Tailwind-Typography, Überschriften, Bullet-Listen und verschachtelte Listen werden korrekt angezeigt
 
-## [0.9.0-beta.1] - 2025-08-15
+## [0.9.0-beta.1] - 15-08-2025
 ### Hinzugefügt
 - Erste Beta-Version der Anwendung
 - Statusabfrage (Polling) für DHCP- und DNS-Dienste
