@@ -1,11 +1,14 @@
 # Changelog
 Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.  
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
+## Unreleased
+### Hinzugefügt
+- Synchronisierung der Benutzer-E-Mail-Adresse aus dem LDP während des Logins
 
 ## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
 - Gruppen- und Detailansicht: Inhalte können nun per Klick in die `[Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
-- Option zum Vergleichen von **User-Gruppen**](****____****)`
+- Option zum Vergleichen von **User-Gruppen**
 - Benutzer-Suche: Benutzer können jetzt über das Kennzeichen gesucht werden.
 
 ### Behoben / Geändert
