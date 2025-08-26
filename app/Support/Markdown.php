@@ -22,8 +22,12 @@ final class Markdown
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
             'max_nesting_level' => 100,
+            // Make permalinks subtle and not intrusive
             'heading_permalink' => [
-                'symbol' => '#',
+                'symbol' => '¶',
+                'insert' => 'after',
+                'min_heading_level' => 2,
+                'max_heading_level' => 4,
                 'aria_hidden' => true,
             ],
         ];

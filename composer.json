@@ -18,7 +18,8 @@
         "league/commonmark": "^2.4",
         "livewire/flux": "^2.2",
         "livewire/flux-pro": "^2.2",
-        "livewire/volt": "^1.7.0"
+        "livewire/volt": "^1.7.0",
+        "spatie/laravel-markdown": "^2.7"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

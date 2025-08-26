@@ -2,15 +2,13 @@
 Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.  
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
-
 ## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
-- Gruppen- und Detailansicht: Inhalte können nun per Klick in die Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
-- Option zum Vergleichen von **User-Gruppen**
+- Gruppen- und Detailansicht: Inhalte können nun per Klick in die `[Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
+- Option zum Vergleichen von **User-Gruppen**](****____****)`
 - Benutzer-Suche: Benutzer können jetzt über das Kennzeichen gesucht werden.
 
-- ### Behoben / Geändert
+### Behoben / Geändert
 - Entfernen unerwünschter Zeichen beim Kopieren
 - Platzhalter in einigen Bereichen korrigiert
 
