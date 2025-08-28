@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Throwable;
+use App\Support\LogsServiceActions; // <-- add this
 
 class DNS extends Component
 {
+    use LogsServiceActions;
+
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dnsStatus = null;
@@ -87,7 +90,6 @@ class DNS extends Component
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
-
             return;
         }
 
@@ -97,7 +99,6 @@ class DNS extends Component
                 heading: 'Start blockiert',
                 variant: 'info'
             );
-
             return;
         }
 
@@ -105,6 +106,9 @@ class DNS extends Component
             Artisan::queue('dns:start-service', [
                 'server' => $this->selectedServer,
             ]);
+
+            // log start
+            $this->logAction('dns', 'start', $this->selectedServer);
 
             Flux::toast(
                 text: "Start des DNS-Dienstes auf {$this->selectedServer} wurde eingeleitet.",
@@ -135,7 +139,6 @@ class DNS extends Component
                 heading: 'Bereits in Warteschlange',
                 variant: 'warning'
             );
-
             return;
         }
 
@@ -144,12 +147,14 @@ class DNS extends Component
         try {
             Artisan::queue('dns:restart-service');
 
+            // log restart
+            $this->logAction('dns', 'restart', $this->runningServer, ['queued' => true]);
+
             Flux::toast(
                 text: 'Neustart wurde gestartet. Bitte prüfen Sie den Status in Kürze.',
                 heading: 'Neustart läuft',
                 variant: 'success'
             );
-
         } catch (Throwable $e) {
             Flux::toast(
                 text: $e->getMessage(),
@@ -175,13 +180,15 @@ class DNS extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
-
                 return;
             }
 
             Artisan::queue('dns:migrate-service', [
                 'targetNode' => $node,
             ]);
+
+            // log migrate
+            $this->logAction('dns', 'migrate', $node);
 
             Flux::toast(
                 text: "Migration nach {$node} gestartet.",

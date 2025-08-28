@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Throwable;
+use App\Support\LogsServiceActions; // <-- our trait
 
 class DHCP extends Component
 {
+    use LogsServiceActions;
+
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
@@ -92,12 +95,15 @@ class DHCP extends Component
                 heading: 'Bereits in Warteschlange',
                 variant: 'warning'
             );
-
             return;
         }
+
         $this->beingRestarted = true;
         try {
             Artisan::queue('dhcp:restart-service');
+
+            // log restart
+            $this->logAction('dhcp', 'restart', $this->runningServer, ['queued' => true]);
 
             Flux::toast(
                 text: 'Neustart wurde gestartet. Bitte prüfen Sie den Status in Kürze.',
@@ -155,12 +161,15 @@ class DHCP extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
-
                 return;
             }
+
             Artisan::queue('dhcp:migrate-service', [
                 'targetNode' => $node,
             ]);
+
+            // log migrate
+            $this->logAction('dhcp', 'migrate', $node);
 
             Flux::toast(
                 text: "Migration nach {$node} gestartet.",
@@ -186,7 +195,6 @@ class DHCP extends Component
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
-
             return;
         }
 
@@ -196,7 +204,6 @@ class DHCP extends Component
                 heading: 'Start blockiert',
                 variant: 'info'
             );
-
             return;
         }
 
@@ -204,6 +211,9 @@ class DHCP extends Component
             Artisan::queue('dhcp:start-service', [
                 'server' => $this->selectedServer,
             ]);
+
+            // log start
+            $this->logAction('dhcp', 'start', $this->selectedServer);
 
             Flux::toast(
                 text: "Start des DHCP-Dienstes auf {$this->selectedServer} wurde eingeleitet.",
