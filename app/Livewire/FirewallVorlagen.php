@@ -42,6 +42,8 @@ class FirewallVorlagen extends Component
     /** @var array<int, array<int, array{src:string,dst:string,port:string}>> */
     public array $previewGroups = [];
 
+    public $emailBodyPreview;
+
     public function mount(): void
     {
         $this->refreshTemplates();
@@ -382,7 +384,7 @@ class FirewallVorlagen extends Component
 
         $this->mailtoUrl = 'mailto:?subject=' . rawurlencode($this->emailSubject)
                          . '&body=' . rawurlencode($this->emailBody);
-
+    $this->emailBodyPreview = preg_replace('/^  /m', '', $this->emailBody);
         $this->modal('preview-email')->show();
     }
 

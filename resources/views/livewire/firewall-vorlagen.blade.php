@@ -53,7 +53,8 @@
                                 {{-- Quellen (optional) --}}
                                 <flux:field>
                                     <flux:label>Quelle(n)</flux:label>
-                                    <flux:textarea
+                                    <flux:textarea2
+                                        copyable
                                         wire:model.defer="ruleGroups.{{ $i }}.sourcesText"
                                         rows="4"
                                         placeholder="10.93.xx.xx"
@@ -66,7 +67,8 @@
                                 {{-- Ziele --}}
                                 <flux:field>
                                     <flux:label>Ziel(e)</flux:label>
-                                    <flux:textarea
+                                    <flux:textarea2
+                                        copyable
                                         wire:model.defer="ruleGroups.{{ $i }}.destinationsText"
                                         rows="4"
                                         placeholder="10.93.15.14&#10;vs508"
@@ -161,8 +163,7 @@
                 </flux:text>
             </div>
 
-            <flux:textarea rows="18" readonly class="font-mono">{{ $this->emailBody }}</flux:textarea>
-
+            <flux:textarea2 copyable rows="18" readonly class="font-mono">{{  $emailBodyPreview }} </flux:textarea2>
             {{-- Tabellen je Regel --}}
             <div class="space-y-6">
                 @forelse($this->previewGroups as $idx => $rows)
