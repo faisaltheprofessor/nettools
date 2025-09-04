@@ -30,6 +30,7 @@ class FirewallVorlagen extends Component
         ['label' => 'DNS',   'value' => '53/udp'],
         ['label' => 'LDAP',  'value' => '389/tcp'],
         ['label' => 'LDAPS', 'value' => '636/tcp'],
+        ['label' => 'SSH', 'value' => '22/tcp'],
         // extend as needed...
     ];
     public array $portLabelMap = [];
