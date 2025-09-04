@@ -29,7 +29,7 @@
         <div class="mt-4">
             <flux:field>
                 <flux:label>Name des Verfahrens</flux:label>
-                <flux:input wire:model.defer="name" placeholder="Nettools (HTTPS)" />
+                <flux:input wire:model.defer="name" placeholder="Nettools" />
             </flux:field>
         </div>
 
