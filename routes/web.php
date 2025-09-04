@@ -64,6 +64,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('feedbacks', \App\Livewire\FeedbackViewer::class)
         ->name('feedbacks.index');
+
+    Route::get('firewall-template', \App\Livewire\FirewallVorlagen::class)
+        ->name('firewall.vorlage');
 });
 
 Route::middleware(['auth'])->group(function () {
