@@ -147,7 +147,7 @@
         <div class="mt-6 flex flex-col sm:flex-row gap-3">
             <flux:button wire:click="saveTemplate" icon="save">Speichern</flux:button>
             <flux:button wire:click="saveAsTemplate" icon="save">Speichern als neu</flux:button>
-            <flux:button wire:click="generate" variant="primary" icon="paper-airplane">E-Mail erzeugen</flux:button>
+            <flux:button wire:click="generate" variant="primary" color="green" icon="paper-airplane">E-Mail erzeugen</flux:button>
         </div>
     </flux:card>
 
@@ -198,7 +198,7 @@
 
             <div class="flex">
                 <flux:spacer />
-                <flux:button as="a" href="{{ $this->mailtoUrl }}" target="_blank" rel="noopener" variant="primary" icon="paper-airplane">
+                <flux:button as="a" href="{{ $this->mailtoUrl }}" color="green" target="_blank" rel="noopener" variant="primary" icon="paper-airplane">
                     Im E-Mail-Client öffnen
                 </flux:button>
             </div>

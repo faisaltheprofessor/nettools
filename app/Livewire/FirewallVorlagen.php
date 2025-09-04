@@ -333,23 +333,37 @@ class FirewallVorlagen extends Component
 
     /* ===== E-Mail erzeugen ===== */
 
-    public function generate(): void
+      public function generate(): void
     {
         $this->emailSubject = "Firewall-Antrag – {$this->name}";
 
         $this->previewGroups = [];
-        $textBlocks = [];
+        $blocks = [];
 
         foreach ($this->ruleGroups as $idx => $r) {
             $sources      = $this->normalizeList((string)($r['sourcesText'] ?? ''));
             $destinations = $this->normalizeList((string)($r['destinationsText'] ?? ''));
             $ports        = array_values($r['ports'] ?? []);
 
+            // For modal table
             $rows = $this->zipRows3($sources, $destinations, $ports);
             $this->previewGroups[] = $rows;
 
-            $table = $this->buildTableText($rows);
-            $textBlocks[] = "Regel ".($idx+1).":\nQuellen / Ziele / Ports:\n\n".$table;
+            // Comma-separated text
+            $srcText  = !empty($sources)      ? implode(', ', $sources)      : '—';
+            $dstText  = !empty($destinations) ? implode(', ', $destinations) : '—';
+            $portText = !empty($ports)        ? implode(', ', $ports)        : '—';
+
+            // Singular/plural labels
+            $srcLabel  = count($sources)      > 1 ? 'Quellen' : 'Quelle';
+            $dstLabel  = count($destinations) > 1 ? 'Ziele'   : 'Ziel';
+            $portLabel = count($ports)        > 1 ? 'Ports'   : 'Port';
+
+            $blocks[] =
+                'REGEL ' . ($idx + 1) . ":\n" .
+                "  {$srcLabel}: {$srcText}\n" .
+                "  {$dstLabel}: {$dstText}\n" .
+                "  {$portLabel}: {$portText}";
         }
 
         $greeting  = "Guten Tag,";
@@ -357,12 +371,12 @@ class FirewallVorlagen extends Component
         $verfahren = "Verfahren: {$this->name}";
 
         $this->emailBody = trim(
-            "{$greeting}\n\n".
-            "{$intro}\n\n".
-            "{$verfahren}\n\n".
-            implode("\n\n", $textBlocks)."\n\n".
-            "Vielen Dank für die Umsetzung.\n".
-            "Freundliche Grüße\n".
+            $greeting . "\n\n" .       // blank line after greeting
+            $intro . "\n\n" .          // blank line after intro
+            $verfahren . "\n\n" .      // blank line before rules
+            implode("\n\n", $blocks) . "\n\n" .
+            "Vielen Dank für die Umsetzung.\n\n" . // extra space before closing
+            "Freundliche Grüße\n" .
             (auth()->check() ? auth()->user()->name : '')
         );
 
@@ -371,6 +385,10 @@ class FirewallVorlagen extends Component
 
         $this->modal('preview-email')->show();
     }
+
+
+
+
 
     /** @return array<int, array{src:string,dst:string,port:string}> */
     private function zipRows3(array $sources, array $destinations, array $ports): array
@@ -406,6 +424,39 @@ class FirewallVorlagen extends Component
         return $header . PHP_EOL . $line . PHP_EOL . $body;
     }
 
+    private function buildKeyValueBlocks(array $rows): string
+    {
+        $lines = [];
+        foreach ($rows as $r) {
+            $src  = trim($r['src'] ?? '') ?: '—';
+            $dst  = trim($r['dst'] ?? '') ?: '—';
+            $port = trim($r['port'] ?? '') ?: '—';
+
+            $lines[] =
+                "- Quelle: {$src}\n" .
+                "  Ziel:   {$dst}\n" .
+                "  Port:   {$port}";
+        }
+        return implode("\n\n", $lines);
+    }
+
+    private function buildBlockLayout(array $rows, int $regelNr): string
+    {
+        $lines = [];
+        foreach ($rows as $r) {
+            $src  = trim($r['src'] ?? '') ?: '—';
+            $dst  = trim($r['dst'] ?? '') ?: '—';
+            $port = trim($r['port'] ?? '') ?: '—';
+
+            $lines[] =
+                "Regel {$regelNr}:\n" .
+                "  Quelle: {$src}\n" .
+                "  Ziel:   {$dst}\n" .
+                "  Port:   {$port}";
+        }
+
+        return implode("\n\n", $lines);
+    }
     private function normalizeList(string $input): array
     {
         $items = preg_split('/[\r\n,]+/', $input) ?: [];
