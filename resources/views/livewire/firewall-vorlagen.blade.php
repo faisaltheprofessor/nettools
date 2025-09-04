@@ -38,10 +38,15 @@
             <flux:accordion>
                 @foreach($this->ruleGroups as $i => $rule)
                     {{-- Only the item where index matches $expandedIndex is expanded --}}
-                    <flux:accordion.item :expanded="$expandedIndex === $i || $i === 0">
+                    <flux:accordion.item expanded>
                         <flux:accordion.heading class="flex items-center gap-2">
-                            <flux:badge variant="pill" icon="brick-wall-fire">Regel {{ $i + 1 }}</flux:badge>
-                        </flux:accordion.heading>
+    <flux:badge
+        variant="pill"
+        icon="brick-wall-fire"
+        :color="['teal','sky','indigo'][$i % 3]">
+        Regel {{ $i + 1 }}
+    </flux:badge>
+</flux:accordion.heading>
 
                         <flux:accordion.content>
                             <div class="space-y-6">

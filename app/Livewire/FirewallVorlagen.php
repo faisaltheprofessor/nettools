@@ -18,7 +18,6 @@ class FirewallVorlagen extends Component
     /** Active/open accordion index (single-open behavior) */
     public int $expandedIndex = 0;
 
-    /** Avoid Livewire $rules collision: use $ruleGroups for data */
     /** @var array<int, array{sourcesText:string,destinationsText:string,ports:array,portInput:string,portQuick:string,portSelect:string}> */
     public array $ruleGroups = [];
 
@@ -292,7 +291,7 @@ class FirewallVorlagen extends Component
         $this->templateId = (string)$tpl->id;
         $this->refreshTemplates();
 
-        Flux::toast('Gespeichert');
+        Flux::toast('Neue Vorlage wurde angelegt.');
         $this->dispatch('flux-toast', title: 'Gespeichert', description: 'Neue Vorlage wurde angelegt');
     }
 
@@ -325,12 +324,6 @@ class FirewallVorlagen extends Component
 
         if (empty($this->ruleGroups)) {
             $this->addError('ruleGroups', 'Mindestens eine Regel ist erforderlich.');
-        } else {
-            foreach ($this->ruleGroups as $idx => $r) {
-                if (count($this->normalizeList((string)($r['destinationsText'] ?? ''))) < 1) {
-                    $this->addError("ruleGroups.$idx.destinationsText", "Mindestens ein Ziel in Regel ".($idx+1)." angeben.");
-                }
-            }
         }
         if ($this->getErrorBag()->isNotEmpty()) {
             throw \Illuminate\Validation\ValidationException::withMessages($this->getErrorBag()->toArray());
