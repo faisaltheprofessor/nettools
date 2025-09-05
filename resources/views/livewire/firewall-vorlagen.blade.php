@@ -101,8 +101,9 @@
                                             wire:model.defer="ruleGroups.{{ $i }}.portInput"
                                             placeholder="z. B. 8443/tcp"
                                             class="flex-1"
+                                            wire:keydown.enter="addCustomPort({{ $i }})"
                                         />
-                                        <flux:button wire:click="addCustomPort({{ $i }})" icon="plus">Hinzufügen</flux:button>
+                                        <flux:button wire:click="addCustomPort({{ $i }})"  icon="plus">Hinzufügen</flux:button>
                                     </div>
 
                                     {{-- Ausgewählte Ports --}}
