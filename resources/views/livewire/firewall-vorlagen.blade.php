@@ -77,7 +77,7 @@
 
                                 {{-- Ports / Protokolle  --}}
                                 <flux:field label="Ports &amp; Protokolle">
-                                    {{-- Searchable select that adds on change --}}
+                                    <flux:label>Port(s) auswählen oder hinzufügen</flux:label>
                                     <div class="max-w-full">
                                         <flux:select
                                             variant="listbox"
