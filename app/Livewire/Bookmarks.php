@@ -12,30 +12,33 @@ use Livewire\WithFileUploads;
 class Bookmarks extends Component
 {
     use WithFileUploads;
+
     protected $queryString = [
         'currentFolderId' => ['as' => 'folder', 'except' => null],
+        'search'          => ['as' => 'q', 'except' => ''],
     ];
+
+    // UI state
     public string $search = '';
     public ?int $currentFolderId = null;
     public array $breadcrumbs = [];
-    public bool $globalSearch = false;
+    public bool $includeChildren = false;
 
-    // Create modal state
+    public string $viewMode = 'grid';     // grid|list (persisted: users.bookmark_view)
+    public string $nameSortDir = 'asc';   // asc|desc  (persisted: users.bookmark_sort_dir)
+
+    // Create state
     public bool $showModal = false;
     public string $newBookmarkName = '';
     public string $newBookmarkUrl  = '';
     public ?int  $newBookmarkParentId = null;
-    public string $newBookmarkType = 'link'; // link|folder
-
-    // Icon selection for create
-    public string $iconChoice = 'favicon';   // favicon|hero|upload
-    public ?string $iconName  = null;        // heroicon name
-    public $newBookmarkIcon   = null;        // uploaded PNG
-
-    // Admin/global toggle
+    public string $newBookmarkType = 'link';
+    public string $iconChoice = 'hero';   // default hero on create
+    public ?string $iconName  = 'link';   // default hero icon for links
+    public $newBookmarkIcon   = null;
     public bool $makeGlobal = false;
 
-    // ---- Edit modal state ----
+    // Edit state
     public bool $showEditModal = false;
     public ?int $editId = null;
     public string $editName = '';
@@ -46,39 +49,75 @@ class Bookmarks extends Component
     public ?string $editIconName = null;
     public $editIconUpload = null;
 
-    // Heroicon options (extend as needed)
-    public array $heroiconOptions = [
-        'globe-alt','link','bookmark','star','bolt','rocket-launch',
-        'code-bracket','cpu-chip','cube','presentation-chart-line',
-        'document-text','photo','film','rss',
-        'folder','folder-open','cloud','server','shield-check',
-    ];
-
     protected array $messages = [
         'newBookmarkName.required' => 'Dieses Feld ist erforderlich.',
         'newBookmarkUrl.required'  => 'Dieses Feld ist erforderlich.',
         'newBookmarkUrl.url'       => 'Bitte eine gültige URL eingeben.',
         'newBookmarkType.required' => 'Dieses Feld ist erforderlich.',
         'newBookmarkType.in'       => 'Ungültiger Typ ausgewählt.',
-        'newBookmarkIcon.image'    => 'Die Datei muss ein Bild sein.',
-        'newBookmarkIcon.file'     => 'Bitte eine gültige Datei hochladen.',
-        'newBookmarkIcon.max'      => 'Die Datei darf nicht größer als 2048 KB sein.',
         'iconName.required'        => 'Bitte ein Symbol auswählen.',
-
         'editName.required'        => 'Dieses Feld ist erforderlich.',
         'editUrl.required'         => 'Dieses Feld ist erforderlich.',
         'editUrl.url'              => 'Bitte eine gültige URL eingeben.',
-        'editIconUpload.image'     => 'Die Datei muss ein Bild sein.',
-        'editIconUpload.file'      => 'Bitte eine gültige Datei hochladen.',
-        'editIconUpload.max'       => 'Die Datei darf nicht größer als 2048 KB sein.',
     ];
 
     public function mount(): void
     {
+        if ($u = Auth::user()) {
+            // view mode
+            $this->viewMode = in_array($u->bookmark_view ?? 'grid', ['grid','list'], true) ? $u->bookmark_view : 'grid';
+
+            // sort dir (ASC/DESC)
+            $dir = $u->bookmark_sort_dir ?? 'asc';
+            $this->nameSortDir = in_array($dir, ['asc','desc'], true) ? $dir : 'asc';
+
+            // force the sort key to 'name' to match your requirement
+            if (($u->bookmark_sort ?? null) !== 'name') {
+                $u->bookmark_sort = 'name';
+                $u->save();
+            }
+        }
+
+        $this->currentFolderId = ($this->currentFolderId === null || $this->currentFolderId === '')
+            ? null
+            : (int) $this->currentFolderId;
+
+        // ensure create defaults consistent with requested behavior
+        $this->applyCreateDefaults();
+
         $this->setBreadcrumbs();
     }
 
-    /* ========== Admin helpers ========== */
+    public function hydrate(): void
+    {
+        $this->currentFolderId = ($this->currentFolderId === null || $this->currentFolderId === '')
+            ? null
+            : (int) $this->currentFolderId;
+
+        $this->newBookmarkParentId = ($this->newBookmarkParentId === null || $this->newBookmarkParentId === '')
+            ? null
+            : (int) $this->newBookmarkParentId;
+
+        $this->editParentId = ($this->editParentId === null || $this->editParentId === '')
+            ? null
+            : (int) $this->editParentId;
+
+        if (!in_array($this->nameSortDir, ['asc','desc'], true)) $this->nameSortDir = 'asc';
+        if (!in_array($this->viewMode, ['grid','list'], true)) $this->viewMode = 'grid';
+    }
+
+    protected function applyCreateDefaults(): void
+    {
+        if ($this->newBookmarkType === 'link') {
+            $this->iconChoice = 'hero';
+            if (!$this->iconName) $this->iconName = 'link';
+        } else {
+            $this->iconChoice = 'hero';
+            $this->iconName   = 'folder';
+        }
+    }
+
+    /* ===== Admin & ownership ===== */
 
     protected function adminUsers(): array
     {
@@ -103,7 +142,32 @@ class Bookmarks extends Component
         return $this->isAdmin() || ($uid !== null && $b->user_guid === $uid);
     }
 
-    /* ========== Breadcrumbs ========== */
+    /* ===== Prefs ===== */
+
+    protected function persistPref(array $attrs): void
+    {
+        if (!$user = Auth::user()) return;
+        foreach ($attrs as $k => $v) $user->setAttribute($k, $v);
+        $user->save();
+    }
+
+    public function setViewMode(string $mode): void
+    {
+        if (!in_array($mode, ['grid','list'], true)) return;
+        $this->viewMode = $mode;
+        $this->persistPref(['bookmark_view' => $mode]);
+    }
+
+    public function toggleNameSort(): void
+    {
+        $this->nameSortDir = $this->nameSortDir === 'asc' ? 'desc' : 'asc';
+        $this->persistPref([
+            'bookmark_sort'     => 'name',
+            'bookmark_sort_dir' => $this->nameSortDir,
+        ]);
+    }
+
+    /* ===== Breadcrumbs ===== */
 
     protected function setBreadcrumbs(): void
     {
@@ -127,147 +191,172 @@ class Bookmarks extends Component
     public function goBackTo(int $index): void
     {
         $this->breadcrumbs     = array_slice($this->breadcrumbs, 0, $index + 1);
-        $this->currentFolderId = $this->breadcrumbs[$index]['id'] ?? null;
+        $id = $this->breadcrumbs[$index]['id'] ?? null;
+        $this->currentFolderId = ($id === null || $id === '') ? null : (int) $id;
         $this->setBreadcrumbs();
     }
 
-    /* ========== Query helpers ========== */
+    /* ===== Query helpers ===== */
 
     protected function scopeAccessible($q)
     {
         return $q->accessible($this->currentUserGuid());
     }
 
+    protected function descendantFolderIds(?int $startId): array
+    {
+        if ($startId === null) return [];
+        $all = $this->scopeAccessible(Bookmark::where('type','folder'))->get(['id','parent_id']);
+        $byParent = [];
+        foreach ($all as $f) $byParent[$f->parent_id ?? 0][] = $f->id;
+
+        $stack = [$startId];
+        $seen  = [$startId => true];
+        $out   = [$startId];
+        while ($stack) {
+            $pid = array_pop($stack);
+            $kids = $byParent[$pid] ?? [];
+            foreach ($kids as $k) {
+                if (!isset($seen[$k])) {
+                    $seen[$k] = true; $out[] = $k; $stack[] = $k;
+                }
+            }
+        }
+        return $out;
+    }
+
+    protected function likePattern(string $q): string
+    {
+        $q = trim($q);
+        if ($q === '') return '%';
+        $q = str_replace(['%','_'], ['\\%','\\_'], $q);
+        $q = str_replace(['*','?'], ['%','_'], $q);
+        if (!str_contains($q, '%') && !str_contains($q, '_')) $q = "%{$q}%";
+        return strtolower($q);
+    }
+
     public function getFilteredItemsProperty()
     {
+        $base = $this->scopeAccessible(Bookmark::query());
+
+        // scope: current folder vs include children
+        if ($this->includeChildren) {
+            if ($this->currentFolderId === null) {
+                $desc = $this->scopeAccessible(Bookmark::where('type','folder'))->pluck('id')->all();
+                $base->where(function($q) use ($desc) {
+                    $q->whereNull('parent_id');
+                    if (!empty($desc)) $q->orWhereIn('parent_id', $desc);
+                });
+            } else {
+                $ids = $this->descendantFolderIds($this->currentFolderId);
+                if (empty($ids)) $base->where('parent_id', $this->currentFolderId);
+                else $base->whereIn('parent_id', $ids);
+            }
+        } else {
+            $base->where('parent_id', $this->currentFolderId);
+        }
+
+        // search
         $query = trim($this->search);
-
-        $baseQuery = $this->scopeAccessible(Bookmark::query());
-
-        if (!$this->globalSearch) {
-            $baseQuery->where('parent_id', $this->currentFolderId);
-        }
-
         if ($query !== '') {
-            $baseQuery->where(function ($q) use ($query) {
-                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
-                    ->orWhereRaw('LOWER(url)  LIKE ?', ['%' . strtolower($query) . '%']);
+            $like = $this->likePattern($query);
+            $base->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(name) LIKE ? ESCAPE "\\"', [$like])
+                  ->orWhereRaw('LOWER(url)  LIKE ? ESCAPE "\\"', [$like]);
             });
-        } elseif ($this->globalSearch) {
-            $baseQuery->whereNull('parent_id');
         }
 
-        return $baseQuery
-            ->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
-            ->orderBy('name')
-            ->get();
+        // folders first + true alphabetical (case-insensitive)
+        $dir = in_array($this->nameSortDir, ['asc','desc'], true) ? strtoupper($this->nameSortDir) : 'ASC';
+        $base->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
+             ->orderByRaw("LOWER(name) COLLATE NOCASE {$dir}");
+
+        return $base->get();
     }
 
     public function getAllFoldersProperty()
     {
         return $this->scopeAccessible(
-            Bookmark::where('type', 'folder')->orderBy('name')
+            Bookmark::where('type', 'folder')->orderByRaw("LOWER(name) COLLATE NOCASE ASC")
         )->get();
     }
 
-    /* ========== Create flow ========== */
+    /* ===== Create / Edit / Delete ===== */
 
     public function updatedNewBookmarkType(): void
     {
+        // Always default to hero for both types
         if ($this->newBookmarkType === 'folder') {
             $this->iconChoice = 'hero';
             $this->iconName   = 'folder';
             $this->newBookmarkIcon = null;
         } else {
-            $this->iconChoice = 'favicon';
-            $this->iconName   = null;
+            $this->iconChoice = 'hero';
+            $this->iconName   = 'link'; // default hero icon for links
         }
     }
 
     public function createBookmark(): void
     {
-        // Block links at root (strict null check)
-        if (
-            $this->newBookmarkType === 'link'
-            && is_null($this->newBookmarkParentId ?? $this->currentFolderId)
-        ) {
-            // No toast; just a field error (tooltip explains the rule)
+        if ($this->newBookmarkType === 'link' && is_null($this->newBookmarkParentId ?? $this->currentFolderId)) {
             $this->addError('newBookmarkParentId', 'Bitte einen Ordner wählen.');
             return;
         }
 
-        // Validation
         $rules = [
             'newBookmarkName' => 'required|string|max:255',
             'newBookmarkType' => 'required|in:link,folder',
         ];
-
         if ($this->newBookmarkType === 'link') {
             $rules['newBookmarkUrl'] = 'required|url';
-
-            if ($this->iconChoice === 'upload') {
-                $rules['newBookmarkIcon'] = 'nullable|file|image|max:2048';
-            } elseif ($this->iconChoice === 'hero') {
-                $rules['iconName'] = 'required|string|max:64';
-            }
+            if ($this->iconChoice === 'hero') $rules['iconName'] = 'required|string|max:64';
         } else {
-            if ($this->iconChoice === 'hero' && $this->iconName) {
-                $rules['iconName'] = 'nullable|string|max:64';
-            }
+            if ($this->iconChoice === 'hero' && $this->iconName) $rules['iconName'] = 'nullable|string|max:64';
         }
-
         $this->validate($rules, $this->messages);
 
         $uid      = $this->currentUserGuid();
         $isGlobal = $this->isAdmin() && $this->makeGlobal;
         $parentId = $this->newBookmarkParentId ?? $this->currentFolderId;
 
-        // Icons
-        $iconPath   = null;  // uploaded path
-        $iconName   = null;  // heroicon
-        $faviconUrl = null;  // derived favicon
+        $iconName   = null;
+        $faviconUrl = null;
 
         if ($this->newBookmarkType === 'link') {
-            if ($this->iconChoice === 'upload' && $this->newBookmarkIcon) {
-                $iconPath = $this->newBookmarkIcon->store('icons', 'public');
-            } elseif ($this->iconChoice === 'hero') {
-                $iconName = $this->iconName;
+            if ($this->iconChoice === 'hero') {
+                $iconName = $this->iconName ?: 'link';
             } else {
                 $faviconUrl = $this->deriveFavicon($this->newBookmarkUrl);
+                if ($faviconUrl === null) $faviconUrl = '__none__'; // cache negative result
             }
         } else {
             $iconName = $this->iconName ?: 'folder';
         }
 
         Bookmark::create([
-            'name'      => $this->newBookmarkName,
-            'type'      => $this->newBookmarkType,
-            'url'       => $this->newBookmarkType === 'link' ? $this->newBookmarkUrl : null,
-            'parent_id' => $parentId,
-            'icon'      => $iconPath,
-            'icon_name' => $iconName,
-            'favicon'   => $faviconUrl,
-            'user_guid' => $isGlobal ? null : $uid,
-            'is_global' => $isGlobal,
+            'name'       => $this->newBookmarkName,
+            'type'       => $this->newBookmarkType,
+            'url'        => $this->newBookmarkType === 'link' ? $this->newBookmarkUrl : null,
+            'parent_id'  => $parentId,
+            'icon'       => null,
+            'icon_name'  => $iconName,
+            'favicon'    => $faviconUrl,
+            'user_guid'  => $isGlobal ? null : $uid,
+            'is_global'  => $isGlobal,
+            'sort_order' => 0,
         ]);
 
+        // reset create form but keep sensible defaults
         $this->reset([
-            'newBookmarkName',
-            'newBookmarkUrl',
-            'newBookmarkIcon',
-            'newBookmarkParentId',
-            'newBookmarkType',
-            'iconChoice',
-            'iconName',
-            'makeGlobal',
-            'showModal',
+            'newBookmarkName','newBookmarkUrl','newBookmarkIcon','newBookmarkParentId',
+            'newBookmarkType','makeGlobal','showModal',
         ]);
+        // re-apply default icon settings
+        $this->iconChoice = 'hero';
+        $this->iconName   = 'link';
 
-        $this->showModal = false;
         Flux::toast('Lesezeichen erfolgreich erstellt.');
     }
-
-    /* ========== Edit flow ========== */
 
     public function startEdit(int $id): void
     {
@@ -283,11 +372,7 @@ class Bookmarks extends Component
         $this->editUrl      = $b->url ?? '';
         $this->editParentId = $b->parent_id;
 
-        // Decide icon choice from stored fields
-        if (!empty($b->icon)) {
-            $this->editIconChoice = 'upload';
-            $this->editIconName   = null;
-        } elseif (!empty($b->icon_name)) {
+        if (!empty($b->icon_name)) {
             $this->editIconChoice = 'hero';
             $this->editIconName   = $b->icon_name;
         } else {
@@ -309,59 +394,51 @@ class Bookmarks extends Component
             return;
         }
 
-        // Block links at root on edit
         if ($this->editType === 'link' && is_null($this->editParentId ?? $this->currentFolderId)) {
             $this->addError('editParentId', 'Bitte einen Ordner wählen.');
             return;
         }
 
-        // Validate
-        $rules = [
-            'editName' => 'required|string|max:255',
-        ];
+        $rules = ['editName' => 'required|string|max:255'];
         if ($this->editType === 'link') {
             $rules['editUrl'] = 'required|url';
-            if ($this->editIconChoice === 'upload') {
-                $rules['editIconUpload'] = 'nullable|file|image|max:2048';
-            } elseif ($this->editIconChoice === 'hero') {
-                $rules['editIconName'] = 'required|string|max:64';
-            }
+            if ($this->editIconChoice === 'hero') $rules['editIconName'] = 'required|string|max:64';
         } else {
-            if ($this->editIconChoice === 'hero' && $this->editIconName) {
-                $rules['editIconName'] = 'nullable|string|max:64';
-            }
+            if ($this->editIconChoice === 'hero' && $this->editIconName) $rules['editIconName'] = 'nullable|string|max:64';
         }
         $this->validate($rules, $this->messages);
 
-        // Apply changes
         $b->name      = $this->editName;
         $b->parent_id = $this->editParentId ?? $this->currentFolderId;
 
         if ($this->editType === 'link') {
+            $urlChanged = $b->url !== $this->editUrl;
             $b->url = $this->editUrl;
 
-            if ($this->editIconChoice === 'upload' && $this->editIconUpload) {
-                $b->icon      = $this->editIconUpload->store('icons', 'public');
+            if ($this->editIconChoice === 'hero') {
+                $b->icon = null;
+                $b->icon_name = $this->editIconName ?: 'link';
+                $b->favicon = null; // force hero usage
+            } else {
+                $b->icon = null;
                 $b->icon_name = null;
-                // keep favicon as-is
-            } elseif ($this->editIconChoice === 'hero') {
-                $b->icon      = null;
-                $b->icon_name = $this->editIconName;
-            } else { // favicon
-                $b->icon      = null;
-                $b->icon_name = null;
-                $b->favicon   = $this->deriveFavicon($this->editUrl);
+
+                // Only (re)derive if URL changed OR favicon was never set
+                if ($urlChanged || $b->favicon === null) {
+                    $fav = $this->deriveFavicon($this->editUrl);
+                    $b->favicon = $fav ?? '__none__';
+                }
             }
         } else {
-            // folder
             $b->url = null;
             if ($this->editIconChoice === 'hero') {
-                $b->icon      = null;
+                $b->icon = null;
                 $b->icon_name = $this->editIconName ?: 'folder';
+                $b->favicon = null;
             } else {
-                // for folders, default to hero folder icon
-                $b->icon      = null;
+                $b->icon = null;
                 $b->icon_name = 'folder';
+                $b->favicon = null;
             }
         }
 
@@ -384,8 +461,6 @@ class Bookmarks extends Component
         $this->editIconUpload = null;
     }
 
-    /* ========== Delete ========== */
-
     public function deleteBookmark(int $id): void
     {
         $b = Bookmark::findOrFail($id);
@@ -393,12 +468,11 @@ class Bookmarks extends Component
             Flux::toast('Du darfst dieses Lesezeichen nicht löschen.', variant: 'danger');
             return;
         }
-
         $b->delete();
         Flux::toast('Lesezeichen gelöscht.');
     }
 
-    /* ========== Favicon util ========== */
+    /* ===== Favicon util (with negative cache) ===== */
 
     protected function deriveFavicon(?string $url): ?string
     {
@@ -408,7 +482,7 @@ class Bookmarks extends Component
             $resp = Http::timeout(5)->get($url);
             if ($resp->ok()) {
                 $html = $resp->body();
-                if (preg_match('/<link[^>]+rel=["\'](?:shortcut\s+icon|icon|apple-touch-icon)["\'][^>]*href=["\']([^"\']+)["\']/i', $html, $m)) {
+                if (preg_match('/<link[^>]+rel=[\"\'](?:shortcut\s+icon|icon|apple-touch-icon)[\"\'][^>]*href=[\"\']([^\"\']+)[\"\']/i', $html, $m)) {
                     $href   = $m[1];
                     $scheme = parse_url($url, PHP_URL_SCHEME) ?: 'https';
                     $host   = parse_url($url, PHP_URL_HOST);
@@ -424,6 +498,7 @@ class Bookmarks extends Component
             // ignore
         }
 
+        // last-resort guess; we don't test it to avoid 404 spam
         $scheme = parse_url($url, PHP_URL_SCHEME) ?: 'https';
         $host   = parse_url($url, PHP_URL_HOST);
         return $host ? ($scheme . '://' . $host . '/favicon.ico') : null;
@@ -432,10 +507,13 @@ class Bookmarks extends Component
     public function render()
     {
         return view('livewire.bookmarks', [
-            'filteredItems' => $this->filteredItems,
-            'allFolders'    => $this->allFolders,
-            'isAdmin'       => $this->isAdmin(),
-            'userGuid'      => $this->currentUserGuid(),
+            'filteredItems'   => $this->filteredItems,
+            'allFolders'      => $this->allFolders,
+            'isAdmin'         => $this->isAdmin(),
+            'userGuid'        => $this->currentUserGuid(),
+            'viewMode'        => $this->viewMode,
+            'nameSortDir'     => $this->nameSortDir,
+            'includeChildren' => $this->includeChildren,
         ]);
     }
 }

@@ -16,6 +16,7 @@ class Bookmark extends Model
         'icon_name',
         'favicon',
         'parent_id',
+        'sort_order',
     ];
 
     protected $casts = [
@@ -29,7 +30,10 @@ class Bookmark extends Model
 
     public function children()
     {
-        return $this->hasMany(self::class, 'parent_id')->orderBy('name');
+        // Browser-like: manual order then name
+        return $this->hasMany(self::class, 'parent_id')
+            ->orderBy('sort_order')
+            ->orderBy('name');
     }
 
     public function user()
@@ -45,5 +49,13 @@ class Bookmark extends Model
             $qq->where('user_guid', $userGuid)
                 ->orWhere('is_global', true);
         });
+    }
+
+    /** Helper: extract host/domain safely (null if not URL) */
+    public function getHostAttribute(): ?string
+    {
+        if (!$this->url) return null;
+        $host = parse_url($this->url, PHP_URL_HOST);
+        return $host ?: null;
     }
 }
