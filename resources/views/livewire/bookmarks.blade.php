@@ -58,7 +58,7 @@
                 <flux:input x-ref="searchInput" kbd="Strg k" icon="magnifying-glass" type="text"
                             class="min-w-[220px] w-full"
                             wire:model.live="search"
-                            placeholder="Suchen… (* und ? unterstützt)" />
+                            placeholder="Suchen… " />
             </div>
 
             <div class="flex items-center gap-2">
@@ -152,14 +152,16 @@
 
                                 <td class="px-3 py-2 hidden md:table-cell">
                                     @if(!$isFolder)
-                                        <div class="truncate max-w-[22rem]">{{ $displayUrl }}</div>
+                                        <flux:badge2 class="truncate max-w-[22rem]">{{ $item->url }}</flux:badge2>
                                     @endif
                                 </td>
 
                                 <td class="px-3 py-2 hidden lg:table-cell">
-                                    <span class="text-xs px-2 py-1 rounded-full border dark:border-zinc-700">
-                                        {{ $isFolder ? 'Ordner' : 'Link' }}
-                                    </span>
+                                    @if ($isFolder)
+                                        <flux:icon.folder />
+                                    @else
+                                        <flux:icon.link />
+                                    @endif
                                 </td>
 
                                 <td class="px-3 py-2 text-right whitespace-nowrap">
