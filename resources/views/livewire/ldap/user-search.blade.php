@@ -7,6 +7,7 @@
                 ? trim(($info['givenname'] ?? '') . ' ' . ($info['surname'] ?? '')) . ' (' . ($info['pid'] ?? '—') . ')'
                 : ($info['pid'] ?? '—') );
         $groupClasses = 'w-fit max-w-sm truncate hover:whitespace-normal focus:whitespace-normal break-words';
+        $b64 = fn (?string $s) => $s === null ? '' : base64_encode($s);
     @endphp
 
     <flux:card>
@@ -14,7 +15,7 @@
             <flux:icon.square-user-round class="size-12"/>
             <p>User Suchen</p>
 
-            <div class="flex justify-center w-full md:w-2/3 lg:w-1/3 space-x-2">
+            <div class="flex justify-center w-1/2 space-x-2">
                 <flux:input.group class="flex-1">
                     <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required class="max-w-fit">
                         <flux:select.option value="PID">PID</flux:select.option>
@@ -24,8 +25,8 @@
                     </flux:select>
 
                     @if ($searchAttribute === 'PID')
-                        <flux:input.group class="ml-2">
-                            <flux:input.group.prefix>p</flux:input.group.prefix>
+                        <flux:input.group>
+                            <flux:input.group.prefix class="rounded-l-none border-l-0">p</flux:input.group.prefix>
                             <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="12345" inputmode="numeric" pattern="[0-9]*"/>
                         </flux:input.group>
                     @else
@@ -101,7 +102,6 @@
         </div>
     @endif
 
-    {{-- Details modal --}}
     <flux:modal name="groups" class="w-content max-w-content max-h-full" :dismissible="false">
         @if ($selectedUserInfo)
             <flux:heading class="flex justify-center">{{ $selectedUserInfo['pid'] }}</flux:heading>
@@ -137,21 +137,24 @@
             @if(count($selectedUserGroups) > 0)
                 <flux:div copyable class="grid gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
-                        @php $dn = $groupDn($group); @endphp
+                        @php
+                            $dn = $groupDn($group);
+                            $dn64 = $b64($dn);
+                        @endphp
                         <span class="inline-flex items-center gap-2">
                             <flux:button
                                 size="xs"
                                 variant="ghost"
                                 class="p-0"
                                 title="Mitglieder anzeigen"
-                                wire:click.stop="openMembersModal('{{ addslashes($dn ?? '') }}')">
+                                wire:click="openMembersModal('{{ $dn64 }}')">
                                 <flux:icon.user-group class="size-4 shrink-0"/>
                             </flux:button>
 
                             <flux:badge2 copyable variant="pill"
-                                color="{{ $colors[$index % count($colors)] }}"
-                                class="{{ $groupClasses }}"
-                                title="{{ $group }}">
+                                         color="{{ $colors[$index % count($colors)] }}"
+                                         class="{{ $groupClasses }}"
+                                         title="{{ $group }}">
                                 {{ $group }}
                             </flux:badge2>
                         </span>
@@ -163,21 +166,29 @@
         @endif
     </flux:modal>
 
-    {{-- Members Modal --}}
+    @php
+        $dn = $memberListForDn ?? null;
+        $dnKey = $dn ? substr(md5($dn),0,10) : 'none';
+    @endphp
+
     <flux:modal name="groupMembers" class="w-[92vw] max-w-4xl" :dismissible="true">
         @php
-            $dn = $memberListForDn ?? null;
-            $members = $dn ? ($groupMembersByDn[$dn] ?? null) : null;
-            $paginator = ($dn && is_array($members)) ? $this->getMembersPaginator($dn) : null;
+            $state = $dn ? ($memberState[$dn] ?? null) : null;
+            $members = $state ? ($state['view'] ?? null) : null;
+            $paginator = ($dn && $members instanceof \Illuminate\Support\Collection) ? $this->getMembersPaginator($dn) : null;
 
             $displayGroupName = null;
             if ($dn) {
                 $found = array_search($dn, $selectedUserGroupMap ?? [], true);
                 $displayGroupName = $found !== false ? $found : $dn;
             }
+
+            $isSorted = $state['sorted'] ?? false;
+            $sortBy = $state['sortBy'] ?? null;
+            $sortDir = $state['sortDir'] ?? 'asc';
         @endphp
 
-        <div class="space-y-3">
+        <div class="space-y-3" wire:key="gm-wrap-{{ $dnKey }}-{{ $gmNonce }}">
             <flux:heading size="lg">
                 Gruppenmitglieder
                 @if($displayGroupName)
@@ -187,49 +198,83 @@
 
             <div class="mb-2">
                 <flux:input
-                    wire:model.live="memberSearch"
-                    placeholder="Suchen: PID, Vorname, Nachname, Telefon"
+                    wire:model.live.debounce.250ms="memberSearch"
+                    placeholder="Suchen: PID, Vorname, Nachname"
                 />
             </div>
 
             @if (!$dn)
                 <flux:text variant="subtle">Keine Gruppe ausgewählt.</flux:text>
-            @elseif ($members === null)
+            @elseif (!$members)
                 <flux:text variant="subtle">Lade Mitglieder…</flux:text>
             @elseif ($paginator)
                 <div class="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                    <flux:table :paginate="$paginator" class="w-full">
+                    <flux:table :paginate="$paginator" class="w-full" wire:key="gm-table-{{ $dnKey }}-{{ $gmNonce }}">
                         <flux:table.columns>
                             <flux:table.column>
                                 <div class="!pl-10 pr-4">
-                                    <button type="button" class="w-full text-left"
-                                            wire:click="setMemberSort('{{ $dn }}','pid')">
+                                    <button type="button"
+                                            class="w-full text-left cursor-pointer inline-flex items-center gap-1"
+                                            wire:click="setMemberSort('{{ base64_encode($dn) }}','pid')">
                                         PID
+                                        @if($isSorted && $sortBy === 'pid')
+                                            @if($sortDir === 'asc')
+                                                <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                            @else
+                                                <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                            @endif
+                                        @endif
                                     </button>
                                 </div>
                             </flux:table.column>
                             <flux:table.column>
-                                <button type="button" class="w-full text-left"
-                                        wire:click="setMemberSort('{{ $dn }}','givenname')">
+                                <button type="button"
+                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
+                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','givenname')">
                                     Vorname
+                                    @if($isSorted && $sortBy === 'givenname')
+                                        @if($sortDir === 'asc')
+                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                        @else
+                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                        @endif
+                                    @endif
                                 </button>
                             </flux:table.column>
                             <flux:table.column>
-                                <button type="button" class="w-full text-left"
-                                        wire:click="setMemberSort('{{ $dn }}','surname')">
+                                <button type="button"
+                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
+                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','surname')">
                                     Nachname
+                                    @if($isSorted && $sortBy === 'surname')
+                                        @if($sortDir === 'asc')
+                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                        @else
+                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                        @endif
+                                    @endif
                                 </button>
                             </flux:table.column>
                             <flux:table.column>
-                                <button type="button" class="w-full text-left"
-                                        wire:click="setMemberSort('{{ $dn }}','tel')">
+                                <button type="button"
+                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
+                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','tel')">
                                     Telefon
+                                    @if($isSorted && $sortBy === 'tel')
+                                        @if($sortDir === 'asc')
+                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                        @else
+                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                        @endif
+                                    @endif
                                 </button>
                             </flux:table.column>
                         </flux:table.columns>
 
                         @foreach ($paginator as $row)
+                            @php $rowKey = ($row['pid'] ?? '') !== '' ? $row['pid'] : ('i'.$loop->index); @endphp
                             <flux:table.row
+                                wire:key="gm-row-{{ $dnKey }}-{{ $gmNonce }}-{{ $rowKey }}"
                                 class="{{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/80' : 'bg-gray-100 dark:bg-gray-800/55' }} hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
 
                                 @php
@@ -240,7 +285,6 @@
                                     $tshow = $tel !== '' ? $tel : '—';
                                 @endphp
 
-                                {{-- PID --}}
                                 <flux:table.cell class="!pl-10 pr-4 whitespace-nowrap">
                                     <span x-data="{label: @js($pid)}" x-transition.opacity>
                                         <span @click="
@@ -254,7 +298,6 @@
                                     </span>
                                 </flux:table.cell>
 
-                                {{-- Vorname --}}
                                 <flux:table.cell class="px-4 whitespace-nowrap">
                                     <span x-data="{label: @js($v)}" x-transition.opacity>
                                         <span @click="
@@ -268,7 +311,6 @@
                                     </span>
                                 </flux:table.cell>
 
-                                {{-- Nachname --}}
                                 <flux:table.cell class="px-4 whitespace-nowrap">
                                     <span x-data="{label: @js($n)}" x-transition.opacity>
                                         <span @click="
@@ -282,7 +324,6 @@
                                     </span>
                                 </flux:table.cell>
 
-                                {{-- Telefon --}}
                                 <flux:table.cell class="px-4 whitespace-nowrap">
                                     <span x-data="{label: @js($tshow)}" x-transition.opacity>
                                         <span @click="
@@ -306,12 +347,6 @@
         </div>
     </flux:modal>
 
-
-
-
-
-
-    {{-- Compare modal --}}
     <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
         <div class="space-y-4">
             <div class="flex items-center justify-between">
@@ -344,46 +379,24 @@
 
             @if ($compareGroups)
                 <div class="flex flex-wrap items-center gap-2 mt-3">
-                    <flux:button
-                        size="sm"
-                        :variant="$compareView === 'user1' ? 'primary' : 'ghost'"
-                        color="lime"
-                        class="cursor-pointer"
-                        wire:click="setCompareView('user1')">
+                    <flux:button size="sm" :variant="$compareView === 'user1' ? 'primary' : 'ghost'" color="lime" class="cursor-pointer" wire:click="setCompareView('user1')">
                         Benutzer&nbsp;1: {{ $namePid($compareBaseInfo) }}
                         <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_first'] }}</flux:badge>
                     </flux:button>
 
-                    <flux:button
-                        size="sm"
-                        :variant="$compareView === 'user2' ? 'primary' : 'ghost'"
-                        color="sky"
-                        class="cursor-pointer"
-                        wire:click="setCompareView('user2')">
+                    <flux:button size="sm" :variant="$compareView === 'user2' ? 'primary' : 'ghost'" color="sky" class="cursor-pointer" wire:click="setCompareView('user2')">
                         Benutzer&nbsp;2: {{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}
                         <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_second'] }}</flux:badge>
                     </flux:button>
 
-                    <flux:button
-                        size="sm"
-                        :variant="$compareView === 'common' ? 'primary' : 'ghost'"
-                        color="violet"
-                        class="cursor-pointer"
-                        wire:click="setCompareView('common')">
+                    <flux:button size="sm" :variant="$compareView === 'common' ? 'primary' : 'ghost'" color="violet" class="cursor-pointer" wire:click="setCompareView('common')">
                         Gemeinsam
                         <flux:badge size="xs" class="ml-2">{{ count($compareGroups['common']) }}</flux:badge>
                     </flux:button>
 
-                    <flux:button
-                        size="sm"
-                        :variant="$compareView === 'diffs' ? 'primary' : 'ghost'"
-                        color="orange"
-                        class="cursor-pointer"
-                        wire:click="setCompareView('diffs')">
+                    <flux:button size="sm" :variant="$compareView === 'diffs' ? 'primary' : 'ghost'" color="orange" class="cursor-pointer" wire:click="setCompareView('diffs')">
                         Unterschiede
-                        <flux:badge size="xs" class="ml-2">
-                            {{ count($compareGroups['only_first']) + count($compareGroups['only_second']) }}
-                        </flux:badge>
+                        <flux:badge size="xs" class="ml-2">{{ count($compareGroups['only_first']) + count($compareGroups['only_second']) }}</flux:badge>
                     </flux:button>
                 </div>
 
@@ -393,10 +406,7 @@
                             <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
                             <flux:div copyable class="mt-2 space-x-2 space-y-2">
                                 @forelse ($compareGroups['all_first'] as $i => $g)
-                                    <flux:badge2 variant="pill"
-                                                 color="{{ $colors[$i % count($colors)] }}"
-                                                 class="{{ $groupClasses }}"
-                                                 title="{{ $g }}">
+                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
                                         {{ $g }}
                                     </flux:badge2>
                                 @empty
@@ -409,10 +419,7 @@
                             <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
                             <flux:div copyable class="mt-2 space-x-2 space-y-2">
                                 @forelse ($compareGroups['all_second'] as $i => $g)
-                                    <flux:badge2 variant="pill"
-                                                 color="{{ $colors[$i % count($colors)] }}"
-                                                 class="{{ $groupClasses }}"
-                                                 title="{{ $g }}">
+                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
                                         {{ $g }}
                                     </flux:badge2>
                                 @empty
@@ -425,10 +432,7 @@
                             <flux:heading size="sm">Gemeinsame Gruppen</flux:heading>
                             <flux:div copyable class="mt-2 space-x-2 space-y-2">
                                 @forelse ($compareGroups['common'] as $i => $g)
-                                    <flux:badge2 variant="pill"
-                                                 color="{{ $colors[$i % count($colors)] }}"
-                                                 class="{{ $groupClasses }}"
-                                                 title="{{ $g }}">
+                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
                                         {{ $g }}
                                     </flux:badge2>
                                 @empty
@@ -442,10 +446,7 @@
                                 <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
                                 <flux:div copyable class="mt-2 space-x-2 space-y-2">
                                     @forelse ($compareGroups['only_first'] as $i => $g)
-                                        <flux:badge2 variant="pill"
-                                                     color="{{ $colors[$i % count($colors)] }}"
-                                                     class="{{ $groupClasses }}"
-                                                     title="{{ $g }}">
+                                        <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
                                             {{ $g }}
                                         </flux:badge2>
                                     @empty
@@ -458,10 +459,7 @@
                                 <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
                                 <flux:div copyable class="mt-2 space-x-2 space-y-2">
                                     @forelse ($compareGroups['only_second'] as $i => $g)
-                                        <flux:badge2 variant="pill"
-                                                     color="{{ $colors[$i % count($colors)] }}"
-                                                     class="{{ $groupClasses }}"
-                                                     title="{{ $g }}">
+                                        <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
                                             {{ $g }}
                                         </flux:badge2>
                                     @empty

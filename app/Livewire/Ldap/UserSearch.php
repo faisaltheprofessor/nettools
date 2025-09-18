@@ -3,33 +3,32 @@
 namespace App\Livewire\Ldap;
 
 use App\Ldap\User;
-use Livewire\Component;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Component;
 
 class UserSearch extends Component
 {
-    // --- Top-level search ---
     public $searchAttribute = 'PID';
     public $searchTerm = '';
     public $searchResults;
     public $error = null;
 
-    // --- User details + groups modal ---
-    public $selectedUserGroups = null;        // display names
+    public $selectedUserGroups = null;
     public $selectedUserInfo = [];
-    public array $selectedUserGroupMap = [];   // display => DN
+    public array $selectedUserGroupMap = [];
 
-    // --- Members (opened in centered modal) ---
-    public array $groupMembersByDn = [];       // DN => rows
-    public ?string $memberListForDn = null;    // active group DN
-    public string $memberSortBy = 'givenname'; // pid|givenname|surname|tel
-    public string $memberSortDir = 'asc';      // asc|desc
-    public string $memberSearch = '';          // filter across all fields
+    /** Per-group state keyed by raw DN */
+    public array $memberState = [];
+
+    public ?string $memberListForDn = null;
+    public string $memberSearch = '';
     public int $memberPageSize = 10;
-    public int $membersCurrentPage = 1;
 
-    // --- Compare modal ---
+    /** Forces inner modal subtree to re-render while keeping the same modal instance open */
+    public int $gmNonce = 0;
+
     public $compareBasePid = null;
     public $compareBaseInfo = [];
     public $compareOtherPidInput = '';
@@ -38,8 +37,6 @@ class UserSearch extends Component
     public $compareGroups = null;
     public $compareError = null;
     public $compareView = 'common';
-
-    // ================= Actions =================
 
     public function search(): void
     {
@@ -62,7 +59,6 @@ class UserSearch extends Component
             $term = trim($this->searchTerm);
             if ($this->searchAttribute === 'PID') $term = $this->normalizePid($term);
 
-            // Wildcards are passed through as-is
             $ldapFilter = sprintf('(%s=%s)', $ldapAttribute, $term);
             $users = User::query()->rawFilter($ldapFilter)->limit(100)->get();
 
@@ -116,13 +112,9 @@ class UserSearch extends Component
             $this->selectedUserGroups = $this->formatGroups($rawGroups);
             $this->selectedUserGroupMap = $this->mapGroups($rawGroups);
 
-            // Reset members state
-            $this->groupMembersByDn = [];
+            $this->memberState = [];
             $this->memberListForDn = null;
-            $this->membersCurrentPage = 1;
             $this->memberSearch = '';
-            $this->memberSortBy = 'givenname';
-            $this->memberSortDir = 'asc';
 
             $this->modal('groups')->show();
         } catch (\Exception $e) {
@@ -131,25 +123,24 @@ class UserSearch extends Component
         }
     }
 
-    // === Members modal (open directly) ===
-    public function openMembersModal(string $groupDn): void
+    public function openMembersModal(string $encodedDn): void
     {
-        $dn = trim($groupDn);
+        $dn = trim((string) base64_decode($encodedDn, true) ?: '');
         if ($dn === '') return;
 
         $this->memberListForDn = $dn;
-        $this->membersCurrentPage = 1;
 
-        if (!array_key_exists($dn, $this->groupMembersByDn)) {
-            $cacheKey = 'ldap.group.members.' . md5($dn);
-            // 5-minute cache TTL (adjust later with explicit invalidation)
+        if (!array_key_exists($dn, $this->memberState)) {
+            $cacheKey = 'ldap.group.members.collection.' . md5(mb_strtolower($dn));
             $list = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($dn) {
                 $filter = sprintf('(groupmembership=%s)', $dn);
-                $users = User::query()->rawFilter($filter)->limit(1000)->get();
+                $users = User::query()->rawFilter($filter)->limit(2000)->get();
 
-                $rows = [];
-                foreach ($users as $u) {
-                    $rows[] = [
+                $i = 0;
+                return collect($users)->map(function ($u) use (&$i) {
+                    $i++;
+                    return [
+                        'ord' => $i,
                         'pid' => $u->getFirstAttribute('uid') ?? '—',
                         'givenname' => $u->getFirstAttribute('givenname') ?? '',
                         'surname' => $u->getFirstAttribute('sn') ?? '',
@@ -159,60 +150,89 @@ class UserSearch extends Component
                                 ?? $u->getFirstAttribute('mobile')
                                 ?? '',
                     ];
-                }
-                return $rows;
+                })->values();
             });
 
-            $this->groupMembersByDn[$dn] = $list;
+            $original = $list instanceof Collection ? $list : collect($list);
+            $this->memberState[$dn] = [
+                'original' => $original,
+                'view'     => $original, // unsorted first render
+                'sorted'   => false,
+                'sortBy'   => null,
+                'sortDir'  => null,
+                'search'   => '',
+                'page'     => 1,
+                'pageSize' => $this->memberPageSize,
+            ];
+        } else {
+            // Reset to first page when switching groups
+            $this->memberState[$dn]['page'] = 1;
         }
 
-        $this->applySortKeep($dn);
+        $this->memberSearch = $this->memberState[$dn]['search'] ?? '';
+        $this->gmNonce++; // force inner subtree refresh while keeping the same modal open
         $this->modal('groupMembers')->show();
     }
 
-    // Sorting + search
-    public function setMemberSort(string $groupDn, string $by): void
+    public function setMemberSort(string $encodedDn, string $by): void
     {
-        if (!in_array($by, ['pid', 'givenname', 'surname', 'tel'], true)) return;
-        if ($this->memberListForDn !== $groupDn) $this->memberListForDn = $groupDn;
+        $dn = trim((string) base64_decode($encodedDn, true) ?: '');
+        if ($dn === '' || !isset($this->memberState[$dn])) return;
+        if (!in_array($by, ['pid','givenname','surname','tel'], true)) return;
 
-        if ($this->memberSortBy === $by) {
-            $this->memberSortDir = $this->memberSortDir === 'asc' ? 'desc' : 'asc';
+        $state = $this->memberState[$dn];
+
+        if ($state['sorted'] && $state['sortBy'] === $by) {
+            $state['sortDir'] = ($state['sortDir'] === 'asc') ? 'desc' : 'asc';
         } else {
-            $this->memberSortBy = $by;
-            $this->memberSortDir = 'asc';
+            $state['sortBy']  = $by;
+            $state['sortDir'] = 'asc';
+            $state['sorted']  = true;
         }
+        $state['page'] = 1;
 
-        $this->membersCurrentPage = 1;
-        $this->applySortKeep($groupDn);
+        $state['view'] = $this->sortedFromOriginal($state['original'], $state['sortBy'], $state['sortDir']);
+        $this->memberState[$dn] = $state;
+        $this->gmNonce++;
     }
 
-    public function setMemberSearch(string $groupDn, string $search): void
+    public function updatedMemberSearch($value): void
     {
-        if ($this->memberListForDn !== $groupDn) $this->memberListForDn = $groupDn;
-        $this->memberSearch = trim($search);
-        $this->membersCurrentPage = 1;
+        $dn = $this->memberListForDn;
+        if (!$dn || !isset($this->memberState[$dn])) return;
+
+        $state = $this->memberState[$dn];
+        $state['search'] = trim((string)$value);
+        $state['page'] = 1;
+        $this->memberState[$dn] = $state;
+        $this->gmNonce++;
     }
 
-    // Pagination hooks expected by Flux/Livewire table
     public function nextPage(): void
     {
-        $this->membersCurrentPage++;
+        $dn = $this->memberListForDn;
+        if (!$dn || !isset($this->memberState[$dn])) return;
+        $this->memberState[$dn]['page']++;
+        $this->gmNonce++;
     }
 
     public function previousPage(): void
     {
-        if ($this->membersCurrentPage > 1) $this->membersCurrentPage--;
+        $dn = $this->memberListForDn;
+        if (!$dn || !isset($this->memberState[$dn])) return;
+        if ($this->memberState[$dn]['page'] > 1) $this->memberState[$dn]['page']--;
+        $this->gmNonce++;
     }
 
     public function gotoPage($page): void
     {
-        $p = (int)$page;
-        if ($p < 1) $p = 1;
-        $this->membersCurrentPage = $p;
+        $dn = $this->memberListForDn;
+        if (!$dn || !isset($this->memberState[$dn])) return;
+        $p = max(1, (int)$page);
+        $this->memberState[$dn]['page'] = $p;
+        $this->gmNonce++;
     }
 
-    // === Compare (unchanged logic) ===
     public function openCompare(string $basePid): void
     {
         $this->resetCompare();
@@ -225,17 +245,12 @@ class UserSearch extends Component
     {
         $this->compareOtherPidInput = '';
         $this->compareOtherPid = null;
-
         $this->compareBaseInfo = [];
         $this->compareOtherInfo = [];
-
         $this->compareGroups = null;
         $this->compareError = null;
-
-        // default tab
         $this->compareView = 'common';
     }
-
 
     public function runCompare(): void
     {
@@ -290,61 +305,73 @@ class UserSearch extends Component
         $this->compareView = $view;
     }
 
-    // ================= Helpers =================
-
-    private function applySortKeep(string $dn): void
+    private function sortedFromOriginal(Collection $original, string $by, string $dir): Collection
     {
-        if (!isset($this->groupMembersByDn[$dn])) return;
-        $data = $this->groupMembersByDn[$dn];
+        $ties = array_values(array_filter(['surname','givenname','pid'], fn ($k) => $k !== $by));
 
-        usort($data, function ($a, $b) {
-            $key = $this->memberSortBy;
-            $dir = $this->memberSortDir;
-            $va = (string)($a[$key] ?? '');
-            $vb = (string)($b[$key] ?? '');
-            $cmp = strnatcasecmp($va, $vb);
-            return $dir === 'asc' ? $cmp : -$cmp;
-        });
+        return $original->sort(function ($a, $b) use ($by, $dir, $ties) {
+            $aval = (string)($a[$by] ?? '');
+            $bval = (string)($b[$by] ?? '');
+            $cmp  = strnatcasecmp($aval, $bval);
 
-        $this->groupMembersByDn[$dn] = $data;
+            if ($cmp !== 0) {
+                return $dir === 'asc' ? $cmp : -$cmp;
+            }
+
+            foreach ($ties as $k) {
+                $ta = (string)($a[$k] ?? '');
+                $tb = (string)($b[$k] ?? '');
+                $t  = strnatcasecmp($ta, $tb);
+                if ($t !== 0) return $t;
+            }
+
+            $oa = (int)($a['ord'] ?? 0);
+            $ob = (int)($b['ord'] ?? 0);
+            return $oa <=> $ob;
+        })->values();
     }
 
-    private function filterMembers(array $rows): array
+    private function filterMembers(Collection $rows, string $q): Collection
     {
-        $q = mb_strtolower(trim($this->memberSearch));
-        if ($q === '') return $rows;
+        $needle = mb_strtolower(trim($q));
+        if ($needle === '') return $rows;
 
-        return array_values(array_filter($rows, function ($r) use ($q) {
-            foreach (['pid', 'givenname', 'surname', 'tel'] as $k) {
+        return $rows->filter(function ($r) use ($needle) {
+            foreach (['pid', 'givenname', 'surname'] as $k) {
                 $val = mb_strtolower((string)($r[$k] ?? ''));
-                if ($val !== '' && str_contains($val, $q)) return true;
+                if ($val !== '' && str_contains($val, $needle)) return true;
             }
             return false;
-        }));
+        })->values();
     }
 
     public function getMembersPaginator(string $groupDn): ?LengthAwarePaginator
     {
-        if (!isset($this->groupMembersByDn[$groupDn])) return null;
+        if (!isset($this->memberState[$groupDn])) return null;
 
-        // Filter AFTER sorting for predictable order
-        $all = $this->filterMembers($this->groupMembersByDn[$groupDn]);
+        $state = $this->memberState[$groupDn];
+        $view  = $state['view'] ?? null;
+        if (!$view instanceof Collection) return null;
 
-        $page = max(1, (int)$this->membersCurrentPage);
-        $perPage = $this->memberPageSize;
-        $total = count($all);
+        $filtered = $this->filterMembers($view, $state['search'] ?? '');
+
+        $page    = max(1, (int)($state['page'] ?? 1));
+        $perPage = (int)($state['pageSize'] ?? $this->memberPageSize);
+        $total   = $filtered->count();
         $maxPage = max(1, (int)ceil($total / $perPage));
         if ($page > $maxPage) $page = $maxPage;
 
-        $offset = ($page - 1) * $perPage;
-        $items = array_slice($all, $offset, $perPage);
+        $items = $filtered->forPage($page, $perPage)->values();
+
+        $pageName = 'gm_' . substr(md5($groupDn), 0, 8);
+        $this->memberState[$groupDn]['page'] = $page;
 
         return new LengthAwarePaginator(
             $items,
             $total,
             $perPage,
             $page,
-            ['path' => request()->url(), 'pageName' => 'page'] // pageName is irrelevant to Livewire hooks
+            ['path' => request()->url(), 'pageName' => $pageName]
         );
     }
 
@@ -353,12 +380,10 @@ class UserSearch extends Component
         $this->selectedUserGroups = [];
         $this->selectedUserInfo = [];
         $this->selectedUserGroupMap = [];
-        $this->groupMembersByDn = [];
+        $this->memberState = [];
         $this->memberListForDn = null;
-        $this->membersCurrentPage = 1;
         $this->memberSearch = '';
-        $this->memberSortBy = 'givenname';
-        $this->memberSortDir = 'asc';
+        $this->gmNonce = 0;
     }
 
     private function getUserGroupsAndInfo(string $pid, array &$info): array
