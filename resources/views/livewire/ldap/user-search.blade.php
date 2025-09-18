@@ -1,13 +1,11 @@
 <div class="w-[80%] md:w-[70%] mx-auto">
     @php
         $colors = ['green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','orange','amber','yellow','lime'];
-        // name + pid; falls kein Name -> nur pid
         $namePid = fn($info) => isset($titleCaseName)
             ? $titleCaseName($info)
             : ( (trim(($info['givenname'] ?? '') . ' ' . ($info['surname'] ?? '')) !== '')
                 ? trim(($info['givenname'] ?? '') . ' ' . ($info['surname'] ?? '')) . ' (' . ($info['pid'] ?? '—') . ')'
                 : ($info['pid'] ?? '—') );
-        // shared classes for long group names: truncate + expand on hover/focus
         $groupClasses = 'w-fit max-w-sm truncate hover:whitespace-normal focus:whitespace-normal break-words';
     @endphp
 
@@ -34,7 +32,7 @@
                         <flux:input
                             wire:model.defer="searchTerm"
                             wire:keydown.enter="search"
-                            placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben...' }}"
+                            placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben...' }}"
                         />
                     @endif
                 </flux:input.group>
@@ -52,22 +50,22 @@
 
     @if ($searchResults && $searchResults->count() > 0)
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-6">
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-auto max-h-72 overflow-auto bg-gray-50 rounded p-2">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-600 dark:text-gray-200 table-auto max-h-72 overflow-auto bg-gray-50 dark:bg-gray-900/20 rounded p-2 border border-gray-300 dark:border-gray-700">
+                <thead class="text-xs text-gray-700 dark:text-gray-100 uppercase bg-gray-100 dark:bg-gray-800">
                 <tr>
                     <th class="px-4 py-3 w-auto">PID</th>
                     <th class="px-4 py-3 w-auto">Nachname</th>
                     <th class="px-4 py-3 w-auto">Vorname</th>
                     <th class="px-4 py-3 w-auto">Email</th>
-                    <th class="px-4 py-3 w-auto">Gruppen</th>
+                    <th class="px-4 py-3 w-auto">Aktion</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($searchResults as $user)
-                    <tr class="{{ $loop->odd ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700' }} border-b border-gray-200 dark:border-gray-600">
+                    <tr class="{{ $loop->odd ? 'bg-white dark:bg-gray-800/70' : 'bg-gray-50 dark:bg-gray-800/40' }} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $user['pid'] }}</td>
-                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ $user['surname'] ?? '–' }}</td>
-                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ $user['givenname'] ?? '–' }}</td>
+                        <td class="px-4 py-3">{{ $user['surname'] ?? '–' }}</td>
+                        <td class="px-4 py-3">{{ $user['givenname'] ?? '–' }}</td>
                         <td class="px-4 py-3">
                             @if(!empty($user['email']))
                                 <flux:badge variant="pill" class="mt-1" color="green">{{ $user['email'] }}</flux:badge>
@@ -131,16 +129,32 @@
             @endif
         </flux:separator>
 
+        @php
+            $groupDn = fn($g) => $selectedUserGroupMap[$g] ?? null;
+        @endphp
+
         @if ($selectedUserGroups !== null)
             @if(count($selectedUserGroups) > 0)
                 <flux:div copyable class="grid gap-1 mt-2 min-w-fit">
                     @foreach ($selectedUserGroups as $index => $group)
-                        <flux:badge2 copyable variant="pill"
-                                     color="{{ $colors[$index % count($colors)] }}"
-                                     class="{{ $groupClasses }}"
-                                     title="{{ $group }}">
-                            {{ $group }}
-                        </flux:badge2>
+                        @php $dn = $groupDn($group); @endphp
+                        <span class="inline-flex items-center gap-2">
+                            <flux:button
+                                size="xs"
+                                variant="ghost"
+                                class="p-0"
+                                title="Mitglieder anzeigen"
+                                wire:click.stop="openMembersModal('{{ addslashes($dn ?? '') }}')">
+                                <flux:icon.user-group class="size-4 shrink-0"/>
+                            </flux:button>
+
+                            <flux:badge2 copyable variant="pill"
+                                color="{{ $colors[$index % count($colors)] }}"
+                                class="{{ $groupClasses }}"
+                                title="{{ $group }}">
+                                {{ $group }}
+                            </flux:badge2>
+                        </span>
                     @endforeach
                 </flux:div>
             @else
@@ -148,6 +162,154 @@
             @endif
         @endif
     </flux:modal>
+
+    {{-- Members Modal --}}
+    <flux:modal name="groupMembers" class="w-[92vw] max-w-4xl" :dismissible="true">
+        @php
+            $dn = $memberListForDn ?? null;
+            $members = $dn ? ($groupMembersByDn[$dn] ?? null) : null;
+            $paginator = ($dn && is_array($members)) ? $this->getMembersPaginator($dn) : null;
+
+            $displayGroupName = null;
+            if ($dn) {
+                $found = array_search($dn, $selectedUserGroupMap ?? [], true);
+                $displayGroupName = $found !== false ? $found : $dn;
+            }
+        @endphp
+
+        <div class="space-y-3">
+            <flux:heading size="lg">
+                Gruppenmitglieder
+                @if($displayGroupName)
+                    <span class="text-gray-500 dark:text-gray-400 font-normal"> — {{ $displayGroupName }}</span>
+                @endif
+            </flux:heading>
+
+            <div class="mb-2">
+                <flux:input
+                    wire:model.live="memberSearch"
+                    placeholder="Suchen: PID, Vorname, Nachname, Telefon"
+                />
+            </div>
+
+            @if (!$dn)
+                <flux:text variant="subtle">Keine Gruppe ausgewählt.</flux:text>
+            @elseif ($members === null)
+                <flux:text variant="subtle">Lade Mitglieder…</flux:text>
+            @elseif ($paginator)
+                <div class="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
+                    <flux:table :paginate="$paginator" class="w-full">
+                        <flux:table.columns>
+                            <flux:table.column>
+                                <div class="!pl-10 pr-4">
+                                    <button type="button" class="w-full text-left"
+                                            wire:click="setMemberSort('{{ $dn }}','pid')">
+                                        PID
+                                    </button>
+                                </div>
+                            </flux:table.column>
+                            <flux:table.column>
+                                <button type="button" class="w-full text-left"
+                                        wire:click="setMemberSort('{{ $dn }}','givenname')">
+                                    Vorname
+                                </button>
+                            </flux:table.column>
+                            <flux:table.column>
+                                <button type="button" class="w-full text-left"
+                                        wire:click="setMemberSort('{{ $dn }}','surname')">
+                                    Nachname
+                                </button>
+                            </flux:table.column>
+                            <flux:table.column>
+                                <button type="button" class="w-full text-left"
+                                        wire:click="setMemberSort('{{ $dn }}','tel')">
+                                    Telefon
+                                </button>
+                            </flux:table.column>
+                        </flux:table.columns>
+
+                        @foreach ($paginator as $row)
+                            <flux:table.row
+                                class="{{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/80' : 'bg-gray-100 dark:bg-gray-800/55' }} hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+
+                                @php
+                                    $pid = $row['pid'] ?? '—';
+                                    $v = $row['givenname'] ?: '—';
+                                    $n = $row['surname'] ?: '—';
+                                    $tel = trim((string)($row['tel'] ?? ''));
+                                    $tshow = $tel !== '' ? $tel : '—';
+                                @endphp
+
+                                {{-- PID --}}
+                                <flux:table.cell class="!pl-10 pr-4 whitespace-nowrap">
+                                    <span x-data="{label: @js($pid)}" x-transition.opacity>
+                                        <span @click="
+                                            if (label !== '—') {
+                                                navigator.clipboard.writeText(label);
+                                                const orig = label;
+                                                label = 'Kopiert 💐';
+                                                setTimeout(()=>label=orig,1200);
+                                            }
+                                        " class="cursor-pointer select-text" x-text="label"></span>
+                                    </span>
+                                </flux:table.cell>
+
+                                {{-- Vorname --}}
+                                <flux:table.cell class="px-4 whitespace-nowrap">
+                                    <span x-data="{label: @js($v)}" x-transition.opacity>
+                                        <span @click="
+                                            if (label !== '—') {
+                                                navigator.clipboard.writeText(label);
+                                                const orig = label;
+                                                label = 'Kopiert 💐';
+                                                setTimeout(()=>label=orig,1200);
+                                            }
+                                        " class="cursor-pointer select-text" x-text="label"></span>
+                                    </span>
+                                </flux:table.cell>
+
+                                {{-- Nachname --}}
+                                <flux:table.cell class="px-4 whitespace-nowrap">
+                                    <span x-data="{label: @js($n)}" x-transition.opacity>
+                                        <span @click="
+                                            if (label !== '—') {
+                                                navigator.clipboard.writeText(label);
+                                                const orig = label;
+                                                label = 'Kopiert 💐';
+                                                setTimeout(()=>label=orig,1200);
+                                            }
+                                        " class="cursor-pointer select-text" x-text="label"></span>
+                                    </span>
+                                </flux:table.cell>
+
+                                {{-- Telefon --}}
+                                <flux:table.cell class="px-4 whitespace-nowrap">
+                                    <span x-data="{label: @js($tshow)}" x-transition.opacity>
+                                        <span @click="
+                                            if (label !== '—') {
+                                                navigator.clipboard.writeText(label);
+                                                const orig = label;
+                                                label = 'Kopiert 💐';
+                                                setTimeout(()=>label=orig,1200);
+                                            }
+                                        " class="cursor-pointer select-text" x-text="label"></span>
+                                    </span>
+                                </flux:table.cell>
+
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table>
+                </div>
+            @else
+                <flux:text variant="subtle">Keine Mitglieder gefunden.</flux:text>
+            @endif
+        </div>
+    </flux:modal>
+
+
+
+
+
 
     {{-- Compare modal --}}
     <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
@@ -181,7 +343,6 @@
             @endif
 
             @if ($compareGroups)
-                {{-- Filter buttons --}}
                 <div class="flex flex-wrap items-center gap-2 mt-3">
                     <flux:button
                         size="sm"
@@ -226,7 +387,6 @@
                     </flux:button>
                 </div>
 
-                {{-- Views --}}
                 <div class="mt-4">
                     @if ($compareView === 'user1')
                         <flux:card>
