@@ -3,10 +3,14 @@ Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 ## Unreleased
 ## [0.9.0-beta.5] - 04-09-2025
+### Behoben / Geändert
+- Signature: Vorname und Nachname großgeschrieben. 
 ### Hinzugefügt
 - Firewall E-mail Vorlage
 - Synchronisierung der Benutzer-E-Mail-Adresse aus dem LDP während des Logins
 - Bessere UI für Bookmarks
+- Lesezeichen sind nun sortierbar. 
+- Lesezeichen: List und Grid view.
 
 ## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
