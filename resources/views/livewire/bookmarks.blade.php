@@ -82,7 +82,7 @@
                                 <th class="px-3 py-2 w-8"></th>
                                 <th class="px-3 py-2 text-left">
                                     <div class="inline-flex items-center gap-2">
-                                        <span>Name</span>
+                                        <span wire:click="toggleNameSort" class="cursor-pointer">Name</span>
                                         <button type="button" class="px-1 text-xs hover:underline"
                                                 wire:click="toggleNameSort" title="Sortierung umkehren">
                                             @if($nameSortDir==='asc') ↑ @else ↓ @endif

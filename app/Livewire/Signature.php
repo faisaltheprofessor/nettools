@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Ldap\User;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Signature extends Component
@@ -38,7 +39,7 @@ class Signature extends Component
         $lines = array_filter([
             'Freundliche Grüße',
             'Im Auftrag',
-            ($user->givenName[0] ?? '').' '.($user->sn[0] ?? ''),
+            (Str::title($user->givenName[0]) ?? '').' '.(Str::title($user->sn[0]) ?? ''),
             $user->company[0] ?? '',
             $user->description[0] ?? '',
             $user->title[0] ?? '',
