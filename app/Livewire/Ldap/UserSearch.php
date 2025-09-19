@@ -3,9 +3,7 @@
 namespace App\Livewire\Ldap;
 
 use App\Ldap\User;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class UserSearch extends Component
@@ -19,15 +17,12 @@ class UserSearch extends Component
     public $selectedUserInfo = [];
     public array $selectedUserGroupMap = [];
 
-    /** Per-group state keyed by raw DN */
-    public array $memberState = [];
-
     public ?string $memberListForDn = null;
     public string $memberSearch = '';
-    public int $memberPageSize = 10;
-
-    /** Forces inner modal subtree to re-render while keeping the same modal instance open */
+    public int $memberPageSize = 5000;
     public int $gmNonce = 0;
+
+    public array $memberState = [];
 
     public $compareBasePid = null;
     public $compareBaseInfo = [];
@@ -38,34 +33,22 @@ class UserSearch extends Component
     public $compareError = null;
     public $compareView = 'common';
 
+    protected int $pageCacheTtlMinutes = 45;
+
     public function search(): void
     {
         $this->reset(['error', 'searchResults', 'selectedUserGroups', 'selectedUserInfo']);
-
-        if (trim($this->searchTerm) === '') {
-            $this->error = 'Bitte geben Sie einen Suchbegriff ein.';
-            return;
-        }
+        if (trim($this->searchTerm) === '') { $this->error = 'Bitte geben Sie einen Suchbegriff ein.'; return; }
 
         try {
-            $attributeMap = [
-                'PID' => 'uid',
-                'Nachname' => 'sn',
-                'Vollst. Name' => 'fullname',
-                'Titel' => 'title',
-            ];
-
+            $attributeMap = ['PID' => 'uid', 'Nachname' => 'sn', 'Vollst. Name' => 'fullname', 'Titel' => 'title'];
             $ldapAttribute = $attributeMap[$this->searchAttribute] ?? 'uid';
             $term = trim($this->searchTerm);
             if ($this->searchAttribute === 'PID') $term = $this->normalizePid($term);
-
             $ldapFilter = sprintf('(%s=%s)', $ldapAttribute, $term);
-            $users = User::query()->rawFilter($ldapFilter)->limit(100)->get();
 
-            if ($users->isEmpty()) {
-                $this->error = 'Keine Benutzer gefunden.';
-                return;
-            }
+            $users = User::query()->rawFilter($ldapFilter)->limit(100)->get();
+            if ($users->isEmpty()) { $this->error = 'Keine Benutzer gefunden.'; return; }
 
             $results = collect();
             foreach ($users as $user) {
@@ -90,11 +73,7 @@ class UserSearch extends Component
         try {
             $pid = $this->normalizePid($pid);
             $user = User::query()->where('uid', '=', $pid)->first();
-
-            if (!$user) {
-                $this->resetGroupsState();
-                return;
-            }
+            if (!$user) { $this->resetGroupsState(); return; }
 
             $this->selectedUserInfo = [
                 'pid' => $user->getFirstAttribute('uid') ?? '',
@@ -130,58 +109,36 @@ class UserSearch extends Component
 
         $this->memberListForDn = $dn;
 
-        if (!array_key_exists($dn, $this->memberState)) {
-            $cacheKey = 'ldap.group.members.collection.' . md5(mb_strtolower($dn));
-            $list = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($dn) {
-                $filter = sprintf('(groupmembership=%s)', $dn);
-                $users = User::query()->rawFilter($filter)->limit(2000)->get();
-
-                $i = 0;
-                return collect($users)->map(function ($u) use (&$i) {
-                    $i++;
-                    return [
-                        'ord' => $i,
-                        'pid' => $u->getFirstAttribute('uid') ?? '—',
-                        'givenname' => $u->getFirstAttribute('givenname') ?? '',
-                        'surname' => $u->getFirstAttribute('sn') ?? '',
-                        'tel' => $u->getFirstAttribute('telephonenumber')
-                            ?? $u->getFirstAttribute('telephoneNumber')
-                                ?? $u->getFirstAttribute('BAPK-telefon')
-                                ?? $u->getFirstAttribute('mobile')
-                                ?? '',
-                    ];
-                })->values();
-            });
-
-            $original = $list instanceof Collection ? $list : collect($list);
+        if (!isset($this->memberState[$dn])) {
             $this->memberState[$dn] = [
-                'original' => $original,
-                'view'     => $original, // unsorted first render
-                'sorted'   => false,
-                'sortBy'   => null,
-                'sortDir'  => null,
-                'search'   => '',
-                'page'     => 1,
-                'pageSize' => $this->memberPageSize,
+                'sorted'       => false,
+                'sortBy'       => null,
+                'sortDir'      => 'asc',
+                'page'         => null,
+                'rows'         => [],
             ];
-        } else {
-            // Reset to first page when switching groups
-            $this->memberState[$dn]['page'] = 1;
         }
 
-        $this->memberSearch = $this->memberState[$dn]['search'] ?? '';
-        $this->gmNonce++; // force inner subtree refresh while keeping the same modal open
+        $this->loadMembersCurrentCursor($dn);
+        $this->gmNonce++;
         $this->modal('groupMembers')->show();
+    }
+
+    public function updatedMemberSearch($value): void
+    {
+        $dn = $this->memberListForDn;
+        if (!$dn || !isset($this->memberState[$dn])) return;
+        $this->memberSearch = trim((string)$value);
+        $this->loadMembersCurrentCursor($dn);
     }
 
     public function setMemberSort(string $encodedDn, string $by): void
     {
         $dn = trim((string) base64_decode($encodedDn, true) ?: '');
         if ($dn === '' || !isset($this->memberState[$dn])) return;
-        if (!in_array($by, ['pid','givenname','surname','tel'], true)) return;
+        if (!in_array($by, ['pid','givenname','surname','tel','title'], true)) return;
 
         $state = $this->memberState[$dn];
-
         if ($state['sorted'] && $state['sortBy'] === $by) {
             $state['sortDir'] = ($state['sortDir'] === 'asc') ? 'desc' : 'asc';
         } else {
@@ -189,48 +146,119 @@ class UserSearch extends Component
             $state['sortDir'] = 'asc';
             $state['sorted']  = true;
         }
-        $state['page'] = 1;
-
-        $state['view'] = $this->sortedFromOriginal($state['original'], $state['sortBy'], $state['sortDir']);
         $this->memberState[$dn] = $state;
-        $this->gmNonce++;
+        $this->sortCurrentPage($dn);
     }
 
-    public function updatedMemberSearch($value): void
+    private function loadMembersCurrentCursor(string $dn): void
     {
-        $dn = $this->memberListForDn;
-        if (!$dn || !isset($this->memberState[$dn])) return;
+        try {
+            $state  = $this->memberState[$dn];
+            $sortBy  = $state['sortBy'] ?? null;
+            $sortDir = $state['sortDir'] ?? 'asc';
 
-        $state = $this->memberState[$dn];
-        $state['search'] = trim((string)$value);
-        $state['page'] = 1;
-        $this->memberState[$dn] = $state;
-        $this->gmNonce++;
+            $page = $this->fetchMembersPage(
+                dn: $dn,
+                pageSize: $this->memberPageSize,
+                query: $this->memberSearch,
+                sortBy: $sortBy,
+                sortDir: $sortDir
+            );
+
+            $this->memberState[$dn]['rows'] = $page['rows'];
+            $this->memberState[$dn]['page'] = ['rows' => $page['rows']];
+
+            $this->sortCurrentPage($dn);
+        } catch (\Throwable $e) {
+            $this->memberState[$dn]['rows'] = [];
+            $this->memberState[$dn]['page'] = ['rows' => []];
+            $this->error = $e->getMessage();
+        }
     }
 
-    public function nextPage(): void
+    private function sortCurrentPage(string $dn): void
     {
-        $dn = $this->memberListForDn;
-        if (!$dn || !isset($this->memberState[$dn])) return;
-        $this->memberState[$dn]['page']++;
-        $this->gmNonce++;
+        $st = $this->memberState[$dn] ?? null;
+        if (!$st || empty($st['page']['rows'])) return;
+        if (!($st['sorted'] ?? false) || !($st['sortBy'] ?? null)) return;
+
+        $by  = $st['sortBy'];
+        $dir = $st['sortDir'] ?? 'asc';
+
+        $rows = $st['page']['rows'];
+        usort($rows, function ($a, $b) use ($by, $dir) {
+            $aval = (string)($a[$by] ?? '');
+            $bval = (string)($b[$by] ?? '');
+            $cmp  = strnatcasecmp($aval, $bval);
+            if ($cmp !== 0) return $dir === 'asc' ? $cmp : -$cmp;
+
+            foreach (['surname','givenname','title','pid'] as $k) {
+                if ($k === $by) continue;
+                $ta = (string)($a[$k] ?? '');
+                $tb = (string)($b[$k] ?? '');
+                $t  = strnatcasecmp($ta, $tb);
+                if ($t !== 0) return $t;
+            }
+            return 0;
+        });
+
+        $this->memberState[$dn]['page']['rows'] = $rows;
+        $this->memberState[$dn]['rows'] = $rows;
     }
 
-    public function previousPage(): void
+    private function fetchMembersPage(string $dn, int $pageSize, string $query = '', ?string $sortBy = null, string $sortDir = 'asc'): array
     {
-        $dn = $this->memberListForDn;
-        if (!$dn || !isset($this->memberState[$dn])) return;
-        if ($this->memberState[$dn]['page'] > 1) $this->memberState[$dn]['page']--;
-        $this->gmNonce++;
+        $filter = $this->buildFilter($dn, $query);
+        $attrs = ['uid','givenname','sn','title','telephonenumber','telephoneNumber','BAPK-telefon','mobile'];
+
+        $cacheKey = 'ldap.members.page.full.' . md5(json_encode([
+            'dn'     => mb_strtolower($dn),
+            'filter' => $filter,
+            'size'   => $pageSize,
+            'sort'   => [$sortBy, $sortDir],
+        ]));
+
+        return Cache::remember($cacheKey, now()->addMinutes($this->pageCacheTtlMinutes), function () use ($filter, $attrs) {
+            $q = User::query()->select($attrs)->rawFilter($filter);
+            $results = $q->limit($this->memberPageSize)->get();
+
+            $rows = [];
+            foreach ($results as $u) {
+                $pid   = $u->getFirstAttribute('uid') ?? '';
+                $given = $u->getFirstAttribute('givenname') ?? '';
+                $sur   = $u->getFirstAttribute('sn') ?? '';
+                $title = $u->getFirstAttribute('title') ?? '';
+                $tel   = $u->getFirstAttribute('telephonenumber')
+                    ?? $u->getFirstAttribute('telephoneNumber')
+                    ?? $u->getFirstAttribute('BAPK-telefon')
+                    ?? $u->getFirstAttribute('mobile')
+                    ?? '';
+
+                if ($pid === '' && $given === '' && $sur === '' && $title === '' && $tel === '') continue;
+
+                $rows[] = [
+                    'pid'       => $pid !== '' ? $pid : '—',
+                    'title'     => $title,
+                    'givenname' => $given,
+                    'surname'   => $sur,
+                    'tel'       => $tel,
+                ];
+            }
+
+            return [
+                'rows'        => $rows,
+            ];
+        });
     }
 
-    public function gotoPage($page): void
+    private function buildFilter(string $dn, string $query): string
     {
-        $dn = $this->memberListForDn;
-        if (!$dn || !isset($this->memberState[$dn])) return;
-        $p = max(1, (int)$page);
-        $this->memberState[$dn]['page'] = $p;
-        $this->gmNonce++;
+        $base = '(groupmembership=' . $dn . ')';
+        $q = trim($query);
+        if ($q === '') return $base;
+        $e = self::esc($q);
+        $or = '(|(uid=*' . $e . '*)(givenname=*' . $e . '*)(sn=*' . $e . '*)(title=*' . $e . '*)(telephonenumber=*' . $e . '*)(telephoneNumber=*' . $e . '*)(BAPK-telefon=*' . $e . '*)(mobile=*' . $e . '*))';
+        return '(&' . $base . $or . ')';
     }
 
     public function openCompare(string $basePid): void
@@ -259,39 +287,33 @@ class UserSearch extends Component
         $this->compareBaseInfo = [];
         $this->compareOtherInfo = [];
 
-        if (!$this->compareBasePid) {
-            $this->compareError = 'Basis-PID fehlt.';
-            return;
-        }
-        if (trim($this->compareOtherPidInput) === '') {
-            $this->compareError = 'Bitte zweite PID eingeben.';
-            return;
-        }
+        if (!$this->compareBasePid) { $this->compareError = 'Basis-PID fehlt.'; return; }
+        if (trim($this->compareOtherPidInput) === '') { $this->compareError = 'Bitte zweite PID eingeben.'; return; }
 
         $this->compareOtherPid = $this->normalizePid($this->compareOtherPidInput);
 
         try {
-            $leftGroups = $this->getUserGroupsAndInfo($this->compareBasePid, $this->compareBaseInfo);
+            $leftGroups  = $this->getUserGroupsAndInfo($this->compareBasePid, $this->compareBaseInfo);
             $rightGroups = $this->getUserGroupsAndInfo($this->compareOtherPid, $this->compareOtherInfo);
 
-            $leftSet = collect($leftGroups)->unique()->values()->all();
+            $leftSet  = collect($leftGroups)->unique()->values()->all();
             $rightSet = collect($rightGroups)->unique()->values()->all();
 
             $onlyLeft = array_values(array_diff($leftSet, $rightSet));
-            $onlyRight = array_values(array_diff($rightSet, $leftSet));
-            $common = array_values(array_intersect($leftSet, $rightSet));
+            $onlyRight= array_values(array_diff($rightSet, $leftSet));
+            $common   = array_values(array_intersect($leftSet, $rightSet));
 
             sort($onlyLeft, SORT_FLAG_CASE | SORT_STRING);
             sort($onlyRight, SORT_FLAG_CASE | SORT_STRING);
             sort($common, SORT_FLAG_CASE | SORT_STRING);
 
             $this->compareGroups = [
-                'only_first' => $onlyLeft,
-                'only_second' => $onlyRight,
-                'common' => $common,
-                'all_first' => $leftSet,
-                'all_second' => $rightSet,
-                'count_first' => count($leftSet),
+                'only_first'   => $onlyLeft,
+                'only_second'  => $onlyRight,
+                'common'       => $common,
+                'all_first'    => $leftSet,
+                'all_second'   => $rightSet,
+                'count_first'  => count($leftSet),
                 'count_second' => count($rightSet),
             ];
         } catch (\Exception $e) {
@@ -301,89 +323,8 @@ class UserSearch extends Component
 
     public function setCompareView(string $view): void
     {
-        if (!in_array($view, ['user1', 'user2', 'common', 'diffs'], true)) return;
+        if (!in_array($view, ['user1','user2','common','diffs'], true)) return;
         $this->compareView = $view;
-    }
-
-    private function sortedFromOriginal(Collection $original, string $by, string $dir): Collection
-    {
-        $ties = array_values(array_filter(['surname','givenname','pid'], fn ($k) => $k !== $by));
-
-        return $original->sort(function ($a, $b) use ($by, $dir, $ties) {
-            $aval = (string)($a[$by] ?? '');
-            $bval = (string)($b[$by] ?? '');
-            $cmp  = strnatcasecmp($aval, $bval);
-
-            if ($cmp !== 0) {
-                return $dir === 'asc' ? $cmp : -$cmp;
-            }
-
-            foreach ($ties as $k) {
-                $ta = (string)($a[$k] ?? '');
-                $tb = (string)($b[$k] ?? '');
-                $t  = strnatcasecmp($ta, $tb);
-                if ($t !== 0) return $t;
-            }
-
-            $oa = (int)($a['ord'] ?? 0);
-            $ob = (int)($b['ord'] ?? 0);
-            return $oa <=> $ob;
-        })->values();
-    }
-
-    private function filterMembers(Collection $rows, string $q): Collection
-    {
-        $needle = mb_strtolower(trim($q));
-        if ($needle === '') return $rows;
-
-        return $rows->filter(function ($r) use ($needle) {
-            foreach (['pid', 'givenname', 'surname'] as $k) {
-                $val = mb_strtolower((string)($r[$k] ?? ''));
-                if ($val !== '' && str_contains($val, $needle)) return true;
-            }
-            return false;
-        })->values();
-    }
-
-    public function getMembersPaginator(string $groupDn): ?LengthAwarePaginator
-    {
-        if (!isset($this->memberState[$groupDn])) return null;
-
-        $state = $this->memberState[$groupDn];
-        $view  = $state['view'] ?? null;
-        if (!$view instanceof Collection) return null;
-
-        $filtered = $this->filterMembers($view, $state['search'] ?? '');
-
-        $page    = max(1, (int)($state['page'] ?? 1));
-        $perPage = (int)($state['pageSize'] ?? $this->memberPageSize);
-        $total   = $filtered->count();
-        $maxPage = max(1, (int)ceil($total / $perPage));
-        if ($page > $maxPage) $page = $maxPage;
-
-        $items = $filtered->forPage($page, $perPage)->values();
-
-        $pageName = 'gm_' . substr(md5($groupDn), 0, 8);
-        $this->memberState[$groupDn]['page'] = $page;
-
-        return new LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'pageName' => $pageName]
-        );
-    }
-
-    private function resetGroupsState(): void
-    {
-        $this->selectedUserGroups = [];
-        $this->selectedUserInfo = [];
-        $this->selectedUserGroupMap = [];
-        $this->memberState = [];
-        $this->memberListForDn = null;
-        $this->memberSearch = '';
-        $this->gmNonce = 0;
     }
 
     private function getUserGroupsAndInfo(string $pid, array &$info): array
@@ -399,6 +340,17 @@ class UserSearch extends Component
 
         $rawGroups = $user->getAttribute('groupmembership') ?? [];
         return $this->formatGroups(is_array($rawGroups) ? $rawGroups : []);
+    }
+
+    private function resetGroupsState(): void
+    {
+        $this->selectedUserGroups = [];
+        $this->selectedUserInfo = [];
+        $this->selectedUserGroupMap = [];
+        $this->memberState = [];
+        $this->memberListForDn = null;
+        $this->memberSearch = '';
+        $this->gmNonce = 0;
     }
 
     private function normalizePid(string $term): string
@@ -438,15 +390,18 @@ class UserSearch extends Component
         return $map;
     }
 
+    private static function esc(string $s): string
+    {
+        return str_replace(['\\', '*', '(', ')', "\x00"], ['\5c','\2a','\28','\29','\00'], $s);
+    }
+
     private function titleCaseName(array $info): string
     {
         $given = trim((string)($info['givenname'] ?? ''));
-        $sur = trim((string)($info['surname'] ?? ''));
-        $pid = $info['pid'] ?? '—';
-
+        $sur   = trim((string)($info['surname'] ?? ''));
+        $pid   = $info['pid'] ?? '—';
         $given = $given !== '' ? (mb_strtoupper(mb_substr($given, 0, 1)) . mb_strtolower(mb_substr($given, 1))) : '';
-        $sur = $sur !== '' ? (mb_strtoupper(mb_substr($sur, 0, 1)) . mb_strtolower(mb_substr($sur, 1))) : '';
-
+        $sur   = $sur   !== '' ? (mb_strtoupper(mb_substr($sur, 0, 1)) . mb_strtolower(mb_substr($sur, 1))) : '';
         $full = trim($given . ' ' . $sur);
         return ($full !== '') ? "$full ($pid)" : $pid;
     }
@@ -454,7 +409,7 @@ class UserSearch extends Component
     public function render()
     {
         return view('livewire.ldap.user-search', [
-            'titleCaseName' => fn($info) => $this->titleCaseName($info),
+            'titleCaseName' => fn($info) => $this->titleCaseName($info ?? []),
         ]);
     }
 }

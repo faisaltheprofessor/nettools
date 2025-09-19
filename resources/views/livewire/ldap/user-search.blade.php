@@ -169,189 +169,328 @@
     @php
         $dn = $memberListForDn ?? null;
         $dnKey = $dn ? substr(md5($dn),0,10) : 'none';
+        $state = $dn ? ($memberState[$dn] ?? null) : null;
+        $page  = $state['page'] ?? null;
+        $displayGroupName = null;
+        if ($dn) {
+            $found = array_search($dn, $selectedUserGroupMap ?? [], true);
+            $displayGroupName = $found !== false ? $found : $dn;
+        }
+        $isSorted = $state['sorted'] ?? false;
+        $sortBy = $state['sortBy'] ?? null;
+        $sortDir = $state['sortDir'] ?? 'asc';
+        $memberCount = is_array($page) && isset($page['rows']) ? count($page['rows']) : 0;
     @endphp
 
     <flux:modal name="groupMembers" class="w-[92vw] max-w-4xl" :dismissible="true">
-        @php
-            $state = $dn ? ($memberState[$dn] ?? null) : null;
-            $members = $state ? ($state['view'] ?? null) : null;
-            $paginator = ($dn && $members instanceof \Illuminate\Support\Collection) ? $this->getMembersPaginator($dn) : null;
+        <div class="space-y-3" wire:key="gm-wrap-{{ $dnKey }}-{{ $gmNonce }}" x-data="{ showCopy:false }">
+            <div class="flex items-center justify-between gap-3 pr-12">
+                <div class="flex items-center gap-2">
+                    <flux:heading size="lg" class="flex items-center gap-2">
+                        Gruppenmitglieder
+                        @if($displayGroupName)
+                            <span class="text-gray-500 dark:text-gray-400 font-normal">— {{ $displayGroupName }}</span>
+                        @endif
+                        <flux:badge size="sm" color="sky">{{ $memberCount }}</flux:badge>
+                    </flux:heading>
+                </div>
 
-            $displayGroupName = null;
-            if ($dn) {
-                $found = array_search($dn, $selectedUserGroupMap ?? [], true);
-                $displayGroupName = $found !== false ? $found : $dn;
-            }
+                <div class="flex items-center gap-2 shrink-0">
+                    <flux:text size="sm" class="text-gray-500 dark:text-gray-400">Kopier-Modus</flux:text>
+                    <flux:switch @change="showCopy = $event.target.checked"/>
+                </div>
+            </div>
 
-            $isSorted = $state['sorted'] ?? false;
-            $sortBy = $state['sortBy'] ?? null;
-            $sortDir = $state['sortDir'] ?? 'asc';
-        @endphp
-
-        <div class="space-y-3" wire:key="gm-wrap-{{ $dnKey }}-{{ $gmNonce }}">
-            <flux:heading size="lg">
-                Gruppenmitglieder
-                @if($displayGroupName)
-                    <span class="text-gray-500 dark:text-gray-400 font-normal"> — {{ $displayGroupName }}</span>
-                @endif
-            </flux:heading>
-
-            <div class="mb-2">
-                <flux:input
-                    wire:model.live.debounce.250ms="memberSearch"
-                    placeholder="Suchen: PID, Vorname, Nachname"
-                />
+            <div class="mb-2 flex items-center gap-2">
+                <div class="relative w-full">
+                    <flux:input
+                        wire:model.live.debounce.300ms="memberSearch"
+                        wire:key="gm-search-{{ $dnKey }}"
+                        x-ref="memberSearch"
+                        x-init="$nextTick(()=> $refs.memberSearch?.focus())"
+                        placeholder="Suchen: PID, Stellenzeichen, Vorname, Nachname, Telefon"
+                    />
+                    <button type="button"
+                            @click="$wire.set('memberSearch',''); $nextTick(()=> $refs.memberSearch?.focus())"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded px-1 text-xs text-gray-500 hover:text-black cursor-pointer">
+                        <flux:icon.x-mark />
+                    </button>
+                </div>
             </div>
 
             @if (!$dn)
                 <flux:text variant="subtle">Keine Gruppe ausgewählt.</flux:text>
-            @elseif (!$members)
+            @elseif (!$page)
                 <flux:text variant="subtle">Lade Mitglieder…</flux:text>
-            @elseif ($paginator)
-                <div class="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                    <flux:table :paginate="$paginator" class="w-full" wire:key="gm-table-{{ $dnKey }}-{{ $gmNonce }}">
-                        <flux:table.columns>
-                            <flux:table.column>
-                                <div class="!pl-10 pr-4">
-                                    <button type="button"
-                                            class="w-full text-left cursor-pointer inline-flex items-center gap-1"
-                                            wire:click="setMemberSort('{{ base64_encode($dn) }}','pid')">
-                                        PID
-                                        @if($isSorted && $sortBy === 'pid')
-                                            @if($sortDir === 'asc')
-                                                <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                            @else
-                                                <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                            @endif
-                                        @endif
-                                    </button>
-                                </div>
-                            </flux:table.column>
-                            <flux:table.column>
-                                <button type="button"
-                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
-                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','givenname')">
-                                    Vorname
-                                    @if($isSorted && $sortBy === 'givenname')
-                                        @if($sortDir === 'asc')
-                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                        @else
-                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                        @endif
-                                    @endif
-                                </button>
-                            </flux:table.column>
-                            <flux:table.column>
-                                <button type="button"
-                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
-                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','surname')">
-                                    Nachname
-                                    @if($isSorted && $sortBy === 'surname')
-                                        @if($sortDir === 'asc')
-                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                        @else
-                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                        @endif
-                                    @endif
-                                </button>
-                            </flux:table.column>
-                            <flux:table.column>
-                                <button type="button"
-                                        class="w-full text-left cursor-pointer inline-flex items-center gap-1"
-                                        wire:click="setMemberSort('{{ base64_encode($dn) }}','tel')">
-                                    Telefon
-                                    @if($isSorted && $sortBy === 'tel')
-                                        @if($sortDir === 'asc')
-                                            <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                        @else
-                                            <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                        @endif
-                                    @endif
-                                </button>
-                            </flux:table.column>
-                        </flux:table.columns>
+            @elseif (($page['rows'] ?? []) === [])
+                <flux:text variant="subtle">Keine Mitglieder gefunden.</flux:text>
+            @else
+                <div
+                    x-data="{
+                        copied:false,
+                        colCopied:{},
+                        rowCopied:{},
+                        widths:[],
+                        clean(s){ return (s || '').toString().replace(/\s+/g,' ').trim(); },
+                        visibleCellNodes(row){ return [...row.querySelectorAll('th,td')].filter(c => !c.classList.contains('no-copy')); },
+                        extractCells(row){ return this.visibleCellNodes(row).map(c => this.clean(c.innerText)); },
+                        extractVisibleRows(){
+                            const t = $refs.gmTable;
+                            if(!t) return {header:[], rows:[]};
+                            const head = t.querySelector('thead tr');
+                            const header = head ? this.extractCells(head) : [];
+                            const rows = [...t.querySelectorAll('tbody tr')].filter(r => r.offsetParent !== null).map(r => this.extractCells(r));
+                            return {header, rows};
+                        },
+                        computeWidths(header, rows){
+                            const all = [header, ...rows];
+                            this.widths = header.map((_,i)=> Math.max(...all.map(r => (r[i] ?? '').length)));
+                        },
+                        smartJoin(row){
+                            return row.map((c,i)=>{
+                                const len = (c||'').length;
+                                const gap = (this.widths[i]||len) - len;
+                                const tabs = gap > 8 ? 2 : 1;
+                                return (c||'') + '\t'.repeat(tabs);
+                            }).join('');
+                        },
+                        copyTable(){
+                            const {header, rows} = this.extractVisibleRows();
+                            this.computeWidths(header, rows);
+                            const text = [this.smartJoin(header), ...rows.map(r => this.smartJoin(r))].join('\n');
+                            navigator.clipboard.writeText(text).then(()=>{
+                                this.copied = true;
+                                setTimeout(()=> this.copied = false, 1200);
+                            });
+                        },
+                        copyRowByKey(key){
+                            const tr = document.querySelector(`[data-row-key='${key}']`);
+                            if(!tr) return;
+                            const {header, rows} = this.extractVisibleRows();
+                            this.computeWidths(header, rows);
+                            const cols = this.extractCells(tr);
+                            const text = this.smartJoin(cols);
+                            navigator.clipboard.writeText(text).then(()=>{
+                                this.rowCopied[key] = true;
+                                setTimeout(()=> this.rowCopied[key] = false, 1200);
+                            });
+                        },
+                        copyColumnByIndex(idx){
+                            const t = $refs.gmTable;
+                            if(!t) return;
+                            const headRow = t.querySelector('thead tr');
+                            const headCells = this.visibleCellNodes(headRow);
+                            const header = headCells[idx] ? this.clean(headCells[idx].innerText) : '';
+                            const bodyRows = [...t.querySelectorAll('tbody tr')].filter(r => r.offsetParent !== null);
+                            const col = bodyRows.map(r => {
+                                const cells = this.visibleCellNodes(r);
+                                return cells[idx] ? this.clean(cells[idx].innerText) : '';
+                            });
+                            const text = [header, ...col].join('\n');
+                            navigator.clipboard.writeText(text).then(()=>{
+                                this.colCopied[idx] = true;
+                                setTimeout(()=> this.colCopied[idx] = false, 1200);
+                            });
+                        }
+                    }"
+                    class="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden"
+                >
+                    <div class="max-h-[65vh] overflow-y-auto">
+                        <table class="w-full text-sm" x-ref="gmTable">
+                            <thead class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-100">
+                                <tr>
+                                    <th class="!pl-10 pr-2 py-2 text-left">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" class="inline-flex items-center gap-1"
+                                                    wire:click="setMemberSort('{{ base64_encode($dn) }}','pid')"
+                                                    wire:target="setMemberSort"
+                                                    wire:loading.attr="disabled">
+                                                PID
+                                                @if($isSorted && $sortBy === 'pid')
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-3.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                @endif
+                                            </button>
+                                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                                  @click="copyColumnByIndex(0)"
+                                                  :data-copyable-copied="colCopied[0] ? '' : null"
+                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-2 py-2 text-left">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" class="inline-flex items-center gap-1"
+                                                    wire:click="setMemberSort('{{ base64_encode($dn) }}','title')"
+                                                    wire:target="setMemberSort"
+                                                    wire:loading.attr="disabled">
+                                                Stellenzeichen
+                                                @if($isSorted && $sortBy === 'title')
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-4.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                @endif
+                                            </button>
+                                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                                  @click="copyColumnByIndex(1)"
+                                                  :data-copyable-copied="colCopied[1] ? '' : null"
+                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-2 py-2 text-left">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" class="inline-flex items-center gap-1"
+                                                    wire:click="setMemberSort('{{ base64_encode($dn) }}','givenname')"
+                                                    wire:target="setMemberSort"
+                                                    wire:loading.attr="disabled">
+                                                Vorname
+                                                @if($isSorted && $sortBy === 'givenname')
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-3.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                @endif
+                                            </button>
+                                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                                  @click="copyColumnByIndex(2)"
+                                                  :data-copyable-copied="colCopied[2] ? '' : null"
+                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-2 py-2 text-left">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" class="inline-flex items-center gap-1"
+                                                    wire:click="setMemberSort('{{ base64_encode($dn) }}','surname')"
+                                                    wire:target="setMemberSort"
+                                                    wire:loading.attr="disabled">
+                                                Nachname
+                                                @if($isSorted && $sortBy === 'surname')
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-3.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                @endif
+                                            </button>
+                                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                                  @click="copyColumnByIndex(3)"
+                                                  :data-copyable-copied="colCopied[3] ? '' : null"
+                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-2 py-2 text-left">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" class="inline-flex items-center gap-1"
+                                                    wire:click="setMemberSort('{{ base64_encode($dn) }}','tel')"
+                                                    wire:target="setMemberSort"
+                                                    wire:loading.attr="disabled">
+                                                Telefon
+                                                @if($isSorted && $sortBy === 'tel')
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-3.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                @endif
+                                            </button>
+                                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                                  @click="copyColumnByIndex(4)"
+                                                  :data-copyable-copied="colCopied[4] ? '' : null"
+                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left no-copy w-16">
+                                        <span :class="showCopy ? 'opacity-100' : 'opacity-0'" class="text-xs text-gray-500 transition-opacity">Aktionen</span>
+                                    </th>
+                                </tr>
+                            </thead>
 
-                        @foreach ($paginator as $row)
-                            @php $rowKey = ($row['pid'] ?? '') !== '' ? $row['pid'] : ('i'.$loop->index); @endphp
-                            <flux:table.row
-                                wire:key="gm-row-{{ $dnKey }}-{{ $gmNonce }}-{{ $rowKey }}"
-                                class="{{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/80' : 'bg-gray-100 dark:bg-gray-800/55' }} hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-
+                            <tbody class="bg-white dark:bg-gray-800/60">
+                            @foreach (($page['rows'] ?? []) as $i => $row)
                                 @php
                                     $pid = $row['pid'] ?? '—';
+                                    $title = ($row['title'] ?? '') !== '' ? $row['title'] : '—';
                                     $v = $row['givenname'] ?: '—';
                                     $n = $row['surname'] ?: '—';
                                     $tel = trim((string)($row['tel'] ?? ''));
                                     $tshow = $tel !== '' ? $tel : '—';
+                                    $rk = $dnKey.'-'.($row['pid'] ?? ('i'.$i));
                                 @endphp
+                                <tr class="{{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/80' : 'bg-gray-100 dark:bg-gray-800/55' }} hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                    wire:key="gm-row-{{ $dnKey }}-{{ $row['pid'] ?? ('i'.$i) }}"
+                                    data-row-key="{{ $rk }}">
+                                    <td class="!pl-10 pr-4 py-2 whitespace-nowrap">
+                                        <span x-data="{label: @js($pid)}" x-transition.opacity>
+                                            <span @click="if (label !== '—') { navigator.clipboard.writeText(label); const o=label; label='Kopiert 💐'; setTimeout(()=>label=o,1200); }"
+                                                  class="cursor-pointer select-text" x-text="label"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <span x-data="{label: @js($title)}" x-transition.opacity>
+                                            <span @click="if (label !== '—') { navigator.clipboard.writeText(label); const o=label; label='Kopiert 💐'; setTimeout(()=>label=o,1200); }"
+                                                  class="cursor-pointer select-text" x-text="label"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <span x-data="{label: @js($v)}" x-transition.opacity>
+                                            <span @click="if (label !== '—') { navigator.clipboard.writeText(label); const o=label; label='Kopiert 💐'; setTimeout(()=>label=o,1200); }"
+                                                  class="cursor-pointer select-text" x-text="label"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <span x-data="{label: @js($n)}" x-transition.opacity>
+                                            <span @click="if (label !== '—') { navigator.clipboard.writeText(label); const o=label; label='Kopiert 💐'; setTimeout(()=>label=o,1200); }"
+                                                  class="cursor-pointer select-text" x-text="label"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <span x-data="{label: @js($tshow)}" x-transition.opacity>
+                                            <span @click="if (label !== '—') { navigator.clipboard.writeText(label); const o=label; label='Kopiert 💐'; setTimeout(()=>label=o,1200); }"
+                                                  class="cursor-pointer select-text" x-text="label"></span>
+                                        </span>
+                                    </td>
+                                    <th class="px-3 py-2 whitespace-nowrap no-copy w-16 font-normal">
+                                        <span role="button" tabindex="0" title="Zeile kopieren"
+                                              @click="copyRowByKey('{{ $rk }}')"
+                                              :data-copyable-copied="rowCopied['{{ $rk }}'] ? '' : null"
+                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                              class="inline-flex w-4 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
+                                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
+                                            <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                        </span>
+                                    </th>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
 
-                                <flux:table.cell class="!pl-10 pr-4 whitespace-nowrap">
-                                    <span x-data="{label: @js($pid)}" x-transition.opacity>
-                                        <span @click="
-                                            if (label !== '—') {
-                                                navigator.clipboard.writeText(label);
-                                                const orig = label;
-                                                label = 'Kopiert 💐';
-                                                setTimeout(()=>label=orig,1200);
-                                            }
-                                        " class="cursor-pointer select-text" x-text="label"></span>
-                                    </span>
-                                </flux:table.cell>
-
-                                <flux:table.cell class="px-4 whitespace-nowrap">
-                                    <span x-data="{label: @js($v)}" x-transition.opacity>
-                                        <span @click="
-                                            if (label !== '—') {
-                                                navigator.clipboard.writeText(label);
-                                                const orig = label;
-                                                label = 'Kopiert 💐';
-                                                setTimeout(()=>label=orig,1200);
-                                            }
-                                        " class="cursor-pointer select-text" x-text="label"></span>
-                                    </span>
-                                </flux:table.cell>
-
-                                <flux:table.cell class="px-4 whitespace-nowrap">
-                                    <span x-data="{label: @js($n)}" x-transition.opacity>
-                                        <span @click="
-                                            if (label !== '—') {
-                                                navigator.clipboard.writeText(label);
-                                                const orig = label;
-                                                label = 'Kopiert 💐';
-                                                setTimeout(()=>label=orig,1200);
-                                            }
-                                        " class="cursor-pointer select-text" x-text="label"></span>
-                                    </span>
-                                </flux:table.cell>
-
-                                <flux:table.cell class="px-4 whitespace-nowrap">
-                                    <span x-data="{label: @js($tshow)}" x-transition.opacity>
-                                        <span @click="
-                                            if (label !== '—') {
-                                                navigator.clipboard.writeText(label);
-                                                const orig = label;
-                                                label = 'Kopiert 💐';
-                                                setTimeout(()=>label=orig,1200);
-                                            }
-                                        " class="cursor-pointer select-text" x-text="label"></span>
-                                    </span>
-                                </flux:table.cell>
-
-                            </flux:table.row>
-                        @endforeach
-                    </flux:table>
+                    <div class="flex justify-end gap-2 p-2 border-t border-gray-200 dark:border-gray-700">
+                        <span role="button" tabindex="0"
+                              title="Tabelle kopieren"
+                              @click="copyTable()"
+                              :data-copyable-copied="copied ? '' : null"
+                              class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
+                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-3 [[data-copyable-copied]>&]:block"/>
+                            <flux:icon.clipboard-document variant="mini" class="block size-3 [[data-copyable-copied]>&]:hidden"/>
+                            <span class="whitespace-nowrap">Tabelle kopieren</span>
+                        </span>
+                    </div>
                 </div>
-            @else
-                <flux:text variant="subtle">Keine Mitglieder gefunden.</flux:text>
             @endif
         </div>
     </flux:modal>
 
     <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
-                <flux:heading size="lg">Gruppenvergleich</flux:heading>
-                <flux:badge variant="pill">Basis: {{ $compareBasePid ?? '—' }}</flux:badge>
+        <div class="space-y-4 pr-12">
+            <div class="flex items-center gap-3 text-center min-w-0">
+                <flux:heading size="lg" class="leading-none">Gruppenvergleich</flux:heading>
+                <flux:badge variant="pill" class="truncate max-w-[60%] leading-none">Basis: {{ $compareBasePid ?? '—' }}</flux:badge>
             </div>
 
             <div class="flex items-end gap-3">
