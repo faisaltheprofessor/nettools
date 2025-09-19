@@ -30,11 +30,18 @@
                             <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="12345" inputmode="numeric" pattern="[0-9]*"/>
                         </flux:input.group>
                     @else
-                        <flux:input
-                            wire:model.defer="searchTerm"
-                            wire:keydown.enter="search"
-                            placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben...' }}"
-                        />
+                        <div class="relative w-full">
+                            <flux:input
+                                wire:model.defer="searchTerm"
+                                wire:keydown.enter="search"
+                                placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben...' }}"
+                            />
+                            <button type="button"
+                                    @click="$wire.set('searchTerm','')"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded px-1.5 py-0.5 text-sm text-gray-500 hover:text-black">
+                                ×
+                            </button>
+                        </div>
                     @endif
                 </flux:input.group>
             </div>
@@ -212,8 +219,8 @@
                     />
                     <button type="button"
                             @click="$wire.set('memberSearch',''); $nextTick(()=> $refs.memberSearch?.focus())"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded px-1 text-xs text-gray-500 hover:text-black cursor-pointer">
-                        <flux:icon.x-mark />
+                            class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded px-2 py-1 text-base leading-none text-gray-500 hover:text-black">
+                        ×
                     </button>
                 </div>
             </div>
@@ -231,16 +238,17 @@
                         colCopied:{},
                         rowCopied:{},
                         widths:[],
-                        clean(s){ return (s || '').toString().replace(/\s+/g,' ').trim(); },
+                        clean(s){ return (s ?? '').toString().replace(/\s+/g,' ').trim(); },
                         visibleCellNodes(row){ return [...row.querySelectorAll('th,td')].filter(c => !c.classList.contains('no-copy')); },
-                        extractCells(row){ return this.visibleCellNodes(row).map(c => this.clean(c.innerText)); },
+                        extractCells(row){ return this.visibleCellNodes(row).map(c => this.clean(c.textContent)); },
                         extractVisibleRows(){
                             const t = $refs.gmTable;
-                            if(!t) return {header:[], rows:[]};
+                            if(!t) return { header:[], rows:[], rowEls:[] };
                             const head = t.querySelector('thead tr');
                             const header = head ? this.extractCells(head) : [];
-                            const rows = [...t.querySelectorAll('tbody tr')].filter(r => r.offsetParent !== null).map(r => this.extractCells(r));
-                            return {header, rows};
+                            const rowEls = [...t.querySelectorAll('tbody tr')].filter(r => r.offsetParent !== null);
+                            const rows = rowEls.map(r => this.extractCells(r));
+                            return { header, rows, rowEls };
                         },
                         computeWidths(header, rows){
                             const all = [header, ...rows];
@@ -254,43 +262,47 @@
                                 return (c||'') + '\t'.repeat(tabs);
                             }).join('');
                         },
-                        copyTable(){
-                            const {header, rows} = this.extractVisibleRows();
+                        async buildTableText(header, rows){
                             this.computeWidths(header, rows);
-                            const text = [this.smartJoin(header), ...rows.map(r => this.smartJoin(r))].join('\n');
-                            navigator.clipboard.writeText(text).then(()=>{
-                                this.copied = true;
-                                setTimeout(()=> this.copied = false, 1200);
-                            });
+                            const out = [];
+                            out.push(this.smartJoin(header));
+                            for (let i=0;i<rows.length;i++){
+                                out.push(this.smartJoin(rows[i]));
+                                if (i % 200 === 199) { await new Promise(requestAnimationFrame); }
+                            }
+                            return out.join('\n');
                         },
-                        copyRowByKey(key){
+                        async copyTable(){
+                            const {header, rows} = this.extractVisibleRows();
+                            const text = await this.buildTableText(header, rows);
+                            await navigator.clipboard.writeText(text);
+                            this.copied = true; setTimeout(()=> this.copied = false, 1200);
+                        },
+                        async copyRowByKey(key){
                             const tr = document.querySelector(`[data-row-key='${key}']`);
                             if(!tr) return;
                             const {header, rows} = this.extractVisibleRows();
                             this.computeWidths(header, rows);
                             const cols = this.extractCells(tr);
                             const text = this.smartJoin(cols);
-                            navigator.clipboard.writeText(text).then(()=>{
-                                this.rowCopied[key] = true;
-                                setTimeout(()=> this.rowCopied[key] = false, 1200);
-                            });
+                            await navigator.clipboard.writeText(text);
+                            this.rowCopied[key] = true; setTimeout(()=> this.rowCopied[key] = false, 1200);
                         },
-                        copyColumnByIndex(idx){
+                        async copyColumnByIndex(idx){
                             const t = $refs.gmTable;
                             if(!t) return;
                             const headRow = t.querySelector('thead tr');
                             const headCells = this.visibleCellNodes(headRow);
-                            const header = headCells[idx] ? this.clean(headCells[idx].innerText) : '';
+                            const header = headCells[idx] ? this.clean(headCells[idx].textContent) : '';
                             const bodyRows = [...t.querySelectorAll('tbody tr')].filter(r => r.offsetParent !== null);
-                            const col = bodyRows.map(r => {
-                                const cells = this.visibleCellNodes(r);
-                                return cells[idx] ? this.clean(cells[idx].innerText) : '';
-                            });
-                            const text = [header, ...col].join('\n');
-                            navigator.clipboard.writeText(text).then(()=>{
-                                this.colCopied[idx] = true;
-                                setTimeout(()=> this.colCopied[idx] = false, 1200);
-                            });
+                            const out = [header];
+                            for (let i=0;i<bodyRows.length;i++){
+                                const cells = this.visibleCellNodes(bodyRows[i]);
+                                out.push(cells[idx] ? this.clean(cells[idx].textContent) : '');
+                                if (i % 300 === 299) { await new Promise(requestAnimationFrame); }
+                            }
+                            await navigator.clipboard.writeText(out.join('\n'));
+                            this.colCopied[idx] = true; setTimeout(()=> this.colCopied[idx] = false, 1200);
                         }
                     }"
                     class="border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden"
@@ -314,9 +326,9 @@
                                                   @click="copyColumnByIndex(0)"
                                                   :data-copyable-copied="colCopied[0] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                             </span>
                                         </div>
                                     </th>
@@ -328,16 +340,16 @@
                                                     wire:loading.attr="disabled">
                                                 Stellenzeichen
                                                 @if($isSorted && $sortBy === 'title')
-                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-4.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
+                                                    @if($sortDir === 'asc') <flux:icon.arrow-up-wide-narrow class="size-3.5"/> @else <flux:icon.arrow-down-wide-narrow class="size-3.5"/> @endif
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
                                                   @click="copyColumnByIndex(1)"
                                                   :data-copyable-copied="colCopied[1] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                             </span>
                                         </div>
                                     </th>
@@ -356,9 +368,9 @@
                                                   @click="copyColumnByIndex(2)"
                                                   :data-copyable-copied="colCopied[2] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                             </span>
                                         </div>
                                     </th>
@@ -377,9 +389,9 @@
                                                   @click="copyColumnByIndex(3)"
                                                   :data-copyable-copied="colCopied[3] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                             </span>
                                         </div>
                                     </th>
@@ -398,9 +410,9 @@
                                                   @click="copyColumnByIndex(4)"
                                                   :data-copyable-copied="colCopied[4] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-4 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                                <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
+                                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                             </span>
                                         </div>
                                     </th>
@@ -459,9 +471,9 @@
                                               @click="copyRowByKey('{{ $rk }}')"
                                               :data-copyable-copied="rowCopied['{{ $rk }}'] ? '' : null"
                                               :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-4 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
-                                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-4.5 [[data-copyable-copied]>&]:block"/>
-                                            <flux:icon.clipboard-document variant="mini" class="block size-4.5 [[data-copyable-copied]>&]:hidden"/>
+                                              class="inline-flex w-5 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
+                                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                            <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                                         </span>
                                     </th>
                                 </tr>
@@ -476,8 +488,8 @@
                               @click="copyTable()"
                               :data-copyable-copied="copied ? '' : null"
                               class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
-                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-3 [[data-copyable-copied]>&]:block"/>
-                            <flux:icon.clipboard-document variant="mini" class="block size-3 [[data-copyable-copied]>&]:hidden"/>
+                            <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                            <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                             <span class="whitespace-nowrap">Tabelle kopieren</span>
                         </span>
                     </div>
