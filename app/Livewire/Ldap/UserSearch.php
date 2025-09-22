@@ -13,6 +13,10 @@ class UserSearch extends Component
     public $searchResults;
     public $error = null;
 
+    public $userSorted = false;
+    public $userSortBy = null;
+    public $userSortDir = 'asc';
+
     public $selectedUserGroups = null;
     public $selectedUserInfo = [];
     public array $selectedUserGroupMap = [];
@@ -35,39 +39,154 @@ class UserSearch extends Component
 
     protected int $pageCacheTtlMinutes = 45;
 
+    /**
+     * Execute search by selected attribute.
+     * - PID normalized to leading "p".
+     * - Telefon strictly matches last 4 digits (post-filtered).
+     * - Wildcards (*) supported for name/title; RFC4515 escaping.
+     */
     public function search(): void
     {
         $this->reset(['error', 'searchResults', 'selectedUserGroups', 'selectedUserInfo']);
         if (trim($this->searchTerm) === '') { $this->error = 'Bitte geben Sie einen Suchbegriff ein.'; return; }
 
         try {
-            $attributeMap = ['PID' => 'uid', 'Nachname' => 'sn', 'Vollst. Name' => 'fullname', 'Titel' => 'title'];
-            $ldapAttribute = $attributeMap[$this->searchAttribute] ?? 'uid';
+            $attribute = $this->searchAttribute;
             $term = trim($this->searchTerm);
-            if ($this->searchAttribute === 'PID') $term = $this->normalizePid($term);
-            $ldapFilter = sprintf('(%s=%s)', $ldapAttribute, $term);
 
-            $users = User::query()->rawFilter($ldapFilter)->limit(100)->get();
+            if ($attribute === 'PID') {
+                $term = $this->normalizePid($term);
+            } elseif ($attribute === 'Telefon') {
+                $term = $this->normalizeShortTel($term);
+                if (strlen($term) !== 4) { $this->error = 'Bitte genau 4 Ziffern eingeben.'; return; }
+            }
+
+            $filter = $this->ldapFilterForUserSearch($attribute, $term);
+
+            $attrs = ['uid','cn','sn','givenname','title','mail','BAPK-mailext','telephonenumber','telephoneNumber','BAPK-telefon','mobile'];
+            $users = User::query()->select($attrs)->rawFilter($filter)->limit(500)->get();
             if ($users->isEmpty()) { $this->error = 'Keine Benutzer gefunden.'; return; }
 
             $results = collect();
             foreach ($users as $user) {
+                $rawTel = $user->getFirstAttribute('telephonenumber')
+                    ?? $user->getFirstAttribute('telephoneNumber')
+                    ?? $user->getFirstAttribute('BAPK-telefon')
+                    ?? $user->getFirstAttribute('mobile')
+                    ?? '';
+
+                $shortTel = $this->normalizeShortTel($rawTel);
+
+                if ($attribute === 'Telefon' && $shortTel !== $term) {
+                    continue;
+                }
+
                 $results->push([
-                    'pid' => $user->getFirstAttribute('uid'),
-                    'fullname' => $user->getFirstAttribute('cn') ?? '',
-                    'surname' => $user->getFirstAttribute('sn') ?? '',
-                    'givenname' => $user->getFirstAttribute('givenname') ?? '',
-                    'title' => $user->getFirstAttribute('title') ?? '',
-                    'email' => $user->getFirstAttribute('mail') ?? '',
-                    'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
+                    'pid'           => $user->getFirstAttribute('uid'),
+                    'fullname'      => $user->getFirstAttribute('cn') ?? '',
+                    'surname'       => $user->getFirstAttribute('sn') ?? '',
+                    'givenname'     => $user->getFirstAttribute('givenname') ?? '',
+                    'title'         => $user->getFirstAttribute('title') ?? '',
+                    'email'         => $user->getFirstAttribute('mail') ?? '',
+                    'external_email'=> $user->getFirstAttribute('BAPK-mailext') ?? '',
+                    'tel'           => $shortTel,
                 ]);
             }
-            $this->searchResults = $results;
+
+            $results = $results->unique('pid')->values();
+            if ($results->isEmpty()) { $this->error = 'Keine Benutzer gefunden.'; return; }
+
+            $this->searchResults = $this->sortUserCollection($results);
         } catch (\Exception $e) {
             $this->error = $e->getMessage();
         }
     }
 
+    /**
+     * Toggle header sort for results table.
+     */
+    public function setUserSort(string $by): void
+    {
+        if (!in_array($by, ['pid','surname','givenname','title','tel','email'], true)) return;
+        if ($this->userSorted && $this->userSortBy === $by) {
+            $this->userSortDir = $this->userSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->userSortBy = $by;
+            $this->userSortDir = 'asc';
+            $this->userSorted = true;
+        }
+        if ($this->searchResults) {
+            $this->searchResults = $this->sortUserCollection(collect($this->searchResults));
+        }
+    }
+
+    /**
+     * Natural sort with stable fallbacks.
+     */
+    private function sortUserCollection($collection)
+    {
+        if (!$this->userSorted || !$this->userSortBy) return $collection->values();
+        $by = $this->userSortBy;
+        $dir = $this->userSortDir;
+
+        $sorted = $collection->sort(function($a,$b) use($by,$dir){
+            $aa = (string)($a[$by] ?? '');
+            $bb = (string)($b[$by] ?? '');
+            $cmp = strnatcasecmp($aa,$bb);
+            if ($cmp !== 0) return $dir === 'asc' ? $cmp : -$cmp;
+            foreach (['surname','givenname','title','pid'] as $k) {
+                if ($k === $by) continue;
+                $ta = (string)($a[$k] ?? '');
+                $tb = (string)($b[$k] ?? '');
+                $t = strnatcasecmp($ta,$tb);
+                if ($t !== 0) return $t;
+            }
+            return 0;
+        });
+
+        return $sorted->values();
+    }
+
+    /**
+     * Build LDAP filter for the main search form.
+     * Preserves * as wildcard; escapes RFC4515 chars; phone is broad then filtered to last-4.
+     */
+    private function ldapFilterForUserSearch(string $attribute, string $term): string
+    {
+        if ($attribute === 'PID') {
+            return sprintf('(uid=%s)', self::rfc4515Escape($term, true));
+        }
+
+        if ($attribute === 'Nachname') {
+            $t = self::withWildcards(self::rfc4515Escape($term, true));
+            return sprintf('(sn=%s)', $t);
+        }
+
+        if ($attribute === 'Vollst. Name') {
+            $t = self::withWildcards(self::rfc4515Escape($term, true));
+            return sprintf('(cn=%s)', $t);
+        }
+
+        if ($attribute === 'Titel') {
+            $t = self::withWildcards(self::rfc4515Escape($term, true));
+            return sprintf('(title=%s)', $t);
+        }
+
+        if ($attribute === 'Telefon') {
+            $t = self::withWildcards(self::rfc4515Escape($term, true));
+            return sprintf('(|(telephonenumber=%1$s)(telephoneNumber=%1$s)(BAPK-telefon=%1$s)(mobile=%1$s))', $t);
+        }
+
+        $t = self::withWildcards(self::rfc4515Escape($term, true));
+        return sprintf(
+            '(|(uid=%1$s)(sn=%1$s)(givenname=%1$s)(cn=%1$s)(title=%1$s)(telephonenumber=%1$s)(telephoneNumber=%1$s)(BAPK-telefon=%1$s)(mobile=%1$s))',
+            $t
+        );
+    }
+
+    /**
+     * Load info and groups for a PID.
+     */
     public function loadGroupsAndInfo(string $pid): void
     {
         try {
@@ -75,20 +194,27 @@ class UserSearch extends Component
             $user = User::query()->where('uid', '=', $pid)->first();
             if (!$user) { $this->resetGroupsState(); return; }
 
+            $rawTel = $user->getFirstAttribute('telephonenumber')
+                ?? $user->getFirstAttribute('telephoneNumber')
+                ?? $user->getFirstAttribute('BAPK-telefon')
+                ?? $user->getFirstAttribute('mobile')
+                ?? '';
+
             $this->selectedUserInfo = [
-                'pid' => $user->getFirstAttribute('uid') ?? '',
-                'surname' => $user->getFirstAttribute('sn') ?? '',
+                'pid'       => $user->getFirstAttribute('uid') ?? '',
+                'surname'   => $user->getFirstAttribute('sn') ?? '',
                 'givenname' => $user->getFirstAttribute('givenname') ?? '',
-                'title' => $user->getFirstAttribute('title') ?? '',
-                'info' => $user->getFirstAttribute('description') ?? '',
+                'title'     => $user->getFirstAttribute('title') ?? '',
+                'info'      => $user->getFirstAttribute('description') ?? '',
                 'lastLogin' => $user->getFirstAttribute('logintime') ?? '—',
-                'context' => method_exists($user, 'getContext') ? ($user->getContext() ?? '—') : '—',
+                'context'   => method_exists($user, 'getContext') ? ($user->getContext() ?? '—') : '—',
+                'tel'       => $this->normalizeShortTel($rawTel),
             ];
 
             $rawGroups = $user->getAttribute('groupmembership') ?? [];
             $rawGroups = is_array($rawGroups) ? $rawGroups : [];
 
-            $this->selectedUserGroups = $this->formatGroups($rawGroups);
+            $this->selectedUserGroups   = $this->formatGroups($rawGroups);
             $this->selectedUserGroupMap = $this->mapGroups($rawGroups);
 
             $this->memberState = [];
@@ -102,6 +228,9 @@ class UserSearch extends Component
         }
     }
 
+    /**
+     * Open group members modal for DN.
+     */
     public function openMembersModal(string $encodedDn): void
     {
         $dn = trim((string) base64_decode($encodedDn, true) ?: '');
@@ -124,14 +253,21 @@ class UserSearch extends Component
         $this->modal('groupMembers')->show();
     }
 
+    /**
+     * Live-search inside members table. For phones we still normalize to last-4 if digits.
+     */
     public function updatedMemberSearch($value): void
     {
         $dn = $this->memberListForDn;
         if (!$dn || !isset($this->memberState[$dn])) return;
-        $this->memberSearch = trim((string)$value);
+        $val = (string)$value;
+        $this->memberSearch = ctype_digit($val) ? $this->normalizeShortTel($val) : $val;
         $this->loadMembersCurrentCursor($dn);
     }
 
+    /**
+     * Toggle sort for members table.
+     */
     public function setMemberSort(string $encodedDn, string $by): void
     {
         $dn = trim((string) base64_decode($encodedDn, true) ?: '');
@@ -150,10 +286,13 @@ class UserSearch extends Component
         $this->sortCurrentPage($dn);
     }
 
+    /**
+     * Load current cursor page for members and apply sorting.
+     */
     private function loadMembersCurrentCursor(string $dn): void
     {
         try {
-            $state  = $this->memberState[$dn];
+            $state   = $this->memberState[$dn];
             $sortBy  = $state['sortBy'] ?? null;
             $sortDir = $state['sortDir'] ?? 'asc';
 
@@ -176,6 +315,9 @@ class UserSearch extends Component
         }
     }
 
+    /**
+     * Sort currently loaded members page.
+     */
     private function sortCurrentPage(string $dn): void
     {
         $st = $this->memberState[$dn] ?? null;
@@ -196,7 +338,7 @@ class UserSearch extends Component
                 if ($k === $by) continue;
                 $ta = (string)($a[$k] ?? '');
                 $tb = (string)($b[$k] ?? '');
-                $t  = strnatcasecmp($ta, $tb);
+                $t  = strnatcasecmp($ta,$tb);
                 if ($t !== 0) return $t;
             }
             return 0;
@@ -206,6 +348,9 @@ class UserSearch extends Component
         $this->memberState[$dn]['rows'] = $rows;
     }
 
+    /**
+     * Fetch full members page; supports broad filter, then optional strict last-4 for digits.
+     */
     private function fetchMembersPage(string $dn, int $pageSize, string $query = '', ?string $sortBy = null, string $sortDir = 'asc'): array
     {
         $filter = $this->buildFilter($dn, $query);
@@ -218,7 +363,7 @@ class UserSearch extends Component
             'sort'   => [$sortBy, $sortDir],
         ]));
 
-        return Cache::remember($cacheKey, now()->addMinutes($this->pageCacheTtlMinutes), function () use ($filter, $attrs) {
+        return Cache::remember($cacheKey, now()->addMinutes($this->pageCacheTtlMinutes), function () use ($filter, $attrs, $query) {
             $q = User::query()->select($attrs)->rawFilter($filter);
             $results = $q->limit($this->memberPageSize)->get();
 
@@ -228,39 +373,59 @@ class UserSearch extends Component
                 $given = $u->getFirstAttribute('givenname') ?? '';
                 $sur   = $u->getFirstAttribute('sn') ?? '';
                 $title = $u->getFirstAttribute('title') ?? '';
-                $tel   = $u->getFirstAttribute('telephonenumber')
+                $rawTel   = $u->getFirstAttribute('telephonenumber')
                     ?? $u->getFirstAttribute('telephoneNumber')
                     ?? $u->getFirstAttribute('BAPK-telefon')
                     ?? $u->getFirstAttribute('mobile')
                     ?? '';
+                $shortTel = $this->normalizeShortTel($rawTel);
 
-                if ($pid === '' && $given === '' && $sur === '' && $title === '' && $tel === '') continue;
+                if ($query !== '' && ctype_digit($query) && strlen($query) === 4 && $shortTel !== $query) {
+                    continue;
+                }
+
+                if ($pid === '' && $given === '' && $sur === '' && $title === '' && $shortTel === '') continue;
 
                 $rows[] = [
                     'pid'       => $pid !== '' ? $pid : '—',
                     'title'     => $title,
                     'givenname' => $given,
                     'surname'   => $sur,
-                    'tel'       => $tel,
+                    'tel'       => $shortTel,
                 ];
             }
 
-            return [
-                'rows'        => $rows,
-            ];
+            return ['rows' => $rows];
         });
     }
 
+    /**
+     * Build LDAP filter for members modal (group DN + optional search).
+     */
     private function buildFilter(string $dn, string $query): string
     {
-        $base = '(groupmembership=' . $dn . ')';
+        $base = '(groupmembership=' . self::rfc4515Escape($dn, true) . ')';
         $q = trim($query);
         if ($q === '') return $base;
-        $e = self::esc($q);
-        $or = '(|(uid=*' . $e . '*)(givenname=*' . $e . '*)(sn=*' . $e . '*)(title=*' . $e . '*)(telephonenumber=*' . $e . '*)(telephoneNumber=*' . $e . '*)(BAPK-telefon=*' . $e . '*)(mobile=*' . $e . '*))';
+
+        $t = self::withWildcards(self::rfc4515Escape($q, true));
+        $or = '(|'
+            . '(uid=' . $t . ')'
+            . '(givenname=' . $t . ')'
+            . '(sn=' . $t . ')'
+            . '(title=' . $t . ')'
+            . '(telephonenumber=' . $t . ')'
+            . '(telephoneNumber=' . $t . ')'
+            . '(BAPK-telefon=' . $t . ')'
+            . '(mobile=' . $t . ')'
+            . ')';
+
         return '(&' . $base . $or . ')';
     }
 
+    /**
+     * Open compare modal with a base PID.
+     */
     public function openCompare(string $basePid): void
     {
         $this->resetCompare();
@@ -269,6 +434,9 @@ class UserSearch extends Component
         $this->modal('compare')->show();
     }
 
+    /**
+     * Reset compare state.
+     */
     private function resetCompare(): void
     {
         $this->compareOtherPidInput = '';
@@ -280,6 +448,9 @@ class UserSearch extends Component
         $this->compareView = 'common';
     }
 
+    /**
+     * Run groups compare between base and other PID.
+     */
     public function runCompare(): void
     {
         $this->compareError = null;
@@ -321,12 +492,18 @@ class UserSearch extends Component
         }
     }
 
+    /**
+     * Switch compare view tab.
+     */
     public function setCompareView(string $view): void
     {
         if (!in_array($view, ['user1','user2','common','diffs'], true)) return;
         $this->compareView = $view;
     }
 
+    /**
+     * Fetch groups and minimal info for a PID.
+     */
     private function getUserGroupsAndInfo(string $pid, array &$info): array
     {
         $user = User::query()->where('uid', '=', $pid)->first();
@@ -342,6 +519,9 @@ class UserSearch extends Component
         return $this->formatGroups(is_array($rawGroups) ? $rawGroups : []);
     }
 
+    /**
+     * Reset group modal state.
+     */
     private function resetGroupsState(): void
     {
         $this->selectedUserGroups = [];
@@ -353,6 +533,9 @@ class UserSearch extends Component
         $this->gmNonce = 0;
     }
 
+    /**
+     * Ensure PID starts with "p".
+     */
     private function normalizePid(string $term): string
     {
         $t = strtolower(trim($term));
@@ -360,6 +543,19 @@ class UserSearch extends Component
         return $t;
     }
 
+    /**
+     * Keep last 4 digits of any phone-like value.
+     */
+    private function normalizeShortTel(string $tel): string
+    {
+        $digits = preg_replace('/\D+/', '', (string)$tel);
+        if ($digits === '') return '';
+        return substr($digits, -4);
+    }
+
+    /**
+     * Display-transform LDAP groups.
+     */
     private function formatGroups(array $groups): array
     {
         $clean = [];
@@ -376,6 +572,9 @@ class UserSearch extends Component
         return $clean;
     }
 
+    /**
+     * Map display group → DN.
+     */
     private function mapGroups(array $rawGroups): array
     {
         $map = [];
@@ -390,11 +589,33 @@ class UserSearch extends Component
         return $map;
     }
 
-    private static function esc(string $s): string
+    /**
+     * RFC4515 escape for LDAP filters. Optionally preserve * as wildcard.
+     */
+    private static function rfc4515Escape(string $s, bool $preserveAsterisk = true): string
     {
-        return str_replace(['\\', '*', '(', ')', "\x00"], ['\5c','\2a','\28','\29','\00'], $s);
+        $s = str_replace(
+            ["\\", "(", ")", "\x00"],
+            ["\\5c", "\\28", "\\29", "\\00"],
+            $s
+        );
+        if (!$preserveAsterisk) {
+            $s = str_replace("*", "\\2a", $s);
+        }
+        return $s;
     }
 
+    /**
+     * Surround with * if user didn’t provide wildcards.
+     */
+    private static function withWildcards(string $term): string
+    {
+        return str_contains($term, '*') ? $term : ('*' . $term . '*');
+    }
+
+    /**
+     * Title case for names in UI.
+     */
     private function titleCaseName(array $info): string
     {
         $given = trim((string)($info['givenname'] ?? ''));
@@ -406,6 +627,9 @@ class UserSearch extends Component
         return ($full !== '') ? "$full ($pid)" : $pid;
     }
 
+    /**
+     * Render Livewire view.
+     */
     public function render()
     {
         return view('livewire.ldap.user-search', [
