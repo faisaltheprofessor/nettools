@@ -27,7 +27,7 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
-    'version' => 'v0.9.0-beta.5',
+    'version' => 'v0.9.0-beta.6',
     'signature_website' => env('SIGNATURE_WEBSITE', ''),
 
     /*
