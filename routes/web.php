@@ -46,8 +46,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('password.generator');
 
     // ID Tools
-    Route::get('id-tools', IdTools::class)
-        ->name('id-tools.index');
+    Route::get('ldap', IdTools::class)
+        ->name('ldap.index');
 
     // ID Tools
     Route::get('next-mailbox-pid', NextMailboxPid::class)

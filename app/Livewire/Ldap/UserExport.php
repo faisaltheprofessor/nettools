@@ -12,13 +12,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class UserExport extends Component
 {
     public string|int $pidCount = 20;
-
-    public string $exportMode = 'table'; // 'txt', 'csv', 'table'
-
-    public array $selectedFields = []; // LDAP attribute names
-
+    public string $exportMode = 'table';
+    public string $sortDirection = 'desc';
+    public array $selectedFields = [];
     public ?string $error = null;
-
     public array $exportOutput = [];
 
     public array $fieldDisplayNames = [
@@ -30,21 +27,32 @@ class UserExport extends Component
         'dn' => 'Kontext',
     ];
 
+    public function updatedSelectedFields()
+    {
+        if ($this->exportMode === 'table') {
+            $this->exportPids();
+        }
+    }
+
+    public function updatedSortDirection()
+    {
+        if ($this->exportMode === 'table') {
+            $this->exportPids();
+        }
+    }
+
     public function exportPids()
     {
         $this->reset(['error', 'exportOutput']);
 
         if ($this->exportMode === '') {
             $this->error = 'Export-Modus erforderlich';
-
             return;
         }
 
         $lock = Cache::lock('ldap:pids-export', 30);
-
         if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell durch jemand anderes verwendet. Bitte warte einen Moment.';
-
             return;
         }
 
@@ -53,19 +61,21 @@ class UserExport extends Component
 
             $anzahl = $this->pidCount === 'Alle' ? 0 : (int) $this->pidCount;
 
-            $orderedFields = array_filter(array_keys($this->fieldDisplayNames), fn ($field) => in_array($field, $this->selectedFields));
+            $orderedFields = array_values(array_filter(
+                $this->selectedFields,
+                fn ($f) => array_key_exists($f, $this->fieldDisplayNames)
+            ));
             $fieldsToSelect = array_unique(array_merge(['uid'], array_diff($orderedFields, ['dn'])));
 
-            $rawEntries = \App\Ldap\User::query()
+            $rawEntries = User::query()
                 ->select($fieldsToSelect)
                 ->where('uid', 'starts_with', 'p')
-                ->orderByDesc('uid')
+                ->orderBy('uid', $this->sortDirection === 'asc' ? 'asc' : 'desc')
                 ->limit(10000)
                 ->get();
 
             if ($rawEntries->isEmpty()) {
                 $this->error = 'Keine P-IDs im LDAP gefunden.';
-
                 return;
             }
 
@@ -75,7 +85,6 @@ class UserExport extends Component
 
             if ($filteredEntries->isEmpty()) {
                 $this->error = 'Keine gültigen P-IDs im LDAP gefunden.';
-
                 return;
             }
 
@@ -86,7 +95,6 @@ class UserExport extends Component
             $filenameDate = now()->format('Ymd');
             $filenameCount = $anzahl > 0 ? $anzahl : 'Alle';
 
-            // TABLE
             if ($this->exportMode === 'table') {
                 $this->exportOutput = $selectedEntries->map(function ($entry) use ($orderedFields) {
                     $row = ['uid' => $entry->getFirstAttribute('uid')];
@@ -104,9 +112,7 @@ class UserExport extends Component
                             if ($field === 'logintime' && $value) {
                                 try {
                                     $value = Carbon::parse($value)->format('d.m.Y');
-                                } catch (\Exception $e) {
-                                    // fallback
-                                }
+                                } catch (\Exception $e) {}
                             }
                         }
 
@@ -114,14 +120,11 @@ class UserExport extends Component
                     }
 
                     return $row;
-                })->toArray();
-
-                $this->exportOutput = array_reverse($this->exportOutput);
+                })->values()->toArray();
 
                 return;
             }
 
-            // TXT
             if ($this->exportMode === 'txt') {
                 $lines = $selectedEntries->map(function ($entry) use ($orderedFields) {
                     $uid = $entry->getFirstAttribute('uid');
@@ -140,9 +143,7 @@ class UserExport extends Component
                             if ($field === 'logintime' && $value) {
                                 try {
                                     $value = Carbon::parse($value)->format('d.m.Y');
-                                } catch (\Exception $e) {
-                                    // fallback
-                                }
+                                } catch (\Exception $e) {}
                             }
                         }
 
@@ -152,10 +153,9 @@ class UserExport extends Component
                         }
                     }
 
-                    return $uid.(! empty($extras) ? ' - '.implode(' | ', $extras) : '');
-                })->toArray();
+                    return $uid.( !empty($extras) ? ' - '.implode(' | ', $extras) : '' );
+                })->values()->toArray();
 
-                $lines = array_reverse($lines);
                 $filename = "{$filenameDate}_PIDs_{$filenameCount}.txt";
 
                 return response()->streamDownload(function () use ($lines) {
@@ -165,7 +165,6 @@ class UserExport extends Component
                 ]);
             }
 
-            // CSV
             if ($this->exportMode === 'csv') {
                 $filename = "{$filenameDate}_PIDs_{$filenameCount}.csv";
 
@@ -179,7 +178,7 @@ class UserExport extends Component
 
                     fputcsv($output, $headerLabels, ';');
 
-                    foreach ($selectedEntries->reverse() as $entry) {
+                    foreach ($selectedEntries as $entry) {
                         $row = [$entry->getFirstAttribute('uid')];
 
                         foreach ($orderedFields as $field) {
@@ -195,9 +194,7 @@ class UserExport extends Component
                                 if ($field === 'logintime' && $value) {
                                     try {
                                         $value = Carbon::parse($value)->format('d.m.Y');
-                                    } catch (\Exception $e) {
-                                        // fallback
-                                    }
+                                    } catch (\Exception $e) {}
                                 }
                             }
 

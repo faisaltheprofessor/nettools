@@ -11,8 +11,8 @@
             <div class="ps-3 pe-4">
                 <?php if ($icon && $icon === 'bookmark'): ?>
                     <!-- Render the provided icon dynamically -->
-                    <flux:icon.bookmark class="size-4! hidden group-data-open/disclosure-button:block" />
-                    <flux:icon.bookmark-slash class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />
+                    <flux:icon.bookmark-slash class="size-4! hidden group-data-open/disclosure-button:block" />
+                    <flux:icon.bookmark class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />
                 <?php elseif ($icon && $icon === 'generators'): ?>
                     <flux:icon.dices class="size-4! hidden group-data-open/disclosure-button:block" />
                     <flux:icon.dice-6 class="size-4! block group-data-open/disclosure-button:hidden rtl:rotate-180" />

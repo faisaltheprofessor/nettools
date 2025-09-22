@@ -9,108 +9,76 @@
     @fluxAppearance
 </head>
 <body class="min-h-screen bg-white dark:bg-zinc-800">
-<flux:sidebar sticky stashable
-              class="bg-zinc-50 dark:bg-zinc-900 border-r rtl:border-r-0 rtl:border-l border-zinc-200 dark:border-zinc-700">
+@php
+    $isActive = fn ($patterns) => collect((array) $patterns)->some(fn ($p) => request()->is(ltrim($p, '/')));
+    $generatorsExpanded = $isActive(['password-generator','ovirt-serialnumber-generator','ip-calculator','signature-generator','firewall-template']);
+    $bookmarksExpanded  = $isActive(['bookmarks','bookmarks/*']);
+@endphp
+<flux:sidebar sticky stashable class="bg-zinc-50 dark:bg-zinc-900 border-r rtl:border-r-0 rtl:border-l border-zinc-200 dark:border-zinc-700">
     <flux:sidebar.toggle class="lg:hidden" icon="x-mark"/>
     <div class="flex">
-        <flux:brand href="/dashboard" logo="{{ asset('logo.png') }}" wire:navigate name="{{ config('app.name') }}"
-                    class="px-2"/>
-        <flux:badge
-            color="lime"
-            size="sm"
-            role="button"
-            tabindex="0"
-            class="cursor-pointer"
-            x-on:click="Flux.modal('changelog').show()"
-        >
+        <flux:brand href="/dashboard" logo="{{ asset('logo.png') }}" wire:navigate name="{{ config('app.name') }}" class="px-2"/>
+        <flux:badge color="lime" size="sm" role="button" tabindex="0" class="cursor-pointer" x-on:click="Flux.modal('changelog').show()">
             {{ config('app.version') }}
         </flux:badge>
     </div>
-
-
     <flux:navlist>
         <flux:navlist.item icon="home" href="/dashboard" wire:navigate>Home</flux:navlist.item>
-
-        {{-- DHCP --}}
         <flux:navlist.item icon="satellite-dish" href="/dhcp" wire:navigate>
             <div class="flex items-center justify-between">
                 <span>DHCP</span>
                 <livewire:service-status-indicator service="dhcp" display="icon"/>
             </div>
         </flux:navlist.item>
-
-        {{-- DNS --}}
         <flux:navlist.item icon="earth-lock" href="{{ route('dns.index') }}" wire:navigate>
             <div class="flex items-center justify-between">
                 <span>DNS</span>
                 <livewire:service-status-indicator service="dns" display="icon"/>
             </div>
         </flux:navlist.item>
-
-
-        {{-- DNS --}}
-        <flux:navlist.item icon="identification" href="{{ route('id-tools.index') }}" wire:navigate>
+        <flux:navlist.item icon="identification" href="{{ route('ldap.index') }}" wire:navigate>
             <div class="flex items-center justify-between">
-                <span>ID-Tools</span>
+                <span>LDAP</span>
             </div>
         </flux:navlist.item>
-
-        <flux:navlist.group expandable icon="generators" heading="Generatoren" class="grid">
+        <flux:navlist.group expandable icon="generators" heading="Generatoren" class="grid" :expanded="$generatorsExpanded">
             <flux:navlist.item icon="key" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
-            <flux:navlist.item icon="numbered-list" href="/ovirt-serialnumber-generator" wire:navigate>oVirt
-                Seriennummer
-            </flux:navlist.item>
+            <flux:navlist.item icon="numbered-list" href="/ovirt-serialnumber-generator" wire:navigate>oVirt Seriennummer</flux:navlist.item>
             <flux:navlist.item icon="network" href="/ip-calculator" wire:navigate>Subnetting</flux:navlist.item>
             <flux:navlist.item icon="signature" href="/signature-generator" wire:navigate>Signatur</flux:navlist.item>
             <flux:navlist.item icon="envelope" href="/firewall-template" wire:navigate>Firewall-Vorlage</flux:navlist.item>
         </flux:navlist.group>
-
-        <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid">
+        <flux:navlist.group expandable icon="bookmark" heading="Lesezeichen" class="grid" :expanded="$bookmarksExpanded">
             <livewire:sidebar-bookmark-folders/>
         </flux:navlist.group>
     </flux:navlist>
-
-
     <flux:spacer/>
-
     <flux:navlist variant="outline">
-        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer"
-                        x-on:click.prevent="document.getElementById('logout-form').submit()">
+        <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
             Logout
         </flux:menu.item>
-
-
     </flux:navlist>
 </flux:sidebar>
-
 <flux:header class="lg:hidden">
     <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left"/>
     <flux:spacer/>
-    <flux:dropdown position="top" alignt="start">
+    <flux:dropdown position="top" align="start">
         <flux:menu>
             <flux:menu.radio.group></flux:menu.radio.group>
             <flux:menu.separator/>
-            <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer"
-                            x-on:click.prevent="document.getElementById('logout-form').submit()">
+            <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
                 Logout
             </flux:menu.item>
         </flux:menu>
     </flux:dropdown>
 </flux:header>
-
 <flux:main>
     <flux:heading size="xl" level="1">
         <div class="flex justify-between">
-            <div>
-                Hallo, {{ Str::title(Auth::user()->name) }}
-            </div>
+            <div>Hallo, {{ Str::title(Auth::user()->name) }}</div>
             <div class="flex items-center gap-2">
-
-                <livewire:feedback name="submit-feedback"></livewire:feedback">
-                {{-- Notifications --}}
+                <livewire:feedback name="submit-feedback" />
                 <livewire:notification-bell />
-
-                {{-- Appearance --}}
                 <flux:dropdown x-data align="end">
                     <flux:button variant="subtle" square class="group" aria-label="Preferred color scheme">
                         <flux:icon.sun x-show="$flux.appearance === 'light'" variant="mini" class="text-zinc-500 dark:text-white"/>
@@ -127,18 +95,15 @@
             </div>
         </div>
     </flux:heading>
-
     <flux:text class="mb-6 mt-2 text-base">Herzlich willkommen bei {{ config('app.name') }}</flux:text>
     <flux:separator variant="subtle"/>
-
     <div class="mt-4">
+        {{-- slot --}}
         {{ $slot }}
     </div>
-
     @persist('toast')
     <flux:toast position="bottom right" class="pt-24"/>
     @endpersist
-
     <flux:modal name="feedback-submitted" class="min-w-[22rem]">
         <div class="space-y-6">
             <div class="flex items-center gap-2">
@@ -155,17 +120,11 @@
             </div>
         </div>
     </flux:modal>
-
-
     <livewire:changelog/>
 </flux:main>
-
-<!-- Logout Form -->
 <form id="logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
     @csrf
 </form>
-
 @fluxScripts
 </body>
 </html>
-

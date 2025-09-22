@@ -313,7 +313,7 @@
                                 <tr>
                                     <th class="!pl-10 pr-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
-                                            <button type="button" class="inline-flex items-center gap-1"
+                                            <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
                                                     wire:click="setMemberSort('{{ base64_encode($dn) }}','pid')"
                                                     wire:target="setMemberSort"
                                                     wire:loading.attr="disabled">
@@ -334,7 +334,7 @@
                                     </th>
                                     <th class="px-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
-                                            <button type="button" class="inline-flex items-center gap-1"
+                                            <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
                                                     wire:click="setMemberSort('{{ base64_encode($dn) }}','title')"
                                                     wire:target="setMemberSort"
                                                     wire:loading.attr="disabled">
@@ -355,7 +355,7 @@
                                     </th>
                                     <th class="px-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
-                                            <button type="button" class="inline-flex items-center gap-1"
+                                            <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
                                                     wire:click="setMemberSort('{{ base64_encode($dn) }}','givenname')"
                                                     wire:target="setMemberSort"
                                                     wire:loading.attr="disabled">
@@ -376,7 +376,7 @@
                                     </th>
                                     <th class="px-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
-                                            <button type="button" class="inline-flex items-center gap-1"
+                                            <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
                                                     wire:click="setMemberSort('{{ base64_encode($dn) }}','surname')"
                                                     wire:target="setMemberSort"
                                                     wire:loading.attr="disabled">
@@ -397,7 +397,7 @@
                                     </th>
                                     <th class="px-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
-                                            <button type="button" class="inline-flex items-center gap-1"
+                                            <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
                                                     wire:click="setMemberSort('{{ base64_encode($dn) }}','tel')"
                                                     wire:target="setMemberSort"
                                                     wire:loading.attr="disabled">
