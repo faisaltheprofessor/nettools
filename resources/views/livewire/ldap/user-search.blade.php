@@ -78,11 +78,10 @@
         </div>
 
         {{-- =========================================
-        --  RESULTS TABLE (BODY SCROLL ONLY, STICKY ACTIONS)
+        --  RESULTS TABLE (SYNCED H SCROLL, NON-STICKY AKTIONEN)
         -- ========================================= --}}
         @if ($searchResults && $searchResults->count() > 0)
-            <div class="mt-6" x-data="userTableCopy({ headRef: 'userHead', bodyRef: 'userBody' })">
-                {{-- Header with copy mode + ALWAYS visible copy-table --}}
+            <div class="mt-6" x-data="userTableCopy()">
                 <div class="flex items-center justify-between gap-3">
                     <flux:heading size="sm" class="text-gray-700 dark:text-gray-100">Ergebnis</flux:heading>
                     <div class="flex items-center gap-3 shrink-0">
@@ -103,19 +102,18 @@
                     </div>
                 </div>
 
-                {{-- Table shell (separate header/body; sticky Aktionen; no horizontal scroll on body) --}}
                 <div class="relative shadow-md sm:rounded-lg border border-gray-300 dark:border-gray-700">
-                    {{-- Header table (no scroll) --}}
-                    <div class="overflow-hidden">
-                        <table class="w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/20">
+                    {{-- Header --}}
+                    <div class="overflow-x-hidden" x-ref="userHeadWrap">
+                        <table class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/20">
                             <colgroup>
                                 <col class="w-[10rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
                                 <col class="w-[12rem]">
-                                <col class="w-[20rem]">
-                                <col class="w-[7.5rem]"> {{-- Aktionen --}}
+                                <col class="w-[20rem]"> {{-- Email --}}
+                                <col class="w-[8rem]">  {{-- Aktionen --}}
                             </colgroup>
                             <thead x-ref="userHead" class="text-xs uppercase bg-gray-100 dark:bg-gray-800">
                                 <tr>
@@ -214,6 +212,7 @@
                                         </div>
                                     </th>
 
+                                    {{-- ✅ Email header added --}}
                                     <th class="px-4 py-3">
                                         <div class="inline-flex items-center gap-1">
                                             <button type="button" class="inline-flex items-center gap-1 cursor-pointer" wire:click="setUserSort('email')">
@@ -233,26 +232,27 @@
                                         </div>
                                     </th>
 
-                                    {{-- Sticky Aktionen header cell (inherit bg + left border) --}}
-                                    <th class="px-2 py-3 no-copy w-[7.5rem] text-right sticky right-0 bg-inherit z-10 border-l border-gray-200 dark:border-gray-700">
-                                        <span :class="showCopy ? 'opacity-100' : 'opacity-0'" class="text-xs text-gray-500 transition-opacity">Aktionen</span>
+                                    <th class="px-4 py-3">
+                                        <div class="inline-flex items-center gap-1">
+                                            <span>Aktionen</span>
+                                        </div>
                                     </th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
 
-                    {{-- Scrollable body only --}}
-                    <div class="max-h-[60vh] overflow-y-auto overflow-x-hidden">
-                        <table class="w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900/20">
+                    {{-- Body --}}
+                    <div class="max-h-[60vh] overflow-y-auto overflow-x-auto" x-ref="userBodyWrap" @scroll="$refs.userHeadWrap.scrollLeft = $event.target.scrollLeft">
+                        <table class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900/20">
                             <colgroup>
                                 <col class="w-[10rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
                                 <col class="w-[12rem]">
-                                <col class="w-[20rem]">
-                                <col class="w-[7.5rem]"> {{-- Aktionen --}}
+                                <col class="w-[20rem]"> {{-- Email --}}
+                                <col class="w-[8rem]">  {{-- Aktionen --}}
                             </colgroup>
                             <tbody x-ref="userBody" class="bg-white dark:bg-gray-800/60">
                             @foreach ($searchResults as $idx => $user)
@@ -271,9 +271,7 @@
                                             <flux:text variant="subtle">nicht vorhanden</flux:text>
                                         @endif
                                     </td>
-
-                                    {{-- Sticky Aktionen body cell (inherit bg + left border) --}}
-                                    <td class="px-2 py-3 whitespace-nowrap no-copy w-[7.5rem] sticky right-0 bg-inherit z-10 border-l border-gray-200 dark:border-gray-700">
+                                    <td class="px-2 py-3 whitespace-nowrap no-copy">
                                         <div class="flex items-center justify-end gap-1">
                                             <flux:button size="xs" variant="primary" color="green" class="cursor-pointer"
                                                          wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
@@ -356,7 +354,7 @@
     </flux:modal>
 
     {{-- =========================================
-    --  GROUP MEMBERS MODAL (BODY SCROLL ONLY, STICKY ACTIONS)
+    --  GROUP MEMBERS MODAL (SYNCED H SCROLL, NON-STICKY AKTIONEN)
     -- ========================================= --}}
     @php
         $dn = $memberListForDn ?? null;
@@ -390,7 +388,7 @@
                 <div class="flex items-center gap-3 shrink-0">
                     <span role="button" tabindex="0"
                           title="Tabelle kopieren"
-                          @click="copyTable($refs.gmTable.querySelector('thead'), $refs.gmTable.querySelector('tbody'))"
+                          @click="copyTable($refs.gmHead, $refs.gmBody)"
                           :data-copyable-copied="copied ? '' : null"
                           class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
                         <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
@@ -433,18 +431,18 @@
                 <flux:text variant="subtle">Keine Mitglieder gefunden.</flux:text>
             @else
                 <div class="relative shadow-md sm:rounded-lg border border-gray-300 dark:border-gray-700">
-                    {{-- Header (no scroll) --}}
-                    <div class="overflow-hidden">
-                        <table class="w-full table-fixed text-sm">
+                    {{-- Header --}}
+                    <div class="overflow-x-hidden" x-ref="gmHeadWrap">
+                        <table class="min-w-[72rem] w-full table-fixed text-sm">
                             <colgroup>
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
-                                <col class="w-[6.5rem]"> {{-- Aktionen --}}
+                                <col class="w-[8rem]"> {{-- Aktionen --}}
                             </colgroup>
-                            <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-100">
+                            <thead x-ref="gmHead" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-100">
                                 <tr>
                                     <th class="!pl-10 pr-2 py-2 text-left">
                                         <div class="inline-flex items-center gap-1">
@@ -458,7 +456,7 @@
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
-                                                  @click="copyColumnByIndex(0, $refs.gmTable)"
+                                                  @click="copyColumnByIndex(0, $refs.gmHead, $refs.gmBody)"
                                                   :data-copyable-copied="colCopied[0] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                                   class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
@@ -477,7 +475,7 @@
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
-                                                  @click="copyColumnByIndex(1, $refs.gmTable)"
+                                                  @click="copyColumnByIndex(1, $refs.gmHead, $refs.gmBody)"
                                                   :data-copyable-copied="colCopied[1] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                                   class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
@@ -496,7 +494,7 @@
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
-                                                  @click="copyColumnByIndex(2, $refs.gmTable)"
+                                                  @click="copyColumnByIndex(2, $refs.gmHead, $refs.gmBody)"
                                                   :data-copyable-copied="colCopied[2] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                                   class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
@@ -515,7 +513,7 @@
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
-                                                  @click="copyColumnByIndex(3, $refs.gmTable)"
+                                                  @click="copyColumnByIndex(3, $refs.gmHead, $refs.gmBody)"
                                                   :data-copyable-copied="colCopied[3] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                                   class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
@@ -534,7 +532,7 @@
                                                 @endif
                                             </button>
                                             <span role="button" tabindex="0" title="Spalte kopieren"
-                                                  @click="copyColumnByIndex(4, $refs.gmTable)"
+                                                  @click="copyColumnByIndex(4, $refs.gmHead, $refs.gmBody)"
                                                   :data-copyable-copied="colCopied[4] ? '' : null"
                                                   :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                                   class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
@@ -543,27 +541,26 @@
                                             </span>
                                         </div>
                                     </th>
-                                    {{-- Sticky Aktionen header cell (inherit bg + left border) --}}
-                                    <th class="px-2 py-2 text-left no-copy sticky right-0 bg-inherit z-10 w-[6.5rem] border-l border-gray-200 dark:border-gray-700">
-                                        <span :class="showCopy ? 'opacity-100' : 'opacity-0'" class="text-xs text-gray-500 transition-opacity">Aktionen</span>
+                                    <th class="px-2 py-2 text-left no-copy">
+                                        <span class="text-xs text-gray-500">Aktionen</span>
                                     </th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
 
-                    {{-- Body (scroll only) --}}
-                    <div class="max-h-[65vh] overflow-y-auto overflow-x-hidden">
-                        <table class="w-full table-fixed text-sm" x-ref="gmTable">
+                    {{-- Body --}}
+                    <div class="max-h-[65vh] overflow-y-auto overflow-x-auto" x-ref="gmBodyWrap" @scroll="$refs.gmHeadWrap.scrollLeft = $event.target.scrollLeft">
+                        <table class="min-w-[72rem] w-full table-fixed text-sm" x-ref="gmTable">
                             <colgroup>
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
-                                <col class="w-[6.5rem]"> {{-- Aktionen --}}
+                                <col class="w-[8rem]"> {{-- Aktionen --}}
                             </colgroup>
-                            <tbody class="bg-white dark:bg-gray-800/60">
+                            <tbody x-ref="gmBody" class="bg-white dark:bg-gray-800/60">
                             @foreach (($page['rows'] ?? []) as $i => $row)
                                 @php
                                     $pid = $row['pid'] ?? '—';
@@ -607,10 +604,9 @@
                                                   class="cursor-pointer select-text" x-text="label"></span>
                                         </span>
                                     </td>
-                                    {{-- Sticky Aktionen body cell (inherit bg + left border) --}}
-                                    <td class="px-2 py-2 whitespace-nowrap no-copy sticky right-0 bg-inherit z-10 border-l border-gray-200 dark:border-gray-700">
+                                    <td class="px-2 py-2 whitespace-nowrap no-copy">
                                         <span role="button" tabindex="0" title="Zeile kopieren"
-                                              @click="copyRowByKey('{{ $rk }}', $refs.gmTable)"
+                                              @click="copyRowByKey('{{ $rk }}', $refs.gmHead, $refs.gmBody)"
                                               :data-copyable-copied="rowCopied['{{ $rk }}'] ? '' : null"
                                               :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                                               class="inline-flex w-5 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
@@ -623,136 +619,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-            @endif
-        </div>
-    </flux:modal>
-
-    {{-- =========================================
-    --  COMPARE MODAL
-    -- ========================================= --}}
-    <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
-        <div class="space-y-4 pr-12">
-            <div class="flex justify-center items-center gap-3 text-center min-w-0">
-                <flux:heading size="lg" class="leading-none">Gruppenvergleich</flux:heading>
-                <flux:badge variant="pill" class="truncate max-w-[60%] leading-none">Basis: {{ $compareBasePid ?? '—' }}</flux:badge>
-            </div>
-
-            <div class="flex items-end gap-3">
-                <div class="flex-1">
-                    <flux:text class="mb-1">Zweite PID</flux:text>
-                    <flux:input.group>
-                        <flux:input.group.prefix>p</flux:input.group.prefix>
-                        <flux:input
-                            wire:model.defer="compareOtherPidInput"
-                            wire:keydown.enter="runCompare"
-                            placeholder="12345"
-                            inputmode="numeric"
-                            pattern="[0-9]*"
-                        />
-                    </flux:input.group>
-                </div>
-                <flux:button variant="primary" color="blue" class="cursor-pointer" wire:click="runCompare">
-                    Vergleichen
-                </flux:button>
-            </div>
-
-            @if ($compareError)
-                <p class="text-red-600">{{ $compareError }}</p>
-            @endif
-
-            @if ($compareGroups)
-                <div class="flex flex-wrap items-center gap-2 mt-3">
-                    <flux:button size="sm" :variant="$compareView === 'user1' ? 'primary' : 'ghost'" color="lime" class="cursor-pointer" wire:click="setCompareView('user1')">
-                        Benutzer&nbsp;1: {{ $namePid($compareBaseInfo) }}
-                        <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_first'] }}</flux:badge>
-                    </flux:button>
-
-                    <flux:button size="sm" :variant="$compareView === 'user2' ? 'primary' : 'ghost'" color="sky" class="cursor-pointer" wire:click="setCompareView('user2')">
-                        Benutzer&nbsp;2: {{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}
-                        <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_second'] }}</flux:badge>
-                    </flux:button>
-
-                    <flux:button size="sm" :variant="$compareView === 'common' ? 'primary' : 'ghost'" color="violet" class="cursor-pointer" wire:click="setCompareView('common')">
-                        Gemeinsam
-                        <flux:badge size="xs" class="ml-2">{{ count($compareGroups['common']) }}</flux:badge>
-                    </flux:button>
-
-                    <flux:button size="sm" :variant="$compareView === 'diffs' ? 'primary' : 'ghost'" color="orange" class="cursor-pointer" wire:click="setCompareView('diffs')">
-                        Unterschiede
-                        <flux:badge size="xs" class="ml-2">{{ count($compareGroups['only_first']) + count($compareGroups['only_second']) }}</flux:badge>
-                    </flux:button>
-                </div>
-
-                <div class="mt-4">
-                    @if ($compareView === 'user1')
-                        <flux:card>
-                            <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
-                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
-                                @forelse ($compareGroups['all_first'] as $i => $g)
-                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
-                                        {{ $g }}
-                                    </flux:badge2>
-                                @empty
-                                    <flux:text variant="subtle">—</flux:text>
-                                @endforelse
-                            </flux:div>
-                        </flux:card>
-                    @elseif ($compareView === 'user2')
-                        <flux:card>
-                            <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
-                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
-                                @forelse ($compareGroups['all_second'] as $i => $g)
-                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
-                                        {{ $g }}
-                                    </flux:badge2>
-                                @empty
-                                    <flux:text variant="subtle">—</flux:text>
-                                @endforelse
-                            </flux:div>
-                        </flux:card>
-                    @elseif ($compareView === 'common')
-                        <flux:card>
-                            <flux:heading size="sm">Gemeinsame Gruppen</flux:heading>
-                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
-                                @forelse ($compareGroups['common'] as $i => $g)
-                                    <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
-                                        {{ $g }}
-                                    </flux:badge2>
-                                @empty
-                                    <flux:text variant="subtle">—</flux:text>
-                                @endforelse
-                            </flux:div>
-                        </flux:card>
-                    @elseif ($compareView === 'diffs')
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <flux:card>
-                                <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
-                                <flux:div copyable class="mt-2 space-x-2 space-y-2">
-                                    @forelse ($compareGroups['only_first'] as $i => $g)
-                                        <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
-                                            {{ $g }}
-                                        </flux:badge2>
-                                    @empty
-                                        <flux:text variant="subtle">—</flux:text>
-                                    @endforelse
-                                </flux:div>
-                            </flux:card>
-
-                            <flux:card>
-                                <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
-                                <flux:div copyable class="mt-2 space-x-2 space-y-2">
-                                    @forelse ($compareGroups['only_second'] as $i => $g)
-                                        <flux:badge2 variant="pill" color="{{ $colors[$i % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $g }}">
-                                            {{ $g }}
-                                        </flux:badge2>
-                                    @empty
-                                        <flux:text variant="subtle">—</flux:text>
-                                    @endforelse
-                                </flux:div>
-                            </flux:card>
-                        </div>
-                    @endif
                 </div>
             @endif
         </div>
@@ -773,24 +639,27 @@ function _smartJoin(row, widths){ return row.map((c,i)=>{ const len=(c||'').leng
 function userTableCopy(){
     return {
         showCopy:false, copied:false, colCopied:{}, rowCopied:{},
-        async copyTable(headRef, bodyRef){
-            const head=_visCells(headRef.querySelector('tr')).map(c=>_clean(c.textContent))
-            const rows=_rows(bodyRef).map(r=>_cells(r))
+        async copyTable(headEl, bodyEl){
+            if(!headEl || !bodyEl) return
+            const head=_visCells(headEl.querySelector('tr')).map(c=>_clean(c.textContent))
+            const rows=_rows(bodyEl).map(r=>_cells(r))
             const w=_widths(head, rows), out=[_smartJoin(head,w)]
             for(let i=0;i<rows.length;i++){ out.push(_smartJoin(rows[i],w)); if(i%200===199) await new Promise(requestAnimationFrame) }
             await navigator.clipboard.writeText(out.join('\n')); this.copied=true; setTimeout(()=>this.copied=false,1200)
         },
-        async copyRowByKey(key, headRef, bodyRef){
+        async copyRowByKey(key, headEl, bodyEl){
+            if(!headEl || !bodyEl) return
             const tr=document.querySelector(`[data-user-row='${key}']`); if(!tr) return
-            const head=_visCells(headRef.querySelector('tr')).map(c=>_clean(c.textContent))
-            const rows=_rows(bodyRef).map(r=>_cells(r))
+            const head=_visCells(headEl.querySelector('tr')).map(c=>_clean(c.textContent))
+            const rows=_rows(bodyEl).map(r=>_cells(r))
             const w=_widths(head, rows), text=_smartJoin(_cells(tr),w)
             await navigator.clipboard.writeText(text); this.rowCopied[key]=true; setTimeout(()=>this.rowCopied[key]=false,1200)
         },
-        async copyColumnByIndex(idx, headRef, bodyRef){
-            const headCells=_visCells(headRef.querySelector('tr'))
+        async copyColumnByIndex(idx, headEl, bodyEl){
+            if(!headEl || !bodyEl) return
+            const headCells=_visCells(headEl.querySelector('tr'))
             const header=headCells[idx]?_clean(headCells[idx].textContent):''
-            const rs=_rows(bodyRef), out=[header]
+            const rs=_rows(bodyEl), out=[header]
             for(let i=0;i<rs.length;i++){ const cs=_cells(rs[i]); out.push(cs[idx] ?? ''); if(i%300===299) await new Promise(requestAnimationFrame) }
             await navigator.clipboard.writeText(out.join('\n')); this.colCopied[idx]=true; setTimeout(()=>this.colCopied[idx]=false,1200)
         }
@@ -801,26 +670,32 @@ function gmCopyTable(){
     return {
         showCopy:false, copied:false, colCopied:{}, rowCopied:{},
         async copyTable(headEl, bodyEl){
-            const head=_cells(headEl.querySelector('tr'))
+            if(!headEl || !bodyEl) return
+            const headRow = headEl.querySelector('tr'); if(!headRow) return
+            const head=_visCells(headRow).map(c=>_clean(c.textContent))
             const rs=_rows(bodyEl).map(r=>_cells(r))
             const w=_widths(head, rs), out=[_smartJoin(head,w)]
             for(let i=0;i<rs.length;i++){ out.push(_smartJoin(rs[i],w)); if(i%200===199) await new Promise(requestAnimationFrame) }
             await navigator.clipboard.writeText(out.join('\n')); this.copied=true; setTimeout(()=>this.copied=false,1200)
         },
-        async copyRowByKey(key, tableRef){
-            const tr=tableRef.querySelector(`[data-gm-row='${key}']`); if(!tr) return
-            const head=_cells(tableRef.querySelector('thead tr'))
-            const rs=[...tableRef.querySelectorAll('tbody tr')].filter(r=>r.offsetParent!==null).map(r=>_cells(r))
+        async copyRowByKey(key, headEl, bodyEl){
+            if(!headEl || !bodyEl) return
+            const tr=bodyEl.querySelector(`[data-gm-row='${key}']`); if(!tr) return
+            const headRow = headEl.querySelector('tr'); if(!headRow) return
+            const head=_visCells(headRow).map(c=>_clean(c.textContent))
+            const rs=_rows(bodyEl).map(r=>_cells(r))
             const w=_widths(head, rs), text=_smartJoin(_cells(tr), w)
             await navigator.clipboard.writeText(text); this.rowCopied[key]=true; setTimeout(()=>this.rowCopied[key]=false,1200)
         },
-        async copyColumnByIndex(idx, tableRef){
-            const headRow=tableRef.querySelector('thead tr'), headCells=_visCells(headRow)
+        async copyColumnByIndex(idx, headEl, bodyEl){
+            if(!headEl || !bodyEl) return
+            const headRow=headEl.querySelector('tr'); if(!headRow) return
+            const headCells=_visCells(headRow)
             const header=headCells[idx]?_clean(headCells[idx].textContent):''
-            const bodyRows=[...tableRef.querySelectorAll('tbody tr')].filter(r=>r.offsetParent!==null)
+            const bodyRows=_rows(bodyEl)
             const out=[header]
             for(let i=0;i<bodyRows.length;i++){
-                const cs=_visCells(bodyRows[i]); out.push(cs[idx]?_clean(cs[idx].textContent):'')
+                const cs=_cells(bodyRows[i]); out.push(cs[idx] ?? '')
                 if(i%300===299) await new Promise(requestAnimationFrame)
             }
             await navigator.clipboard.writeText(out.join('\n')); this.colCopied[idx]=true; setTimeout(()=>this.colCopied[idx]=false,1200)
