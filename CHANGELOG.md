@@ -1,22 +1,32 @@
 # Changelog
 Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.  
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
-## Unreleased
+
+## Unveröffentlicht
+## [0.9.0-beta.6] - 22-09-2025
+### Behoben / Geändert
+- Signatur: Vorname und Nachname werden jetzt großgeschrieben
+- Umbenennung: **ID Tools** heißt nun **LDAP**
+- Menüeinträge mit Untermenüs werden nun automatisch je nach aktueller URL ein- oder ausgeklappt
+
+### Hinzugefügt
+- LDAP-Benutzer: Tabellen im Benutzer-Export und in der Benutzersuche sind nun durchsuchbar, sortierbar und kopierbar
+- Gruppenmitglieder: Mitglieder einer Gruppe können aufgelistet werden
+- Verbesserte Benutzeroberfläche für Lesezeichen
+- Lesezeichen sind nun sortierbar
+- Lesezeichen: Listen- und Rasteransicht
+
 ## [0.9.0-beta.5] - 04-09-2025
 ### Behoben / Geändert
-- Signature: Vorname und Nachname großgeschrieben. 
 ### Hinzugefügt
-- Firewall E-mail Vorlage
-- Synchronisierung der Benutzer-E-Mail-Adresse aus dem LDP während des Logins
-- Bessere UI für Bookmarks
-- Lesezeichen sind nun sortierbar. 
-- Lesezeichen: List und Grid view.
+- E-Mail-Vorlage für Firewall
+- Synchronisierung der Benutzer-E-Mail-Adresse aus dem LDAP während des Logins
 
 ## [0.9.0-beta.4] - 26-08-2025
 ### Hinzugefügt
-- Gruppen- und Detailansicht: Inhalte können nun per Klick in die `[Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
-- Option zum Vergleichen von **User-Gruppen**
-- Benutzer-Suche: Benutzer können jetzt über das Kennzeichen gesucht werden.
+- Gruppen- und Detailansicht: Inhalte können nun per Klick in die Zwischenablage kopiert werden, inklusive kurzem visuellen Feedback
+- Option zum Vergleichen von **Benutzer-Gruppen**
+- Benutzersuche: Benutzer können jetzt über das Kennzeichen gesucht werden
 
 ### Behoben / Geändert
 - Entfernen unerwünschter Zeichen beim Kopieren
@@ -26,18 +36,18 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 ### Hinzugefügt
 - Anliegen: Anliegen-Einträge können nun als **Diskussion/Forum** genutzt werden
     - Nutzer können Kommentare zu Anliegen schreiben
-    - Anliegen besitzen jetzt einen **Status** (open, in progress, resolved, closed, wontfix)
-    - Filtermöglichkeiten für Anliegen nach **Typ**, **Status**, **User** und **Volltextsuche**
-    - Filter sind in einem **Accordion** organisiert für bessere Übersicht
+    - Anliegen besitzen jetzt einen **Status** (offen, in Bearbeitung, gelöst, geschlossen, kein Fehler)
+    - Filtermöglichkeiten für Anliegen nach **Typ**, **Status**, **Benutzer** und **Volltextsuche**
+    - Filter sind in einem **Akkordeon** organisiert für bessere Übersicht
     - Reaktionen
 - Gruppen- und Detailansicht: Nutzer können nun einzelne Gruppen kopieren
 - DNS und DHCP: Hinweis zur Service-Migration per Rechtsklick wird nun angezeigt
 
 ## [0.9.0-beta.2] - 18-08-2025
 ### Behoben / Geändert
-- Usersuche: PID-Suchfeld ergänzt automatisch ein führendes **"p"**, falls nicht vorhanden
+- Benutzersuche: PID-Suchfeld ergänzt automatisch ein führendes **"p"**, falls nicht vorhanden
 - Gruppen-Detailansicht: **Letzter Login** zeigt nun **`--`**, wenn kein gültiges Datum vorhanden ist
-- Changelog-Ansicht: Verbesserte Markdown-Render-Logik mit CommonMark und Tailwind-Typography, Überschriften, Bullet-Listen und verschachtelte Listen werden korrekt angezeigt
+- Changelog-Ansicht: Verbesserte Markdown-Render-Logik mit CommonMark und Tailwind-Typography; Überschriften, Aufzählungen und verschachtelte Listen werden korrekt angezeigt
 
 ## [0.9.0-beta.1] - 15-08-2025
 ### Hinzugefügt
@@ -45,10 +55,10 @@ Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 - Statusabfrage (Polling) für DHCP- und DNS-Dienste
 - Funktionen zum Start, Neustart und zur Migration von DHCP- und DNS-Diensten
 - Abruf von LDAP-Einträgen
-    - freie Mailbox PIDs
-    - freie User PIDs
-    - User PID Lücken
-    - Usersuche
+    - freie Mailbox-PIDs
+    - freie Benutzer-PIDs
+    - Benutzer-PID-Lücken
+    - Benutzersuche
     - Export von LDAP-Einträgen
 - Passwort-Generator
 - Seriennummern-Generator für oVirt
