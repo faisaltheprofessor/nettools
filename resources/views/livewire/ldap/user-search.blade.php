@@ -656,7 +656,7 @@
   {{-- Compare modal --}}
     <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
         <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
                 <flux:heading size="lg">Gruppenvergleich</flux:heading>
                 <flux:badge variant="pill">Basis: {{ $compareBasePid ?? '—' }}</flux:badge>
             </div>
