@@ -1,6 +1,3 @@
-{{-- =========================================
---  WRAPPER + HELPERS
--- ========================================= --}}
 <div class="w-[80%] md:w-[70%] mx-auto">
     @php
         $colors = ['green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','orange','amber','yellow','lime'];
@@ -78,13 +75,13 @@
         </div>
 
         {{-- =========================================
-        --  RESULTS TABLE (SYNCED H SCROLL, NON-STICKY AKTIONEN)
+        --  RESULTS TABLE
         -- ========================================= --}}
         @if ($searchResults && $searchResults->count() > 0)
             <div class="mt-6" x-data="userTableCopy()">
                 <div class="flex items-center justify-between gap-3">
                     <flux:heading size="sm" class="text-gray-700 dark:text-gray-100">Ergebnis</flux:heading>
-                    <div class="flex items-center gap-3 shrink-0">
+                    <div class="flex items-center gap-3 shrink-0 mb-3">
                         <span role="button" tabindex="0"
                               title="Tabelle kopieren"
                               @click="copyTable($refs.userHead, $refs.userBody)"
@@ -304,6 +301,21 @@
     {{-- =========================================
     --  GROUPS MODAL
     -- ========================================= --}}
+     @php
+        $dn = $memberListForDn ?? null;
+        $dnKey = $dn ? substr(md5($dn),0,10) : 'none';
+        $state = $dn ? ($memberState[$dn] ?? null) : null;
+        $page  = $state['page'] ?? null;
+        $displayGroupName = null;
+        if ($dn) {
+            $found = array_search($dn, $selectedUserGroupMap ?? [], true);
+            $displayGroupName = $found !== false ? $found : $dn;
+        }
+        $isSorted = $state['sorted'] ?? false;
+        $sortBy = $state['sortBy'] ?? null;
+        $sortDir = $state['sortDir'] ?? 'asc';
+        $memberCount = is_array($page) && isset($page['rows']) ? count($page['rows']) : 0;
+    @endphp
     <flux:modal name="groups" class="w-content max-w-content max-h-full" :dismissible="false">
         @if ($selectedUserInfo)
             <flux:heading class="flex justify-center">{{ $selectedUserInfo['pid'] }}</flux:heading>
@@ -356,7 +368,7 @@
     {{-- =========================================
     --  GROUP MEMBERS MODAL (SYNCED H SCROLL, NON-STICKY AKTIONEN)
     -- ========================================= --}}
-    @php
+   @php
         $dn = $memberListForDn ?? null;
         $dnKey = $dn ? substr(md5($dn),0,10) : 'none';
         $state = $dn ? ($memberState[$dn] ?? null) : null;
@@ -619,6 +631,175 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            @endif
+        </div>
+    </flux:modal>
+
+
+
+  {{-- Compare modal --}}
+    <flux:modal name="compare" class="w-[92vw] max-w-5xl" :dismissible="false">
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <flux:heading size="lg">Gruppenvergleich</flux:heading>
+                <flux:badge variant="pill">Basis: {{ $compareBasePid ?? '—' }}</flux:badge>
+            </div>
+
+            <div class="flex items-end gap-3">
+                <div class="flex-1">
+                    <flux:text class="mb-1">Zweite PID</flux:text>
+                    <flux:input.group>
+                        <flux:input.group.prefix>p</flux:input.group.prefix>
+                        <flux:input
+                            wire:model.defer="compareOtherPidInput"
+                            wire:keydown.enter="runCompare"
+                            placeholder="12345"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                        />
+                    </flux:input.group>
+                </div>
+                <flux:button variant="primary" color="blue" class="cursor-pointer" wire:click="runCompare">
+                    Vergleichen
+                </flux:button>
+            </div>
+
+            @if ($compareError)
+                <p class="text-red-600">{{ $compareError }}</p>
+            @endif
+
+            @if ($compareGroups)
+                {{-- Filter buttons --}}
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <flux:button
+                        size="sm"
+                        :variant="$compareView === 'user1' ? 'primary' : 'ghost'"
+                        color="lime"
+                        class="cursor-pointer"
+                        wire:click="setCompareView('user1')">
+                        Benutzer&nbsp;1: {{ $namePid($compareBaseInfo) }}
+                        <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_first'] }}</flux:badge>
+                    </flux:button>
+
+                    <flux:button
+                        size="sm"
+                        :variant="$compareView === 'user2' ? 'primary' : 'ghost'"
+                        color="sky"
+                        class="cursor-pointer"
+                        wire:click="setCompareView('user2')">
+                        Benutzer&nbsp;2: {{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}
+                        <flux:badge size="xs" class="ml-2">{{ $compareGroups['count_second'] }}</flux:badge>
+                    </flux:button>
+
+                    <flux:button
+                        size="sm"
+                        :variant="$compareView === 'common' ? 'primary' : 'ghost'"
+                        color="violet"
+                        class="cursor-pointer"
+                        wire:click="setCompareView('common')">
+                        Gemeinsam
+                        <flux:badge size="xs" class="ml-2">{{ count($compareGroups['common']) }}</flux:badge>
+                    </flux:button>
+
+                    <flux:button
+                        size="sm"
+                        :variant="$compareView === 'diffs' ? 'primary' : 'ghost'"
+                        color="orange"
+                        class="cursor-pointer"
+                        wire:click="setCompareView('diffs')">
+                        Unterschiede
+                        <flux:badge size="xs" class="ml-2">
+                            {{ count($compareGroups['only_first']) + count($compareGroups['only_second']) }}
+                        </flux:badge>
+                    </flux:button>
+                </div>
+
+                {{-- Views --}}
+                <div class="mt-4">
+                    @if ($compareView === 'user1')
+                        <flux:card>
+                            <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
+                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
+                                @forelse ($compareGroups['all_first'] as $i => $g)
+                                    <flux:badge2 variant="pill"
+                                                 color="{{ $colors[$i % count($colors)] }}"
+                                                 class="{{ $groupClasses }}"
+                                                 title="{{ $g }}">
+                                        {{ $g }}
+                                    </flux:badge2>
+                                @empty
+                                    <flux:text variant="subtle">—</flux:text>
+                                @endforelse
+                            </flux:div>
+                        </flux:card>
+                    @elseif ($compareView === 'user2')
+                        <flux:card>
+                            <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
+                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
+                                @forelse ($compareGroups['all_second'] as $i => $g)
+                                    <flux:badge2 variant="pill"
+                                                 color="{{ $colors[$i % count($colors)] }}"
+                                                 class="{{ $groupClasses }}"
+                                                 title="{{ $g }}">
+                                        {{ $g }}
+                                    </flux:badge2>
+                                @empty
+                                    <flux:text variant="subtle">—</flux:text>
+                                @endforelse
+                            </flux:div>
+                        </flux:card>
+                    @elseif ($compareView === 'common')
+                        <flux:card>
+                            <flux:heading size="sm">Gemeinsame Gruppen</flux:heading>
+                            <flux:div copyable class="mt-2 space-x-2 space-y-2">
+                                @forelse ($compareGroups['common'] as $i => $g)
+                                    <flux:badge2 variant="pill"
+                                                 color="{{ $colors[$i % count($colors)] }}"
+                                                 class="{{ $groupClasses }}"
+                                                 title="{{ $g }}">
+                                        {{ $g }}
+                                    </flux:badge2>
+                                @empty
+                                    <flux:text variant="subtle">—</flux:text>
+                                @endforelse
+                            </flux:div>
+                        </flux:card>
+                    @elseif ($compareView === 'diffs')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <flux:card>
+                                <flux:heading size="sm">{{ $namePid($compareBaseInfo) }}</flux:heading>
+                                <flux:div copyable class="mt-2 space-x-2 space-y-2">
+                                    @forelse ($compareGroups['only_first'] as $i => $g)
+                                        <flux:badge2 variant="pill"
+                                                     color="{{ $colors[$i % count($colors)] }}"
+                                                     class="{{ $groupClasses }}"
+                                                     title="{{ $g }}">
+                                            {{ $g }}
+                                        </flux:badge2>
+                                    @empty
+                                        <flux:text variant="subtle">—</flux:text>
+                                    @endforelse
+                                </flux:div>
+                            </flux:card>
+
+                            <flux:card>
+                                <flux:heading size="sm">{{ $namePid($compareOtherInfo ?: ['pid' => $compareOtherPid]) }}</flux:heading>
+                                <flux:div copyable class="mt-2 space-x-2 space-y-2">
+                                    @forelse ($compareGroups['only_second'] as $i => $g)
+                                        <flux:badge2 variant="pill"
+                                                     color="{{ $colors[$i % count($colors)] }}"
+                                                     class="{{ $groupClasses }}"
+                                                     title="{{ $g }}">
+                                            {{ $g }}
+                                        </flux:badge2>
+                                    @empty
+                                        <flux:text variant="subtle">—</flux:text>
+                                    @endforelse
+                                </flux:div>
+                            </flux:card>
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
