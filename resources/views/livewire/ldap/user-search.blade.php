@@ -31,7 +31,7 @@
                     @if ($searchAttribute === 'PID')
                         <flux:input.group>
                             <flux:input.group.prefix class="rounded-l-none border-l-0">p</flux:input.group.prefix>
-                            <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="12345" inputmode="numeric" pattern="[0-9]*"/>
+                            <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search" placeholder="12345 oder p12345" />
                         </flux:input.group>
                     @elseif ($searchAttribute === 'Telefon')
                         <flux:input
@@ -47,7 +47,7 @@
                             <flux:input
                                 wire:model.defer="searchTerm"
                                 wire:keydown.enter="search"
-                                placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben… (Wildcards * erlaubt)' }}"
+                                placeholder="{{ $searchAttribute === 'Titel' ? 'z. B. FM IKT 1*' : 'Suchbegriff eingeben…' }}"
                             />
                             <button type="button"
                                     @click="$wire.set('searchTerm','')"
@@ -669,7 +669,7 @@
                         <flux:input
                             wire:model.defer="compareOtherPidInput"
                             wire:keydown.enter="runCompare"
-                            placeholder="12345"
+                            placeholder="12345 oder p12345"
                             inputmode="numeric"
                             pattern="[0-9]*"
                         />
