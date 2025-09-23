@@ -271,7 +271,7 @@
                     </td>
 
                     {{-- ✅ Aktionen cell (sticky) --}}
-                    <td class="px-2 py-3 whitespace-nowrap no-copy sticky right-0 z-10 bg-inherit [background:inherit] border-l border-gray-200 dark:border-gray-700">
+                    <td class="px-2 py-3 whitespace-nowrap no-copy sticky right-0 z-10 bg-inherit [background:inherit] border-l-0 border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-end gap-1">
                             <flux:button size="xs" variant="primary" color="green" class="cursor-pointer"
                                          wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
@@ -320,54 +320,74 @@
         $sortDir = $state['sortDir'] ?? 'asc';
         $memberCount = is_array($page) && isset($page['rows']) ? count($page['rows']) : 0;
     @endphp
-    <flux:modal name="groups" class="w-content max-w-content overflow" :dismissible="false">
+    <flux:modal
+    name="groups"
+    class="w-content max-w-content overflow-hidden"  {{-- prevent double scroll --}}
+    :dismissible="false"
+>
+    {{-- Modal content as a fixed header + scrollable body --}}
+    <div class="flex flex-col max-h-[80vh]"> {{-- control modal height --}}
+        {{-- FIXED HEADER (user info) --}}
         @if ($selectedUserInfo)
-            <flux:heading class="flex justify-center">{{ $selectedUserInfo['pid'] }}</flux:heading>
-            <flux:text class="mt-2">Nachname: {{ $selectedUserInfo['surname'] ?? '—' }}</flux:text>
-            <flux:text class="mt-2">Vorname: {{ $selectedUserInfo['givenname'] ?? '—' }}</flux:text>
-            <flux:text class="mt-2">Titel: {{ $selectedUserInfo['title'] ?? '—' }}</flux:text>
-            <flux:text class="mt-2">Info: {{ $selectedUserInfo['info'] ?? '—' }}</flux:text>
-            <flux:text class="mt-2">
-                Letzter Login:
-                @php
-                    $lastLogin = $selectedUserInfo['lastLogin'] ?? null;
-                    try { $loginTime = $lastLogin ? \Carbon\Carbon::parse($lastLogin)->setTimezone('Europe/Berlin') : null; }
-                    catch (\Exception $e) { $loginTime = null; }
-                @endphp
-                {{ $loginTime ? $loginTime->format('d.m.Y H:i') . ' (' . $loginTime->diffForHumans() . ')' : '--' }}
-            </flux:text>
-            <flux:text class="mt-2">Kontext: {{ $selectedUserInfo['context'] ?? '—' }}</flux:text>
+            <div class="shrink-0">
+                <flux:heading class="flex justify-center">
+                    {{ $selectedUserInfo['pid'] }}
+                </flux:heading>
+                <flux:text class="mt-2">Nachname: {{ $selectedUserInfo['surname'] ?? '—' }}</flux:text>
+                <flux:text class="mt-2">Vorname: {{ $selectedUserInfo['givenname'] ?? '—' }}</flux:text>
+                <flux:text class="mt-2">Titel: {{ $selectedUserInfo['title'] ?? '—' }}</flux:text>
+                <flux:text class="mt-2">Info: {{ $selectedUserInfo['info'] ?? '—' }}</flux:text>
+                <flux:text class="mt-2">
+                    Letzter Login:
+                    @php
+                        $lastLogin = $selectedUserInfo['lastLogin'] ?? null;
+                        try { $loginTime = $lastLogin ? \Carbon\Carbon::parse($lastLogin)->setTimezone('Europe/Berlin') : null; }
+                        catch (\Exception $e) { $loginTime = null; }
+                    @endphp
+                    {{ $loginTime ? $loginTime->format('d.m.Y H:i') . ' (' . $loginTime->diffForHumans() . ')' : '--' }}
+                </flux:text>
+                <flux:text class="mt-2">Kontext: {{ $selectedUserInfo['context'] ?? '—' }}</flux:text>
+            </div>
         @endif
 
-        <flux:separator class="mt-3 mb-3 overflow-y-scroll">
-            Gruppenzugehörigkeiten
-            @if($selectedUserGroups != null)
-                <flux:badge size="sm" color="lime">{{ count($selectedUserGroups) }}</flux:badge>
-            @endif
-        </flux:separator>
+        {{-- FIXED SEPARATOR (title + count) --}}
+        <div class="shrink-0">
+            <flux:separator class="mt-3 mb-3">
+                Gruppenzugehörigkeiten
+                @if($selectedUserGroups != null)
+                    <flux:badge size="sm" color="lime">{{ count($selectedUserGroups) }}</flux:badge>
+                @endif
+            </flux:separator>
+        </div>
 
         @php $groupDn = fn($g) => $selectedUserGroupMap[$g] ?? null; @endphp
 
-        @if ($selectedUserGroups !== null)
-            @if(count($selectedUserGroups) > 0)
-                <flux:div copyable class="grid gap-1 mt-2 min-w-fit">
-                    @foreach ($selectedUserGroups as $index => $group)
-                        @php $dn = $groupDn($group); $dn64 = $b64($dn); @endphp
-                        <span class="inline-flex items-center gap-2">
-                            <flux:button size="xs" variant="ghost" class="p-0" title="Mitglieder anzeigen" wire:click="openMembersModal('{{ $dn64 }}')">
-                                <flux:icon.user-group class="size-4 shrink-0"/>
-                            </flux:button>
-                            <flux:badge2 copyable variant="pill" color="{{ $colors[$index % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $group }}">
-                                {{ $group }}
-                            </flux:badge2>
-                        </span>
-                    @endforeach
-                </flux:div>
-            @else
-                <p>Keine Gruppen gefunden.</p>
+        {{-- SCROLLABLE GROUPS LIST ONLY --}}
+        <div class="min-h-[12rem] max-h-[50vh] overflow-y-auto"> {{-- tweak heights as you like --}}
+            @if ($selectedUserGroups !== null)
+                @if(count($selectedUserGroups) > 0)
+                    {{-- NOTE: copy button from flux:div (copyable) will scroll with this area --}}
+                    <flux:div copyable class="grid gap-1 mt-2 min-w-fit">
+                        @foreach ($selectedUserGroups as $index => $group)
+                            @php $dn = $groupDn($group); $dn64 = $b64($dn); @endphp
+                            <span class="inline-flex items-center gap-2">
+                                <flux:button size="xs" variant="ghost" class="p-0" title="Mitglieder anzeigen" wire:click="openMembersModal('{{ $dn64 }}')">
+                                    <flux:icon.user-group class="size-4 shrink-0"/>
+                                </flux:button>
+                                <flux:badge2 copyable variant="pill" color="{{ $colors[$index % count($colors)] }}" class="{{ $groupClasses }}" title="{{ $group }}">
+                                    {{ $group }}
+                                </flux:badge2>
+                            </span>
+                        @endforeach
+                    </flux:div>
+                @else
+                    <p>Keine Gruppen gefunden.</p>
+                @endif
             @endif
-        @endif
-    </flux:modal>
+        </div>
+    </div>
+</flux:modal>
+
 
     {{-- =========================================
     --  GROUP MEMBERS MODAL (SYNCED H SCROLL, NON-STICKY AKTIONEN)
@@ -466,17 +486,14 @@
             <div class="relative shadow-md sm:rounded-lg border border-gray-300 dark:border-gray-700">
                 {{-- Single scroll container for BOTH header and body so horizontal scroll keeps headers aligned --}}
                 <div class="max-h-[65vh] overflow-auto">
-                    <table class="w-full table-fixed text-sm min-w-[62rem]" x-ref="gmTable">
+                    <table class="w-full table-auto text-sm" x-ref="gmTable">
                         <colgroup>
-                            <col class="w-[12rem]">
-                            <col class="w-[16rem]">
-                            <col class="w-[12rem]">
-                            <col class="w-[12rem]">
-                            <col class="w-[12rem]">
-                            {{-- Aktionen col only when copy mode is on --}}
-                            <template x-if="showCopy">
-                                <col class="w-[6.5rem]">
-                            </template>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
                         </colgroup>
 
                         <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-100 sticky top-0 z-10">
