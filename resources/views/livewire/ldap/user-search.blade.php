@@ -96,6 +96,14 @@
                             <span class="whitespace-nowrap">Tabelle kopieren</span>
                         </span>
 
+                        <span role="button" tabindex="0"
+                              title="Als Excel exportieren"
+                              @click="exportExcel($refs.userHead, $refs.userBody, 'benutzer-liste.xls')"
+                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black shadow-sm">
+  <flux:icon.table-cells variant="mini" class="size-4"/>
+  <span class="whitespace-nowrap">Excel</span>
+</span>
+
                         <div class="flex items-center gap-2">
                             <flux:text size="sm" class="text-gray-500 dark:text-gray-400">Kopier-Modus</flux:text>
                             <flux:switch @change="showCopy = $event.target.checked"/>
@@ -415,11 +423,10 @@
 
             @php $groupDn = fn($g) => $selectedUserGroupMap[$g] ?? null; @endphp
 
-            {{-- SCROLLABLE GROUPS LIST ONLY --}}
-            <div class="min-h-[12rem] max-h-[50vh] overflow-y-auto"> {{-- tweak heights as you like --}}
+
+            <div class="min-h-[12rem] max-h-[50vh] overflow-y-auto">
                 @if ($selectedUserGroups !== null)
                     @if(count($selectedUserGroups) > 0)
-                        {{-- NOTE: copy button from flux:div (copyable) will scroll with this area --}}
                         <flux:div copyable class="grid gap-1 mt-2 min-w-fit">
                             @foreach ($selectedUserGroups as $index => $group)
                                 @php $dn = $groupDn($group); $dn64 = $b64($dn); @endphp
@@ -487,7 +494,7 @@
                     <flux:heading size="lg" class="flex items-center gap-2">
                         Gruppenmitglieder
                         @if($displayGroupName)
-                            <span class="text-gray-500 dark:text-gray-400 font-normal">— {{ $displayGroupName }}</span>
+                            <span class="text-gray-500 dark:text-gray-400 font-normal"> <flux:badge>{{ $displayGroupName }}</flux:badge></span>
                         @endif
                         <flux:badge size="sm" color="sky">{{ $memberCount }}</flux:badge>
                     </flux:heading>
@@ -505,6 +512,14 @@
                                                   class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                     <span class="whitespace-nowrap">Tabelle kopieren</span>
                 </span>
+
+                    <span role="button" tabindex="0"
+                          title="Als Excel exportieren"
+                          @click="exportExcel($refs.gmTable.querySelector('thead'), $refs.gmTable.querySelector('tbody'), '{{ $displayGroupName }} - gruppenmitglieder.xls')"
+                          class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
+  <flux:icon.table-cells variant="mini" class="size-4"/>
+  <span class="whitespace-nowrap">Excel</span>
+</span>
 
                     <div class="flex items-center gap-2">
                         <flux:text size="sm" class="text-gray-500 dark:text-gray-400">Kopier-Modus</flux:text>
@@ -972,7 +987,7 @@
         return [...(tbody?.querySelectorAll('tr') ?? [])].filter(r => r.offsetParent !== null)
     }
 
-    // Proper TSV escaping: quote if cell contains tab, quote, or newline
+
     function _escapeTSV(s) {
         if (s == null) return ''
         const needsQuote = /[\t"\n]/.test(s)
@@ -992,54 +1007,64 @@
     }
 
     // ===== Components =====
-    function userTableCopy() {
-        return {
-            showCopy: false, copied: false, colCopied: {}, rowCopied: {},
-            async copyTable(headEl, bodyEl) {
-                if (!headEl || !bodyEl) return
-                const headRow = headEl.querySelector('tr');
-                if (!headRow) return
-                const head = _cellsWithColspan(headRow).map(_clean)
+function userTableCopy() {
+    return {
+        showCopy: false, copied: false, colCopied: {}, rowCopied: {},
 
-                const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
-                const tsv = _toTSV([head, ...bodyRows])
+        async copyTable(headEl, bodyEl) {
+            if (!headEl || !bodyEl) return
+            const headRow = headEl.querySelector('tr');
+            if (!headRow) return
+            const head = _cellsWithColspan(headRow).map(_clean)
 
-                await navigator.clipboard.writeText(tsv)
-                this.copied = true;
-                setTimeout(() => this.copied = false, 1200)
-            },
-            async copyRowByKey(key, headEl, bodyEl) {
-                if (!headEl || !bodyEl) return
-                const tr = document.querySelector(`[data-user-row='${key}']`);
-                if (!tr) return
-                const row = _cellsWithColspan(tr).map(_clean)
-                const tsv = _toTSV([row])
+            const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+            const tsv = _toTSV([head, ...bodyRows])
 
-                await navigator.clipboard.writeText(tsv)
-                this.rowCopied[key] = true;
-                setTimeout(() => this.rowCopied[key] = false, 1200)
-            },
-            async copyColumnByIndex(idx, headEl, bodyEl) {
-                if (!headEl || !bodyEl) return
-                const headRow = headEl.querySelector('tr');
-                if (!headRow) return
+            await navigator.clipboard.writeText(tsv)
+            this.copied = true;
+            setTimeout(() => this.copied = false, 1200)
+        },
 
-                // Build full table first to ensure the same column indexing after colspans
-                const head = _cellsWithColspan(headRow).map(_clean)
-                const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
-                const maxCols = Math.max(head.length, ...bodyRows.map(r => r.length))
+        async copyRowByKey(key, headEl, bodyEl) {
+            if (!headEl || !bodyEl) return
+            const tr = document.querySelector(`[data-user-row='${key}']`);
+            if (!tr) return
+            const row = _cellsWithColspan(tr).map(_clean)
+            const tsv = _toTSV([row])
 
-                const get = (arr, i) => (i < arr.length ? arr[i] : '')
-                const col = [get(head, idx)]
-                for (const r of bodyRows) col.push(get(r, idx))
+            await navigator.clipboard.writeText(tsv)
+            this.rowCopied[key] = true;
+            setTimeout(() => this.rowCopied[key] = false, 1200)
+        },
 
-                const tsv = _toTSV(col.map(c => [c])) // one column TSV
-                await navigator.clipboard.writeText(tsv)
-                this.colCopied[idx] = true;
-                setTimeout(() => this.colCopied[idx] = false, 1200)
-            }
+        async copyColumnByIndex(idx, headEl, bodyEl) {
+            if (!headEl || !bodyEl) return
+            const headRow = headEl.querySelector('tr');
+            if (!headRow) return
+
+            // Build full table first to ensure the same column indexing after colspans
+            const head = _cellsWithColspan(headRow).map(_clean)
+            const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+            const maxCols = Math.max(head.length, ...bodyRows.map(r => r.length))
+
+            const get = (arr, i) => (i < arr.length ? arr[i] : '')
+            const col = [get(head, idx)]
+            for (const r of bodyRows) col.push(get(r, idx))
+
+            const tsv = _toTSV(col.map(c => [c])) // one column TSV
+            await navigator.clipboard.writeText(tsv)
+            this.colCopied[idx] = true;
+            setTimeout(() => this.colCopied[idx] = false, 1200)
+        },
+
+        exportExcel(headEl, bodyEl, filename = 'export.xls') {
+            if (!headEl || !bodyEl) return;
+            const rows = _rowsForExport(headEl, bodyEl);
+            _downloadExcelFromRows(rows, filename);
         }
     }
+}
+
 
     function gmCopyTable() {
         return {
@@ -1083,7 +1108,27 @@
                 await navigator.clipboard.writeText(tsv)
                 this.colCopied[idx] = true;
                 setTimeout(() => this.colCopied[idx] = false, 1200)
-            }
+            },
+
+            exportExcel(headEl, bodyEl, filename = '{{ $displayGroupName }} - gruppenmitglieder.xls') {
+        if (!headEl || !bodyEl) return
+        const headRow = headEl.querySelector('tr')
+        if (!headRow) return
+
+        const head = _cellsWithColspan(headRow).map(_clean)
+        const rows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+        const tsv = _toTSV([head, ...rows])
+
+        const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+      }
         }
     }
 </script>

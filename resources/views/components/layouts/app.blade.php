@@ -126,5 +126,7 @@
     @csrf
 </form>
 @fluxScripts
+
+
 </body>
 </html>
