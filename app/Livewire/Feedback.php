@@ -13,7 +13,9 @@ class Feedback extends Component
     use WithFileUploads;
 
     public string $type = 'feature';
+
     public ?string $title = null;
+
     public ?string $description = null;
 
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[] */
@@ -28,7 +30,7 @@ class Feedback extends Component
 
     protected $messages = [
         'attachments.*.image' => 'Nur Bilddateien sind erlaubt.',
-        'attachments.*.max'   => 'Jede Datei darf maximal 5 MB groß sein.',
+        'attachments.*.max' => 'Jede Datei darf maximal 5 MB groß sein.',
     ];
 
     public function removeAttachment(int $index): void
@@ -50,15 +52,15 @@ class Feedback extends Component
         }
 
         FeedbackModel::create([
-            'user_guid'   => Auth::user()->guid,
-            'type'        => $this->type,
-            'title'       => $this->title,
+            'user_guid' => Auth::user()->guid,
+            'type' => $this->type,
+            'title' => $this->title,
             'description' => $this->description,
             'attachments' => $storedPaths,
-            'status'      => 'open',
+            'status' => 'open',
         ]);
 
-        $this->reset(['type','title','description','attachments']);
+        $this->reset(['type', 'title', 'description', 'attachments']);
         $this->type = 'feature';
 
         $this->dispatch('feedback-submitted');

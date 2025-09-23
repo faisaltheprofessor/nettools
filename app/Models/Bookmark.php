@@ -54,8 +54,11 @@ class Bookmark extends Model
     /** Helper: extract host/domain safely (null if not URL) */
     public function getHostAttribute(): ?string
     {
-        if (!$this->url) return null;
+        if (! $this->url) {
+            return null;
+        }
         $host = parse_url($this->url, PHP_URL_HOST);
+
         return $host ?: null;
     }
 }

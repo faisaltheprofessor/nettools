@@ -4,8 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('feedback_comment_reactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('comment_id')->index();
@@ -17,11 +19,12 @@ return new class extends Migration {
                 ->references('id')->on('feedback_comments')
                 ->cascadeOnDelete();
 
-            $table->unique(['comment_id','user_guid','emoji']);
+            $table->unique(['comment_id', 'user_guid', 'emoji']);
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('feedback_comment_reactions');
     }
 };

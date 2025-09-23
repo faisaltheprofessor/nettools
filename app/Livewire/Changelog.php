@@ -7,15 +7,18 @@ use Livewire\Component;
 class Changelog extends Component
 {
     public string $version = '';
+
     public string $path = '';
-    public array  $entries = [];
+
+    public array $entries = [];
+
     public string $query = '';
 
     public function mount()
     {
         $this->version = config('app.version', '');
-        $this->path    = $this->resolveChangelogPath();
-        $markdown      = $this->path && file_exists($this->path) ? file_get_contents($this->path) : '';
+        $this->path = $this->resolveChangelogPath();
+        $markdown = $this->path && file_exists($this->path) ? file_get_contents($this->path) : '';
         $this->entries = $markdown ? $this->parseChangelog($markdown) : [];
     }
 
@@ -27,8 +30,11 @@ class Changelog extends Component
             resource_path('CHANGELOG.md'),
         ];
         foreach ($candidates as $p) {
-            if (file_exists($p)) return $p;
+            if (file_exists($p)) {
+                return $p;
+            }
         }
+
         return '';
     }
 
@@ -38,25 +44,25 @@ class Changelog extends Component
         $md = str_replace(["\r\n", "\r"], "\n", $md);
 
         $pattern = '/^##\s+\[?([^\]\n]+)\]?\s*(?:-\s*([0-9]{4}-[0-9]{2}-[0-9]{2}))?\s*$/m';
-        if (!preg_match_all($pattern, $md, $matches, PREG_OFFSET_CAPTURE)) {
+        if (! preg_match_all($pattern, $md, $matches, PREG_OFFSET_CAPTURE)) {
             return $entries;
         }
 
         $count = count($matches[0]);
         for ($i = 0; $i < $count; $i++) {
             $startPos = $matches[0][$i][1];
-            $endPos   = ($i < $count - 1) ? $matches[0][$i+1][1] : strlen($md);
+            $endPos = ($i < $count - 1) ? $matches[0][$i + 1][1] : strlen($md);
 
-            $version  = trim($matches[1][$i][0]);
-            $date     = isset($matches[2][$i][0]) ? trim($matches[2][$i][0]) : null;
+            $version = trim($matches[1][$i][0]);
+            $date = isset($matches[2][$i][0]) ? trim($matches[2][$i][0]) : null;
 
-            $lineEnd  = strpos($md, "\n", $startPos);
-            $block    = substr($md, $lineEnd !== false ? $lineEnd : $startPos, $endPos - ($lineEnd !== false ? $lineEnd : $startPos));
+            $lineEnd = strpos($md, "\n", $startPos);
+            $block = substr($md, $lineEnd !== false ? $lineEnd : $startPos, $endPos - ($lineEnd !== false ? $lineEnd : $startPos));
 
             $entries[] = [
-                'version'  => $version,
-                'date'     => $date,
-                'raw'      => trim($block),
+                'version' => $version,
+                'date' => $date,
+                'raw' => trim($block),
                 'sections' => $this->parseSections($block),
             ];
         }
@@ -70,11 +76,12 @@ class Changelog extends Component
         $block = ltrim($block, "\n");
 
         $secPattern = '/^###\s+([^\n]+)\s*$/m';
-        if (!preg_match_all($secPattern, $block, $secMatches, PREG_OFFSET_CAPTURE)) {
+        if (! preg_match_all($secPattern, $block, $secMatches, PREG_OFFSET_CAPTURE)) {
             $items = $this->collectBullets($block);
-            if (!empty($items)) {
+            if (! empty($items)) {
                 $sections[] = ['title' => 'Other', 'items' => $items];
             }
+
             return $sections;
         }
 
@@ -82,10 +89,10 @@ class Changelog extends Component
         for ($i = 0; $i < $count; $i++) {
             $secTitle = trim($secMatches[1][$i][0]);
             $startPos = $secMatches[0][$i][1];
-            $lineEnd  = strpos($block, "\n", $startPos);
+            $lineEnd = strpos($block, "\n", $startPos);
             $contentStart = $lineEnd !== false ? $lineEnd : $startPos;
-            $endPos   = ($i < $count - 1) ? $secMatches[0][$i+1][1] : strlen($block);
-            $content  = substr($block, $contentStart, $endPos - $contentStart);
+            $endPos = ($i < $count - 1) ? $secMatches[0][$i + 1][1] : strlen($block);
+            $content = substr($block, $contentStart, $endPos - $contentStart);
 
             $sections[] = [
                 'title' => $secTitle,
@@ -103,9 +110,11 @@ class Changelog extends Component
         $lines = preg_split('/\n/', $txt);
         $buf = [];
 
-        $flush = function() use (&$buf, &$items) {
+        $flush = function () use (&$buf, &$items) {
             $s = trim(implode("\n", $buf));
-            if ($s !== '') $items[] = $s;
+            if ($s !== '') {
+                $items[] = $s;
+            }
             $buf = [];
         };
 
@@ -114,29 +123,44 @@ class Changelog extends Component
                 $flush();
                 $buf[] = $m[2];
             } else {
-                if (!empty($buf)) $buf[] = $line;
+                if (! empty($buf)) {
+                    $buf[] = $line;
+                }
             }
         }
         $flush();
 
-        return array_map(fn($s) => preg_replace('/`([^`]+)`/', '$1', $s), $items);
+        return array_map(fn ($s) => preg_replace('/`([^`]+)`/', '$1', $s), $items);
     }
 
     public function getFilteredEntriesProperty(): array
     {
         $q = mb_strtolower(trim($this->query));
-        if ($q === '') return $this->entries;
+        if ($q === '') {
+            return $this->entries;
+        }
 
         return array_values(array_filter($this->entries, function ($e) use ($q) {
-            if (str_contains(mb_strtolower($e['version']), $q)) return true;
-            if (!empty($e['date']) && str_contains(mb_strtolower($e['date']), $q)) return true;
-            if (!empty($e['raw']) && str_contains(mb_strtolower($e['raw']), $q)) return true;
+            if (str_contains(mb_strtolower($e['version']), $q)) {
+                return true;
+            }
+            if (! empty($e['date']) && str_contains(mb_strtolower($e['date']), $q)) {
+                return true;
+            }
+            if (! empty($e['raw']) && str_contains(mb_strtolower($e['raw']), $q)) {
+                return true;
+            }
             foreach ($e['sections'] as $sec) {
-                if (str_contains(mb_strtolower($sec['title']), $q)) return true;
+                if (str_contains(mb_strtolower($sec['title']), $q)) {
+                    return true;
+                }
                 foreach ($sec['items'] as $it) {
-                    if (str_contains(mb_strtolower($it), $q)) return true;
+                    if (str_contains(mb_strtolower($it), $q)) {
+                        return true;
+                    }
                 }
             }
+
             return false;
         }));
     }

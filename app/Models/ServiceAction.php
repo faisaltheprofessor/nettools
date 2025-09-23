@@ -18,14 +18,15 @@ class ServiceAction extends Model
     public static function log(string $service, string $action, ?string $target = null, array $meta = []): self
     {
         $u = Auth::user();
+
         return self::create([
-            'service'       => $service,
-            'action'        => $action,
-            'target'        => $target,
-            'user_id'       => $u?->id,
-            'user_name'     => $u?->name,
+            'service' => $service,
+            'action' => $action,
+            'target' => $target,
+            'user_id' => $u?->id,
+            'user_name' => $u?->name,
             'user_username' => $u?->username ?? $u?->email,
-            'meta'          => $meta ?: null,
+            'meta' => $meta ?: null,
         ]);
     }
 }

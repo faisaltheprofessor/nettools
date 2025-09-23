@@ -22,6 +22,7 @@ class OnlyNettoolsUsers implements Rule
 
         // Fallback for directories that expose `groupMembership` (eDirectory):
         $memberships = array_map('strtolower', (array) $user->getAttribute('groupMembership', []));
+
         return in_array(strtolower($allowedGroupDn), $memberships, true);
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Support\LogsServiceActions;
 use Exception;
 use Flux\Flux;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
-use Throwable;
-use App\Support\LogsServiceActions; // <-- our trait
+use Throwable; // <-- our trait
 
 class DHCP extends Component
 {
@@ -95,6 +95,7 @@ class DHCP extends Component
                 heading: 'Bereits in Warteschlange',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -161,6 +162,7 @@ class DHCP extends Component
                     heading: 'Migration blockiert',
                     variant: 'warning'
                 );
+
                 return;
             }
 
@@ -195,6 +197,7 @@ class DHCP extends Component
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -204,6 +207,7 @@ class DHCP extends Component
                 heading: 'Start blockiert',
                 variant: 'info'
             );
+
             return;
         }
 

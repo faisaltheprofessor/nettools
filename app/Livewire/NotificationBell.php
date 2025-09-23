@@ -12,7 +12,9 @@ class NotificationBell extends Component
     use WithPagination;
 
     public $unreadCount = 0;
+
     public $open = false; // optional: to control dropdown with Alpine
+
     protected $paginationTheme = 'tailwind';
 
     protected $listeners = [
@@ -32,7 +34,9 @@ class NotificationBell extends Component
     public function markAsRead(int $id): void
     {
         $n = AppNotification::where('user_guid', Auth::user()->guid)->find($id);
-        if (!$n) return;
+        if (! $n) {
+            return;
+        }
         if (is_null($n->read_at)) {
             $n->update(['read_at' => now()]);
             $this->refreshData();

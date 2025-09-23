@@ -2,14 +2,14 @@
 
 namespace App\Support;
 
-use League\CommonMark\Environment\Environment;
 use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Environment\Environment;
 use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\Table\TableExtension;
-use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\Extension\TaskList\TaskListExtension;
 
 final class Markdown
 {
@@ -33,13 +33,14 @@ final class Markdown
         ];
 
         $env = new Environment($config);
-        $env->addExtension(new CommonMarkCoreExtension());
-        $env->addExtension(new GithubFlavoredMarkdownExtension());
-        $env->addExtension(new TableExtension());
-        $env->addExtension(new TaskListExtension());
-        $env->addExtension(new HeadingPermalinkExtension());
+        $env->addExtension(new CommonMarkCoreExtension);
+        $env->addExtension(new GithubFlavoredMarkdownExtension);
+        $env->addExtension(new TableExtension);
+        $env->addExtension(new TaskListExtension);
+        $env->addExtension(new HeadingPermalinkExtension);
 
         $converter = new CommonMarkConverter($config, $env);
+
         return (string) $converter->convert($md);
     }
 }

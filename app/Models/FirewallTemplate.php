@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class FirewallTemplate extends Model
 {
     protected $fillable = ['name', 'sources', 'destinations', 'ports'];
+
     protected $casts = [
-        'sources'      => 'array',
+        'sources' => 'array',
         'destinations' => 'array',
-        'ports'        => 'array',
+        'ports' => 'array',
     ];
 }

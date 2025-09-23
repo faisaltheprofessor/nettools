@@ -4,7 +4,6 @@ use App\Livewire\Bookmarks;
 use App\Livewire\Dashboard;
 use App\Livewire\DHCP;
 use App\Livewire\DNS;
-use App\Livewire\Feedback;
 use App\Livewire\IdTools;
 use App\Livewire\IpCalculator;
 use App\Livewire\Ldap\NextMailboxPid;

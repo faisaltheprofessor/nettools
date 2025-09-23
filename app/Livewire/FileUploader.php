@@ -16,7 +16,7 @@ class FileUploader extends Component
     public $allFiles = []; // ['path' => ..., 'name' => ...]
 
     protected $listeners = [
-        'reset-file-uploader' => 'resetUploader'
+        'reset-file-uploader' => 'resetUploader',
     ];
 
     public function updatedNewFiles()
@@ -24,7 +24,7 @@ class FileUploader extends Component
         $this->validate();
 
         foreach ($this->newFiles as $file) {
-            $timestampedName = time() . '_' . $file->getClientOriginalName();
+            $timestampedName = time().'_'.$file->getClientOriginalName();
             $storedPath = $file->storeAs('feedback', $timestampedName, 'public');
             $this->allFiles[] = [
                 'path' => $storedPath,

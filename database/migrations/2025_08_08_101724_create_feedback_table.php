@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('feedback', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_guid')->constrained('users','guid')->cascadeOnDelete();
+            $table->foreignId('user_guid')->constrained('users', 'guid')->cascadeOnDelete();
             $table->enum('type', ['feature', 'bug', 'feedback']);
             $table->string('title');
             $table->text('description')->nullable();

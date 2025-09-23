@@ -12,10 +12,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class UserExport extends Component
 {
     public string|int $pidCount = 20;
+
     public string $exportMode = 'table';
+
     public string $sortDirection = 'desc';
+
     public array $selectedFields = [];
+
     public ?string $error = null;
+
     public array $exportOutput = [];
 
     public array $fieldDisplayNames = [
@@ -47,12 +52,14 @@ class UserExport extends Component
 
         if ($this->exportMode === '') {
             $this->error = 'Export-Modus erforderlich';
+
             return;
         }
 
         $lock = Cache::lock('ldap:pids-export', 30);
         if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell durch jemand anderes verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -76,6 +83,7 @@ class UserExport extends Component
 
             if ($rawEntries->isEmpty()) {
                 $this->error = 'Keine P-IDs im LDAP gefunden.';
+
                 return;
             }
 
@@ -85,6 +93,7 @@ class UserExport extends Component
 
             if ($filteredEntries->isEmpty()) {
                 $this->error = 'Keine gültigen P-IDs im LDAP gefunden.';
+
                 return;
             }
 
@@ -112,7 +121,8 @@ class UserExport extends Component
                             if ($field === 'logintime' && $value) {
                                 try {
                                     $value = Carbon::parse($value)->format('d.m.Y');
-                                } catch (\Exception $e) {}
+                                } catch (\Exception $e) {
+                                }
                             }
                         }
 
@@ -143,7 +153,8 @@ class UserExport extends Component
                             if ($field === 'logintime' && $value) {
                                 try {
                                     $value = Carbon::parse($value)->format('d.m.Y');
-                                } catch (\Exception $e) {}
+                                } catch (\Exception $e) {
+                                }
                             }
                         }
 
@@ -153,7 +164,7 @@ class UserExport extends Component
                         }
                     }
 
-                    return $uid.( !empty($extras) ? ' - '.implode(' | ', $extras) : '' );
+                    return $uid.(! empty($extras) ? ' - '.implode(' | ', $extras) : '');
                 })->values()->toArray();
 
                 $filename = "{$filenameDate}_PIDs_{$filenameCount}.txt";
@@ -194,7 +205,8 @@ class UserExport extends Component
                                 if ($field === 'logintime' && $value) {
                                     try {
                                         $value = Carbon::parse($value)->format('d.m.Y');
-                                    } catch (\Exception $e) {}
+                                    } catch (\Exception $e) {
+                                    }
                                 }
                             }
 

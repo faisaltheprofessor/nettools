@@ -19,10 +19,10 @@ class SidebarBookmarkFolders extends Component
             ->accessible($userGuid)
             ->where('type', 'folder')
             ->orderBy('name')
-            ->get(['id','name','parent_id','icon_name']);
+            ->get(['id', 'name', 'parent_id', 'icon_name']);
 
         // Group by parent_id for recursion; use 0 for root/null
-        $byParent = $folders->groupBy(fn($f) => $f->parent_id ?? 0);
+        $byParent = $folders->groupBy(fn ($f) => $f->parent_id ?? 0);
 
         return view('livewire.sidebar-bookmark-folders', [
             'byParent' => $byParent,

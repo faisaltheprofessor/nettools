@@ -15,13 +15,18 @@ class FeedbackViewer extends Component
 
     // sorting + selection
     public string $sortField = 'created_at';
+
     public string $sortDirection = 'desc';
+
     public ?Feedback $selectedFeedback = null;
 
     // filters
     public string $filterType = '';
+
     public string $filterUser = '';
+
     public string $filterStatus = '';
+
     public string $search = '';
 
     // new top-level comment
@@ -30,14 +35,17 @@ class FeedbackViewer extends Component
     // reply boxes per comment id
     /** @var array<int,string> */
     public array $replyBoxes = []; // [commentId => draft text]
-    /** @var null|int */
+
     public ?int $activeReplyFor = null;
 
     // mentions (live search)
     public bool $mentionOpen = false;        // global (Alpine holds per-box open state; LW holds results)
+
     public string $mentionQuery = '';
+
     /** @var array<int,array{guid:string,name:string}> */
     public array $mentionResults = [];
+
     public int $mentionLimit = 8;
 
     protected $paginationTheme = 'tailwind';
@@ -52,12 +60,35 @@ class FeedbackViewer extends Component
     ];
 
     // reset pagination on filter change
-    public function updatedFilterType(){ $this->resetPage(); }
-    public function updatedFilterUser(){ $this->resetPage(); }
-    public function updatedFilterStatus(){ $this->resetPage(); }
-    public function updatedSearch(){ $this->resetPage(); }
-    public function updatingSortField(){ $this->resetPage(); }
-    public function updatingSortDirection(){ $this->resetPage(); }
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterUser()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterStatus()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSortField()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSortDirection()
+    {
+        $this->resetPage();
+    }
 
     public function sortBy(string $field): void
     {
@@ -88,8 +119,12 @@ class FeedbackViewer extends Component
 
     public function setStatus(string $status): void
     {
-        if (!$this->selectedFeedback) return;
-        if (!in_array($status, Feedback::statuses(), true)) return;
+        if (! $this->selectedFeedback) {
+            return;
+        }
+        if (! in_array($status, Feedback::statuses(), true)) {
+            return;
+        }
 
         $this->selectedFeedback->update(['status' => $status]);
         $this->refreshThread();
@@ -98,13 +133,15 @@ class FeedbackViewer extends Component
     public function addComment(): void
     {
         $body = trim($this->newComment);
-        if (!$this->selectedFeedback || $body === '') return;
+        if (! $this->selectedFeedback || $body === '') {
+            return;
+        }
 
         FeedbackComment::create([
             'feedback_id' => $this->selectedFeedback->id,
-            'user_guid'   => Auth::user()->guid,
-            'body'        => $body,
-            'parent_id'   => null,
+            'user_guid' => Auth::user()->guid,
+            'body' => $body,
+            'parent_id' => null,
         ]);
 
         $this->newComment = '';
@@ -114,7 +151,7 @@ class FeedbackViewer extends Component
     public function openReply(int $commentId): void
     {
         $this->activeReplyFor = $commentId;
-        if (!isset($this->replyBoxes[$commentId])) {
+        if (! isset($this->replyBoxes[$commentId])) {
             $name = optional(FeedbackComment::with('user')->find($commentId)->user)->name ?? null;
             $this->replyBoxes[$commentId] = $name ? '@'.$name.' ' : '';
         }
@@ -122,15 +159,19 @@ class FeedbackViewer extends Component
 
     public function addReply(int $parentId): void
     {
-        if (!$this->selectedFeedback) return;
+        if (! $this->selectedFeedback) {
+            return;
+        }
         $body = trim($this->replyBoxes[$parentId] ?? '');
-        if ($body === '') return;
+        if ($body === '') {
+            return;
+        }
 
         FeedbackComment::create([
             'feedback_id' => $this->selectedFeedback->id,
-            'user_guid'   => Auth::user()->guid,
-            'body'        => $body,
-            'parent_id'   => $parentId,
+            'user_guid' => Auth::user()->guid,
+            'body' => $body,
+            'parent_id' => $parentId,
         ]);
 
         // clear only this reply box
@@ -145,7 +186,9 @@ class FeedbackViewer extends Component
     public function toggleReaction(int $commentId, string $emoji): void
     {
         $comment = FeedbackComment::find($commentId);
-        if (!$comment) return;
+        if (! $comment) {
+            return;
+        }
 
         $userGuid = Auth::user()->guid;
         $existing = $comment->reactions()
@@ -158,7 +201,7 @@ class FeedbackViewer extends Component
         } else {
             $comment->reactions()->create([
                 'user_guid' => $userGuid,
-                'emoji'     => $emoji,
+                'emoji' => $emoji,
             ]);
         }
 
@@ -176,6 +219,7 @@ class FeedbackViewer extends Component
         $q = trim($q);
         if ($q === '') {
             $this->mentionResults = [];
+
             return;
         }
 
@@ -183,8 +227,8 @@ class FeedbackViewer extends Component
             ->where('name', 'like', '%'.$q.'%')
             ->orderBy('name')
             ->limit($this->mentionLimit)
-            ->get(['guid','name'])
-            ->map(fn($u) => ['guid' => $u->guid, 'name' => $u->name])
+            ->get(['guid', 'name'])
+            ->map(fn ($u) => ['guid' => $u->guid, 'name' => $u->name])
             ->toArray();
     }
 
@@ -201,14 +245,14 @@ class FeedbackViewer extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['filterType','filterStatus','filterUser','search']);
+        $this->reset(['filterType', 'filterStatus', 'filterUser', 'search']);
         $this->resetPage();
     }
 
     protected function refreshThread(): void
     {
         if ($this->selectedFeedback) {
-            $this->selectedFeedback->refresh()->load(['user','comments.user','comments.reactions.user']);
+            $this->selectedFeedback->refresh()->load(['user', 'comments.user', 'comments.reactions.user']);
         }
     }
 
@@ -216,15 +260,19 @@ class FeedbackViewer extends Component
     {
         $query = Feedback::with('user');
 
-        if ($this->filterType !== '')   $query->where('type', $this->filterType);
-        if ($this->filterStatus !== '') $query->where('status', $this->filterStatus);
+        if ($this->filterType !== '') {
+            $query->where('type', $this->filterType);
+        }
+        if ($this->filterStatus !== '') {
+            $query->where('status', $this->filterStatus);
+        }
         if ($this->filterUser !== '') {
-            $query->whereHas('user', fn($q) => $q->where('name', 'like', '%'.$this->filterUser.'%'));
+            $query->whereHas('user', fn ($q) => $q->where('name', 'like', '%'.$this->filterUser.'%'));
         }
         if ($this->search !== '') {
             $s = '%'.$this->search.'%';
-            $query->where(function($q) use ($s){
-                $q->where('title','like',$s)->orWhere('description','like',$s);
+            $query->where(function ($q) use ($s) {
+                $q->where('title', 'like', $s)->orWhere('description', 'like', $s);
             });
         }
 
@@ -239,7 +287,7 @@ class FeedbackViewer extends Component
         $feedbacks = $query->paginate(12);
 
         return view('livewire.feedback-viewer', [
-            'feedbacks'   => $feedbacks,
+            'feedbacks' => $feedbacks,
             'allStatuses' => Feedback::statuses(),
         ]);
     }

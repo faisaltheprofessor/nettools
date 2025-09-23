@@ -11,7 +11,9 @@ use Livewire\Component;
 class FirewallVorlagen extends Component
 {
     public array $templates = [];
+
     public string $templateId = '';
+
     #[Validate('required|string|min:3', as: 'Vorlagenname')]
     public string $name = '';
 
@@ -21,7 +23,7 @@ class FirewallVorlagen extends Component
     /** @var array<int, array{sourcesText:string,destinationsText:string,ports:array,portInput:string,portQuick:string,portSelect:string}> */
     public array $ruleGroups = [];
 
-    public array $portSuggestions = ['80/tcp','443/tcp','22/tcp','53/udp','3306/tcp','5432/tcp'];
+    public array $portSuggestions = ['80/tcp', '443/tcp', '22/tcp', '53/udp', '3306/tcp', '5432/tcp'];
 
     // Searchable catalog & label map for friendly names
     public array $portCatalog = [
@@ -33,12 +35,16 @@ class FirewallVorlagen extends Component
         ['label' => 'SSH', 'value' => '22/tcp'],
         // extend as needed...
     ];
+
     public array $portLabelMap = [];
 
     // E-Mail Vorschau
     public string $emailSubject = '';
+
     public string $emailBody = '';
+
     public string $mailtoUrl = '';
+
     /** @var array<int, array<int, array{src:string,dst:string,port:string}>> */
     public array $previewGroups = [];
 
@@ -64,7 +70,7 @@ class FirewallVorlagen extends Component
 
     public function refreshTemplates(): void
     {
-        $this->templates = FirewallTemplate::orderBy('name')->get(['id','name'])->toArray();
+        $this->templates = FirewallTemplate::orderBy('name')->get(['id', 'name'])->toArray();
     }
 
     /** When user selects a template or "new", load or reset */
@@ -73,14 +79,16 @@ class FirewallVorlagen extends Component
         if ($this->templateId === '') {
             $this->resetForm();
             $this->dispatch('flux-toast', title: 'Neu', description: 'Neues Verfahren – Felder zurückgesetzt.');
+
             return;
         }
 
-        $id = (int)$this->templateId;
+        $id = (int) $this->templateId;
         $tpl = FirewallTemplate::find($id);
-        if (!$tpl) {
+        if (! $tpl) {
             $this->resetForm();
             $this->dispatch('flux-toast', title: 'Nicht gefunden', description: 'Vorlage existiert nicht mehr.', variant: 'danger');
+
             return;
         }
 
@@ -90,18 +98,18 @@ class FirewallVorlagen extends Component
         $dsts = $tpl->destinations ?? [];
         $prts = $tpl->ports ?? [];
 
-        $isNested = static fn($a) => !empty($a) && is_array(reset($a));
-        $srcGroups = $isNested($srcs) ? $srcs : (empty($srcs) ? [] : [ $srcs ]);
-        $dstGroups = $isNested($dsts) ? $dsts : (empty($dsts) ? [] : [ $dsts ]);
-        $prtGroups = $isNested($prts) ? $prts : (empty($prts) ? [] : [ $prts ]);
+        $isNested = static fn ($a) => ! empty($a) && is_array(reset($a));
+        $srcGroups = $isNested($srcs) ? $srcs : (empty($srcs) ? [] : [$srcs]);
+        $dstGroups = $isNested($dsts) ? $dsts : (empty($dsts) ? [] : [$dsts]);
+        $prtGroups = $isNested($prts) ? $prts : (empty($prts) ? [] : [$prts]);
 
         $count = max(count($srcGroups), count($dstGroups), count($prtGroups));
         $this->ruleGroups = [];
 
         for ($i = 0; $i < max(1, $count); $i++) {
             $sources = $srcGroups[$i] ?? [];
-            $dests   = $dstGroups[$i] ?? [];
-            $ports   = $prtGroups[$i] ?? [];
+            $dests = $dstGroups[$i] ?? [];
+            $ports = $prtGroups[$i] ?? [];
             $this->addRule(
                 sourcesText: implode(PHP_EOL, $sources),
                 destinationsText: implode(PHP_EOL, $dests),
@@ -132,22 +140,22 @@ class FirewallVorlagen extends Component
 
     public function addRule(string $sourcesText = '', string $destinationsText = '', array $ports = []): void
     {
-        if ($sourcesText === '' && $destinationsText === '' && !empty($this->ruleGroups)) {
+        if ($sourcesText === '' && $destinationsText === '' && ! empty($this->ruleGroups)) {
             // Auto: Quelle/Ziel vom vorherigen Eintrag vertauschen
             $prev = $this->ruleGroups[array_key_last($this->ruleGroups)];
             $prevSources = $this->normalizeList($prev['sourcesText'] ?? '');
-            $prevDests   = $this->normalizeList($prev['destinationsText'] ?? '');
+            $prevDests = $this->normalizeList($prev['destinationsText'] ?? '');
             $sourcesText = implode(PHP_EOL, $prevDests);
             $destinationsText = implode(PHP_EOL, $prevSources);
         }
 
         $this->ruleGroups[] = [
-            'sourcesText'      => $sourcesText,
+            'sourcesText' => $sourcesText,
             'destinationsText' => $destinationsText,
-            'ports'            => array_values($ports),
-            'portInput'        => '',
-            'portQuick'        => '',
-            'portSelect'       => '',
+            'ports' => array_values($ports),
+            'portInput' => '',
+            'portQuick' => '',
+            'portSelect' => '',
         ];
 
         // Expand the new rule and collapse the others
@@ -156,7 +164,9 @@ class FirewallVorlagen extends Component
 
     public function removeRule(int $index): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
         unset($this->ruleGroups[$index]);
         $this->ruleGroups = array_values($this->ruleGroups);
 
@@ -165,6 +175,7 @@ class FirewallVorlagen extends Component
         if ($last < 0) {
             $this->addRule();
             $this->expandedIndex = 0;
+
             return;
         }
 
@@ -175,9 +186,13 @@ class FirewallVorlagen extends Component
 
     public function addPortFromSelect(int $index): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
-        $val = (string)($this->ruleGroups[$index]['portSelect'] ?? '');
-        if ($val === '') return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
+        $val = (string) ($this->ruleGroups[$index]['portSelect'] ?? '');
+        if ($val === '') {
+            return;
+        }
 
         $this->addPort($index, $val);
         $this->ruleGroups[$index]['portSelect'] = '';
@@ -185,7 +200,9 @@ class FirewallVorlagen extends Component
 
     public function addPortFromRadio(int $index): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
         $val = $this->ruleGroups[$index]['portQuick'] ?? '';
         if ($val !== '') {
             $this->addPort($index, $val);
@@ -195,12 +212,17 @@ class FirewallVorlagen extends Component
 
     public function addCustomPort(int $index): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
-        $value = trim((string)($this->ruleGroups[$index]['portInput'] ?? ''));
-        if ($value === '') return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
+        $value = trim((string) ($this->ruleGroups[$index]['portInput'] ?? ''));
+        if ($value === '') {
+            return;
+        }
 
-        if (!$this->isValidPort($value)) {
+        if (! $this->isValidPort($value)) {
             $this->dispatch('flux-toast', title: 'Ungültiger Port', description: 'Format NNN/(tcp|udp), 1–65535', variant: 'danger');
+
             return;
         }
 
@@ -210,7 +232,9 @@ class FirewallVorlagen extends Component
 
     public function removePort(int $index, string $value): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
         $this->ruleGroups[$index]['ports'] = array_values(array_filter(
             $this->ruleGroups[$index]['ports'],
             fn ($p) => $p !== $value
@@ -219,12 +243,16 @@ class FirewallVorlagen extends Component
 
     private function addPort(int $index, string $value): void
     {
-        if (!isset($this->ruleGroups[$index])) return;
+        if (! isset($this->ruleGroups[$index])) {
+            return;
+        }
 
         $value = strtolower(trim($value));
-        if (!$this->isValidPort($value)) return;
+        if (! $this->isValidPort($value)) {
+            return;
+        }
 
-        if (!in_array($value, $this->ruleGroups[$index]['ports'], true)) {
+        if (! in_array($value, $this->ruleGroups[$index]['ports'], true)) {
             $this->ruleGroups[$index]['ports'][] = $value;
         } else {
             $this->dispatch('flux-toast', title: 'Duplikat', description: "$value bereits vorhanden");
@@ -233,8 +261,11 @@ class FirewallVorlagen extends Component
 
     private function isValidPort(string $value): bool
     {
-        if (!preg_match('/^\s*(\d{1,5})\s*\/\s*(tcp|udp)\s*$/i', $value, $m)) return false;
-        $n = (int)$m[1];
+        if (! preg_match('/^\s*(\d{1,5})\s*\/\s*(tcp|udp)\s*$/i', $value, $m)) {
+            return false;
+        }
+        $n = (int) $m[1];
+
         return $n >= 1 && $n <= 65535;
     }
 
@@ -243,32 +274,33 @@ class FirewallVorlagen extends Component
     public function saveTemplate(): void
     {
         // Create when new (no templateId), update when existing
-        $ignoreId = $this->templateId !== '' ? (int)$this->templateId : null;
+        $ignoreId = $this->templateId !== '' ? (int) $this->templateId : null;
         $this->validateNameAndRules($ignoreId);
 
         [$sources, $destinations, $ports] = $this->ruleGroupsToArrays();
 
         if ($this->templateId === '') {
             $tpl = FirewallTemplate::create([
-                'name'         => $this->name,
-                'sources'      => $sources,
+                'name' => $this->name,
+                'sources' => $sources,
                 'destinations' => $destinations,
-                'ports'        => $ports,
+                'ports' => $ports,
             ]);
-            $this->templateId = (string)$tpl->id;
+            $this->templateId = (string) $tpl->id;
             $msg = 'Neue Vorlage wurde angelegt';
         } else {
-            $tpl = FirewallTemplate::find((int)$this->templateId);
-            if (!$tpl) {
+            $tpl = FirewallTemplate::find((int) $this->templateId);
+            if (! $tpl) {
                 $this->resetForm();
                 $this->dispatch('flux-toast', title: 'Nicht gefunden', description: 'Vorlage existiert nicht mehr.', variant: 'danger');
+
                 return;
             }
             $tpl->update([
-                'name'         => $this->name,
-                'sources'      => $sources,
+                'name' => $this->name,
+                'sources' => $sources,
                 'destinations' => $destinations,
-                'ports'        => $ports,
+                'ports' => $ports,
             ]);
             $msg = 'Vorlage wurde aktualisiert';
         }
@@ -285,13 +317,13 @@ class FirewallVorlagen extends Component
 
         [$sources, $destinations, $ports] = $this->ruleGroupsToArrays();
         $tpl = FirewallTemplate::create([
-            'name'         => $this->name,
-            'sources'      => $sources,
+            'name' => $this->name,
+            'sources' => $sources,
             'destinations' => $destinations,
-            'ports'        => $ports,
+            'ports' => $ports,
         ]);
 
-        $this->templateId = (string)$tpl->id;
+        $this->templateId = (string) $tpl->id;
         $this->refreshTemplates();
 
         Flux::toast('Neue Vorlage wurde angelegt.');
@@ -304,10 +336,11 @@ class FirewallVorlagen extends Component
         $destinations = [];
         $ports = [];
         foreach ($this->ruleGroups as $r) {
-            $sources[]      = $this->normalizeList((string)($r['sourcesText'] ?? ''));
-            $destinations[] = $this->normalizeList((string)($r['destinationsText'] ?? ''));
-            $ports[]        = array_values($r['ports'] ?? []);
+            $sources[] = $this->normalizeList((string) ($r['sourcesText'] ?? ''));
+            $destinations[] = $this->normalizeList((string) ($r['destinationsText'] ?? ''));
+            $ports[] = array_values($r['ports'] ?? []);
         }
+
         return [$sources, $destinations, $ports];
     }
 
@@ -315,12 +348,12 @@ class FirewallVorlagen extends Component
     {
         $this->validate([
             'name' => [
-                'required','string','min:3',
+                'required', 'string', 'min:3',
                 Rule::unique('firewall_templates', 'name')->ignore($ignoreId),
             ],
         ], [
             'name.required' => 'Bitte einen Namen für das Verfahren angeben.',
-            'name.unique'   => 'Dieser Verfahrensname ist bereits vergeben.',
+            'name.unique' => 'Dieser Verfahrensname ist bereits vergeben.',
         ], [
             'name' => 'Verfahrensname',
         ]);
@@ -335,7 +368,7 @@ class FirewallVorlagen extends Component
 
     /* ===== E-Mail erzeugen ===== */
 
-      public function generate(): void
+    public function generate(): void
     {
         $this->emailSubject = "Firewall-Antrag – {$this->name}";
 
@@ -343,54 +376,50 @@ class FirewallVorlagen extends Component
         $blocks = [];
 
         foreach ($this->ruleGroups as $idx => $r) {
-            $sources      = $this->normalizeList((string)($r['sourcesText'] ?? ''));
-            $destinations = $this->normalizeList((string)($r['destinationsText'] ?? ''));
-            $ports        = array_values($r['ports'] ?? []);
+            $sources = $this->normalizeList((string) ($r['sourcesText'] ?? ''));
+            $destinations = $this->normalizeList((string) ($r['destinationsText'] ?? ''));
+            $ports = array_values($r['ports'] ?? []);
 
             // For modal table
             $rows = $this->zipRows3($sources, $destinations, $ports);
             $this->previewGroups[] = $rows;
 
             // Comma-separated text
-            $srcText  = !empty($sources)      ? implode(', ', $sources)      : '—';
-            $dstText  = !empty($destinations) ? implode(', ', $destinations) : '—';
-            $portText = !empty($ports)        ? implode(', ', $ports)        : '—';
+            $srcText = ! empty($sources) ? implode(', ', $sources) : '—';
+            $dstText = ! empty($destinations) ? implode(', ', $destinations) : '—';
+            $portText = ! empty($ports) ? implode(', ', $ports) : '—';
 
             // Singular/plural labels
-            $srcLabel  = count($sources)      > 1 ? 'Quellen' : 'Quelle';
-            $dstLabel  = count($destinations) > 1 ? 'Ziele'   : 'Ziel';
-            $portLabel = count($ports)        > 1 ? 'Ports'   : 'Port';
+            $srcLabel = count($sources) > 1 ? 'Quellen' : 'Quelle';
+            $dstLabel = count($destinations) > 1 ? 'Ziele' : 'Ziel';
+            $portLabel = count($ports) > 1 ? 'Ports' : 'Port';
 
             $blocks[] =
-                'REGEL ' . ($idx + 1) . ":\n" .
-                "  {$srcLabel}: {$srcText}\n" .
-                "  {$dstLabel}: {$dstText}\n" .
+                'REGEL '.($idx + 1).":\n".
+                "  {$srcLabel}: {$srcText}\n".
+                "  {$dstLabel}: {$dstText}\n".
                 "  {$portLabel}: {$portText}";
         }
 
-        $greeting  = "Guten Tag,";
-        $intro     = "ich bitte um das Hinzufügen folgender Firewall-Einträge.";
+        $greeting = 'Guten Tag,';
+        $intro = 'ich bitte um das Hinzufügen folgender Firewall-Einträge.';
         $verfahren = "Verfahren: {$this->name}";
 
         $this->emailBody = trim(
-            $greeting . "\n\n" .       // blank line after greeting
-            $intro . "\n\n" .          // blank line after intro
-            $verfahren . "\n\n" .      // blank line before rules
-            implode("\n\n", $blocks) . "\n\n" .
-            "Vielen Dank für die Umsetzung.\n\n" . // extra space before closing
-            "Freundliche Grüße\n" .
+            $greeting."\n\n".       // blank line after greeting
+            $intro."\n\n".          // blank line after intro
+            $verfahren."\n\n".      // blank line before rules
+            implode("\n\n", $blocks)."\n\n".
+            "Vielen Dank für die Umsetzung.\n\n". // extra space before closing
+            "Freundliche Grüße\n".
             (auth()->check() ? auth()->user()->name : '')
         );
 
-        $this->mailtoUrl = 'mailto:?subject=' . rawurlencode($this->emailSubject)
-                         . '&body=' . rawurlencode($this->emailBody);
-    $this->emailBodyPreview = preg_replace('/^  /m', '', $this->emailBody);
+        $this->mailtoUrl = 'mailto:?subject='.rawurlencode($this->emailSubject)
+                         .'&body='.rawurlencode($this->emailBody);
+        $this->emailBodyPreview = preg_replace('/^  /m', '', $this->emailBody);
         $this->modal('preview-email')->show();
     }
-
-
-
-
 
     /** @return array<int, array{src:string,dst:string,port:string}> */
     private function zipRows3(array $sources, array $destinations, array $ports): array
@@ -399,46 +428,50 @@ class FirewallVorlagen extends Component
         $rows = [];
         for ($i = 0; $i < $max; $i++) {
             $rows[] = [
-                'src'  => $sources[$i] ?? '',
-                'dst'  => $destinations[$i] ?? '',
+                'src' => $sources[$i] ?? '',
+                'dst' => $destinations[$i] ?? '',
                 'port' => $ports[$i] ?? '',
             ];
         }
+
         return $rows;
     }
 
     private function buildTableText(array $rows): string
     {
-        $c1 = 'Quelle(n)'; $c2 = 'Ziel(e)'; $c3 = 'Port/Protokoll';
+        $c1 = 'Quelle(n)';
+        $c2 = 'Ziel(e)';
+        $c3 = 'Port/Protokoll';
 
-        $w1 = max(strlen($c1), ...array_map(fn($r)=>strlen($r['src']),  $rows ?: [['src'=>'']]));
-        $w2 = max(strlen($c2), ...array_map(fn($r)=>strlen($r['dst']),  $rows ?: [['dst'=>'']]));
-        $w3 = max(strlen($c3), ...array_map(fn($r)=>strlen($r['port']), $rows ?: [['port'=>'']]));
+        $w1 = max(strlen($c1), ...array_map(fn ($r) => strlen($r['src']), $rows ?: [['src' => '']]));
+        $w2 = max(strlen($c2), ...array_map(fn ($r) => strlen($r['dst']), $rows ?: [['dst' => '']]));
+        $w3 = max(strlen($c3), ...array_map(fn ($r) => strlen($r['port']), $rows ?: [['port' => '']]));
 
         $header = sprintf("%-{$w1}s | %-{$w2}s | %-{$w3}s", $c1, $c2, $c3);
-        $line   = str_repeat('-', $w1 + $w2 + $w3 + 7);
+        $line = str_repeat('-', $w1 + $w2 + $w3 + 7);
 
         $body = implode(PHP_EOL, array_map(
-            fn($r) => sprintf("%-{$w1}s | %-{$w2}s | %-{$w3}s", $r['src'], $r['dst'], $r['port']),
+            fn ($r) => sprintf("%-{$w1}s | %-{$w2}s | %-{$w3}s", $r['src'], $r['dst'], $r['port']),
             $rows
         ));
 
-        return $header . PHP_EOL . $line . PHP_EOL . $body;
+        return $header.PHP_EOL.$line.PHP_EOL.$body;
     }
 
     private function buildKeyValueBlocks(array $rows): string
     {
         $lines = [];
         foreach ($rows as $r) {
-            $src  = trim($r['src'] ?? '') ?: '—';
-            $dst  = trim($r['dst'] ?? '') ?: '—';
+            $src = trim($r['src'] ?? '') ?: '—';
+            $dst = trim($r['dst'] ?? '') ?: '—';
             $port = trim($r['port'] ?? '') ?: '—';
 
             $lines[] =
-                "- Quelle: {$src}\n" .
-                "  Ziel:   {$dst}\n" .
+                "- Quelle: {$src}\n".
+                "  Ziel:   {$dst}\n".
                 "  Port:   {$port}";
         }
+
         return implode("\n\n", $lines);
     }
 
@@ -446,22 +479,24 @@ class FirewallVorlagen extends Component
     {
         $lines = [];
         foreach ($rows as $r) {
-            $src  = trim($r['src'] ?? '') ?: '—';
-            $dst  = trim($r['dst'] ?? '') ?: '—';
+            $src = trim($r['src'] ?? '') ?: '—';
+            $dst = trim($r['dst'] ?? '') ?: '—';
             $port = trim($r['port'] ?? '') ?: '—';
 
             $lines[] =
-                "Regel {$regelNr}:\n" .
-                "  Quelle: {$src}\n" .
-                "  Ziel:   {$dst}\n" .
+                "Regel {$regelNr}:\n".
+                "  Quelle: {$src}\n".
+                "  Ziel:   {$dst}\n".
                 "  Port:   {$port}";
         }
 
         return implode("\n\n", $lines);
     }
+
     private function normalizeList(string $input): array
     {
         $items = preg_split('/[\r\n,]+/', $input) ?: [];
-        return array_values(array_filter(array_map('trim', $items), fn($v)=>$v!==''));
+
+        return array_values(array_filter(array_map('trim', $items), fn ($v) => $v !== ''));
     }
 }
