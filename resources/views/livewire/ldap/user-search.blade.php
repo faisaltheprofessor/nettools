@@ -88,7 +88,7 @@
                               title="Tabelle kopieren"
                               @click="copyTable($refs.userHead, $refs.userBody)"
                               :data-copyable-copied="copied ? '' : null"
-                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black shadow-sm">
+                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black shadow-sm">
                             <flux:icon.clipboard-document-check variant="mini"
                                                                 class="hidden size-4 [[data-copyable-copied]>&]:block"/>
                             <flux:icon.clipboard-document variant="mini"
@@ -99,7 +99,7 @@
                         <span role="button" tabindex="0"
                               title="Als Excel exportieren"
                               @click="exportExcel($refs.userHead, $refs.userBody, 'benutzer-liste.xls')"
-                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black shadow-sm">
+                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black shadow-sm">
   <flux:icon.table-cells variant="mini" class="size-4"/>
   <span class="whitespace-nowrap">Excel</span>
 </span>
@@ -505,7 +505,7 @@
                       title="Tabelle kopieren"
                       @click="copyTable($refs.gmTable.querySelector('thead'), $refs.gmTable.querySelector('tbody'))"
                       :data-copyable-copied="copied ? '' : null"
-                      class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
+                      class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black transition-colors">
                     <flux:icon.clipboard-document-check variant="mini"
                                                         class="hidden size-4 [[data-copyable-copied]>&]:block"/>
                     <flux:icon.clipboard-document variant="mini"
@@ -516,7 +516,7 @@
                     <span role="button" tabindex="0"
                           title="Als Excel exportieren"
                           @click="exportExcel($refs.gmTable.querySelector('thead'), $refs.gmTable.querySelector('tbody'), '{{ $displayGroupName }} - gruppenmitglieder.xls')"
-                          class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 hover:text-black transition-colors">
+                          class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black transition-colors">
   <flux:icon.table-cells variant="mini" class="size-4"/>
   <span class="whitespace-nowrap">Excel</span>
 </span>
