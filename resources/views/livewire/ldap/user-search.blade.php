@@ -320,29 +320,29 @@
                                     <td class="px-4 py-3 truncate">{{ $user['title'] ?? '–' }}</td>
                                     <td class="px-4 py-3 truncate">{{ $tel !== '' ? $tel : '–' }}</td>
                                     <td class="px-4 py-3">
+                                    <div class="flex flex-col space-y-1">
                                         @if(!empty($user['email']))
-                                            <flux:badge2 copyable variant="pill" class="mt-1"
-                                                         color="green">{{ $user['email'] }}</flux:badge2>
+                                            <flux:badge2 copyable variant="pill" color="green">
+                                                {{ $user['email'] }}
+                                            </flux:badge2>
                                         @else
                                             <flux:text variant="subtle">nicht vorhanden</flux:text>
                                         @endif
 
                                         @if(!empty($user['external_email']))
-
-                                            <div class="flex items-center justify-center">
-                                                <flux:tooltip toggleable class="mt-1">
-                                                        <flux:button icon="information-circle" size="sm" variant="ghost"/>
-                                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">extern</flux:tooltip.content>
-                                                </flux:tooltip>
-                                                <flux:badge2 copyable variant="pill" class="flex p-0 mt-1" color="teal">
+                                            <div class="flex items-center space-x-2">
+                                                <flux:badge2 copyable variant="pill" color="teal">
                                                     {{ $user['external_email'] }}
-
                                                 </flux:badge2>
-
-
+                                                <flux:tooltip toggleable>
+                                                    <flux:button icon="information-circle" size="sm" variant="ghost"/>
+                                                    <flux:tooltip.content class="max-w-[20rem]">extern</flux:tooltip.content>
+                                                </flux:tooltip>
                                             </div>
                                         @endif
-                                    </td>
+                                    </div>
+                                </td>
+
 
                                     {{-- ✅ Aktionen cell (sticky) --}}
                                     <td class="px-2 py-3 whitespace-nowrap no-copy sticky right-0 z-10 bg-inherit [background:inherit] border-l-0 border-gray-200 dark:border-gray-700">
