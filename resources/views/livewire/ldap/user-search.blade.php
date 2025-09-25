@@ -321,10 +321,26 @@
                                     <td class="px-4 py-3 truncate">{{ $tel !== '' ? $tel : '–' }}</td>
                                     <td class="px-4 py-3">
                                         @if(!empty($user['email']))
-                                            <flux:badge variant="pill" class="mt-1"
-                                                        color="green">{{ $user['email'] }}</flux:badge>
+                                            <flux:badge2 copyable variant="pill" class="mt-1"
+                                                         color="green">{{ $user['email'] }}</flux:badge2>
                                         @else
                                             <flux:text variant="subtle">nicht vorhanden</flux:text>
+                                        @endif
+
+                                        @if(!empty($user['external_email']))
+
+                                            <div class="flex items-center justify-center">
+                                                <flux:tooltip toggleable class="mt-1">
+                                                        <flux:button icon="information-circle" size="sm" variant="ghost"/>
+                                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">extern</flux:tooltip.content>
+                                                </flux:tooltip>
+                                                <flux:badge2 copyable variant="pill" class="flex p-0 mt-1" color="teal">
+                                                    {{ $user['external_email'] }}
+
+                                                </flux:badge2>
+
+
+                                            </div>
                                         @endif
                                     </td>
 
@@ -1007,63 +1023,63 @@
     }
 
     // ===== Components =====
-function userTableCopy() {
-    return {
-        showCopy: false, copied: false, colCopied: {}, rowCopied: {},
+    function userTableCopy() {
+        return {
+            showCopy: false, copied: false, colCopied: {}, rowCopied: {},
 
-        async copyTable(headEl, bodyEl) {
-            if (!headEl || !bodyEl) return
-            const headRow = headEl.querySelector('tr');
-            if (!headRow) return
-            const head = _cellsWithColspan(headRow).map(_clean)
+            async copyTable(headEl, bodyEl) {
+                if (!headEl || !bodyEl) return
+                const headRow = headEl.querySelector('tr');
+                if (!headRow) return
+                const head = _cellsWithColspan(headRow).map(_clean)
 
-            const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
-            const tsv = _toTSV([head, ...bodyRows])
+                const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+                const tsv = _toTSV([head, ...bodyRows])
 
-            await navigator.clipboard.writeText(tsv)
-            this.copied = true;
-            setTimeout(() => this.copied = false, 1200)
-        },
+                await navigator.clipboard.writeText(tsv)
+                this.copied = true;
+                setTimeout(() => this.copied = false, 1200)
+            },
 
-        async copyRowByKey(key, headEl, bodyEl) {
-            if (!headEl || !bodyEl) return
-            const tr = document.querySelector(`[data-user-row='${key}']`);
-            if (!tr) return
-            const row = _cellsWithColspan(tr).map(_clean)
-            const tsv = _toTSV([row])
+            async copyRowByKey(key, headEl, bodyEl) {
+                if (!headEl || !bodyEl) return
+                const tr = document.querySelector(`[data-user-row='${key}']`);
+                if (!tr) return
+                const row = _cellsWithColspan(tr).map(_clean)
+                const tsv = _toTSV([row])
 
-            await navigator.clipboard.writeText(tsv)
-            this.rowCopied[key] = true;
-            setTimeout(() => this.rowCopied[key] = false, 1200)
-        },
+                await navigator.clipboard.writeText(tsv)
+                this.rowCopied[key] = true;
+                setTimeout(() => this.rowCopied[key] = false, 1200)
+            },
 
-        async copyColumnByIndex(idx, headEl, bodyEl) {
-            if (!headEl || !bodyEl) return
-            const headRow = headEl.querySelector('tr');
-            if (!headRow) return
+            async copyColumnByIndex(idx, headEl, bodyEl) {
+                if (!headEl || !bodyEl) return
+                const headRow = headEl.querySelector('tr');
+                if (!headRow) return
 
-            // Build full table first to ensure the same column indexing after colspans
-            const head = _cellsWithColspan(headRow).map(_clean)
-            const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
-            const maxCols = Math.max(head.length, ...bodyRows.map(r => r.length))
+                // Build full table first to ensure the same column indexing after colspans
+                const head = _cellsWithColspan(headRow).map(_clean)
+                const bodyRows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+                const maxCols = Math.max(head.length, ...bodyRows.map(r => r.length))
 
-            const get = (arr, i) => (i < arr.length ? arr[i] : '')
-            const col = [get(head, idx)]
-            for (const r of bodyRows) col.push(get(r, idx))
+                const get = (arr, i) => (i < arr.length ? arr[i] : '')
+                const col = [get(head, idx)]
+                for (const r of bodyRows) col.push(get(r, idx))
 
-            const tsv = _toTSV(col.map(c => [c])) // one column TSV
-            await navigator.clipboard.writeText(tsv)
-            this.colCopied[idx] = true;
-            setTimeout(() => this.colCopied[idx] = false, 1200)
-        },
+                const tsv = _toTSV(col.map(c => [c])) // one column TSV
+                await navigator.clipboard.writeText(tsv)
+                this.colCopied[idx] = true;
+                setTimeout(() => this.colCopied[idx] = false, 1200)
+            },
 
-        exportExcel(headEl, bodyEl, filename = 'export.xls') {
-            if (!headEl || !bodyEl) return;
-            const rows = _rowsForExport(headEl, bodyEl);
-            _downloadExcelFromRows(rows, filename);
+            exportExcel(headEl, bodyEl, filename = 'export.xls') {
+                if (!headEl || !bodyEl) return;
+                const rows = _rowsForExport(headEl, bodyEl);
+                _downloadExcelFromRows(rows, filename);
+            }
         }
     }
-}
 
 
     function gmCopyTable() {
@@ -1111,24 +1127,24 @@ function userTableCopy() {
             },
 
             exportExcel(headEl, bodyEl, filename = '{{ $displayGroupName }} - gruppenmitglieder.xls') {
-        if (!headEl || !bodyEl) return
-        const headRow = headEl.querySelector('tr')
-        if (!headRow) return
+                if (!headEl || !bodyEl) return
+                const headRow = headEl.querySelector('tr')
+                if (!headRow) return
 
-        const head = _cellsWithColspan(headRow).map(_clean)
-        const rows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
-        const tsv = _toTSV([head, ...rows])
+                const head = _cellsWithColspan(headRow).map(_clean)
+                const rows = _rows(bodyEl).map(r => _cellsWithColspan(r).map(_clean))
+                const tsv = _toTSV([head, ...rows])
 
-        const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        URL.revokeObjectURL(url)
-      }
+                const blob = new Blob([tsv], {type: 'application/vnd.ms-excel'})
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = filename
+                document.body.appendChild(a)
+                a.click()
+                a.remove()
+                URL.revokeObjectURL(url)
+            }
         }
     }
 </script>
