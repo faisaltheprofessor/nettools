@@ -44,6 +44,20 @@
                             inputmode="numeric"
                             pattern="[0-9]{4}"
                         />
+
+                    @elseif($searchAttribute === 'Vollst. Name')
+                        <div class="relative w-full">
+                            <flux:input
+                                wire:model.defer="searchTerm"
+                                wire:keydown.enter="search"
+                                placeholder="Nachname, Vorname"
+                            />
+                            <button type="button"
+                                    @click="$wire.set('searchTerm','')"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded px-2 py-1 text-base leading-none text-gray-500 hover:text-black">
+                                ×
+                            </button>
+                        </div>
                     @else
                         <div class="relative w-full">
                             <flux:input
@@ -327,10 +341,10 @@
 
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate text-center">
                             @if($user['active'] || !((bool) ($user['logindisabled'] ?? false)))
-                                <flux:icon.check-circle variant="solid" class="text-green-600 mx-4"/>
+                                <flux:icon.check-circle variant="solid" class="text-green-600 mx-4 md:mx-6"/>
                             @else
                                 <flux:tooltip content="{!! nl2br($user['additionalinfo'] ?? '') !!}">
-                                    <flux:icon.x-circle variant="solid" class="text-red-600 mx-4"/>
+                                    <flux:icon.x-circle variant="solid" class="text-red-600 mx-4 md:mx-6"/>
                                 </flux:tooltip>
                             @endif
                         </td>
