@@ -128,6 +128,7 @@ public function search(): void
             'BAPK-telefon', 'mobile'
         ];
 
+
         $users = User::query()->select($attrs)->rawFilter($filter)->limit(500)->get();
 
         if ($users->isEmpty()) {
@@ -142,6 +143,7 @@ public function search(): void
                 ?? $user->getFirstAttribute('telephoneNumber')
                 ?? $user->getFirstAttribute('BAPK-telefon')
                 ?? $user->getFirstAttribute('mobile')
+
                 ?? '';
 
             $shortTel = $this->normalizeShortTel($rawTel);
@@ -149,6 +151,8 @@ public function search(): void
             if ($attribute === 'Telefon' && $shortTel !== $term) {
                 continue;
             }
+
+            $active = $user->getContext() !== 'DeaktivierteUser.ba';
 
             $results->push([
                 'pid' => $user->getFirstAttribute('uid'),
@@ -159,6 +163,7 @@ public function search(): void
                 'email' => $user->getFirstAttribute('mail') ?? '',
                 'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
                 'tel' => $shortTel,
+                'active' => $active,
             ]);
         }
 

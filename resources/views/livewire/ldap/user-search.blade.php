@@ -117,7 +117,8 @@
                         <table
                             class="min-w-[80rem] w-full table-auto text-sm text-left text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/20">
                             <colgroup>
-                                <col class="w-[10rem]">
+                                <col class="w-[8rem]">
+                                <col class="w-[8rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
@@ -153,6 +154,11 @@
                                     </div>
                                 </th>
 
+                                 <th class="px-4 py-3">
+                                    <div class="inline-flex items-center gap-1">
+                                        Aktiv
+                                    </div>
+                                 </th>
                                 <th class="px-4 py-3">
                                     <div class="inline-flex items-center gap-1">
                                         <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
@@ -178,7 +184,6 @@
                             </span>
                                     </div>
                                 </th>
-
                                 <th class="px-4 py-3">
                                     <div class="inline-flex items-center gap-1">
                                         <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
@@ -301,7 +306,8 @@
                         <table
                             class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900/20">
                             <colgroup>
-                                <col class="w-[10rem]">
+                                <col class="w-[8rem]">
+                                <col class="w-[8rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[16rem]">
@@ -315,6 +321,7 @@
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/40' : 'bg-white dark:bg-gray-800/70' }}"
                                     data-user-row="rk-{{ $idx }}-{{ $user['pid'] }}">
                                     <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate">{{ $user['pid'] }}</td>
+                                    <td class=" py-3 font-medium text-gray-900 dark:text-gray-100 truncate">@if($user['active']) <flux:icon.check-circle variant="solid" class="text-green-600" /> @else <flux:icon.x-circle variant="solid" class="text-red-600" />@endif</td>
                                     <td class="px-4 py-3 truncate">{{ $user['surname'] ?? '–' }}</td>
                                     <td class="px-4 py-3 truncate">{{ $user['givenname'] ?? '–' }}</td>
                                     <td class="px-4 py-3 truncate">{{ $user['title'] ?? '–' }}</td>
