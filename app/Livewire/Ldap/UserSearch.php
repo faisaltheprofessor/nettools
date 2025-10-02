@@ -125,11 +125,12 @@ public function search(): void
         $attrs = [
             'uid', 'cn', 'sn', 'givenname', 'title', 'mail',
             'BAPK-mailext', 'telephonenumber', 'telephoneNumber',
-            'BAPK-telefon', 'mobile'
+            'BAPK-telefon', 'mobile', 'logindisabled'
         ];
 
 
         $users = User::query()->select($attrs)->rawFilter($filter)->limit(500)->get();
+
 
         if ($users->isEmpty()) {
             $this->error = 'Keine Benutzer gefunden.';
@@ -153,6 +154,7 @@ public function search(): void
             }
 
             $active = $user->getContext() !== 'DeaktivierteUser.ba';
+            $loginDisabled = $user->getFirstAttribute('logindisabled') === 'TRUE' ?? true;
 
             $results->push([
                 'pid' => $user->getFirstAttribute('uid'),
@@ -164,6 +166,8 @@ public function search(): void
                 'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
                 'tel' => $shortTel,
                 'active' => $active,
+                'logindisabled' => $loginDisabled,
+                'additionalinfo' => 'Konto deaktiviert: ' . strtolower($user->getFirstAttribute('logindisabled'))  . " | Kontext: ". $user->getContext()
             ]);
         }
 
