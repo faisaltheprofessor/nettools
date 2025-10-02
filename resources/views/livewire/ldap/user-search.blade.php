@@ -18,7 +18,7 @@
             <flux:icon.square-user-round class="size-12"/>
             <p>User Suchen</p>
 
-            <div class="flex justify-center w-full md:w-3/4 lg:w-2/3">
+            <div class="flex justify-center w-full md:w-3/4 lg:w-2/3" x-data x-init="$refs.input.focus()">
                 <flux:input.group>
                     <flux:select wire:model.live="searchAttribute" placeholder="Attribute..." required
                                  class="max-w-fit">
@@ -33,7 +33,7 @@
                         <flux:input.group>
                             <flux:input.group.prefix class="rounded-l-none border-l-0">p</flux:input.group.prefix>
                             <flux:input wire:model.defer="searchTerm" wire:keydown.enter="search"
-                                        placeholder="12345 oder p12345"/>
+                                        placeholder="12345 oder p12345" x-ref="input" />
                         </flux:input.group>
                     @elseif ($searchAttribute === 'Telefon')
                         <flux:input
@@ -81,342 +81,315 @@
         -- ========================================= --}}
         @if ($searchResults && $searchResults->count() > 0)
             <div class="mt-6" x-data="userTableCopy()">
-                <div class="flex items-center justify-between gap-3">
-                    <flux:heading size="sm" class="text-gray-700 dark:text-gray-100">Ergebnis</flux:heading>
-                    <div class="flex items-center gap-3 shrink-0 mb-3">
+    <div class="flex items-center justify-between gap-3">
+        <flux:heading size="sm" class="text-gray-700 dark:text-gray-100">Ergebnis</flux:heading>
+        <div class="flex items-center gap-3 shrink-0 mb-3">
             <span role="button" tabindex="0"
                   title="Tabelle kopieren"
                   @click="copyTable($refs.userHead, $refs.userBody)"
                   :data-copyable-copied="copied ? '' : null"
-                  class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black shadow-sm">
-                <flux:icon.clipboard-document-check variant="mini"
-                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                <flux:icon.clipboard-document variant="mini"
-                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                  class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm">
+                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
                 <span class="whitespace-nowrap">Tabelle kopieren</span>
             </span>
 
-                        <span role="button" tabindex="0"
-                              title="Als Excel exportieren"
-                              @click="exportExcel($refs.userHead, $refs.userBody, 'benutzer-liste.xls')"
-                              class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:text-black shadow-sm">
-<flux:icon.table-cells variant="mini" class="size-4"/>
-<span class="whitespace-nowrap">Excel</span>
-</span>
+            <span role="button" tabindex="0"
+                  title="Als Excel exportieren"
+                  @click="exportExcel($refs.userHead, $refs.userBody, 'benutzer-liste.xlsx')"
+                  class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs bg-white/90 dark:bg-gray-800/90 border border-gray-300 dark:border-gray-700 cursor-pointer text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm">
+                <flux:icon.table-cells variant="mini" class="size-4"/>
+                <span class="whitespace-nowrap">Excel</span>
+            </span>
 
-                        <div class="flex items-center gap-2">
-                            <flux:text size="sm" class="text-gray-500 dark:text-gray-400">Kopier-Modus</flux:text>
-                            <flux:switch @change="showCopy = $event.target.checked"/>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative shadow-md sm:rounded-lg border border-gray-300 dark:border-gray-700">
-                    {{-- Header --}}
-                    <div class="overflow-x-hidden" x-ref="userHeadWrap">
-                        <table
-                            class="min-w-[80rem] w-full table-auto text-sm text-left text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/20">
-                            <colgroup>
-                                <col class="w-[8rem]">
-                                <col class="w-[8rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[16rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[20rem]"> {{-- Email --}}
-                                <col class="w-[8rem]"> {{-- Aktionen --}}
-                            </colgroup>
-                            <thead x-ref="userHead" class="text-xs uppercase bg-gray-100 dark:bg-gray-800">
-                            <tr>
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('pid')">
-                                            PID
-                                            @if($userSorted && $userSortBy==='pid')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(0, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[0] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-
-                                {{-- Aktiv Header - Centered and Sortable --}}
-                                <th class="px-4 py-3 text-center">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('active')">
-                                            Aktiv
-                                            @if($userSorted && $userSortBy==='active')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(1, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[1] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('surname')">
-                                            Nachname
-                                            @if($userSorted && $userSortBy==='surname')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(2, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[2] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('givenname')">
-                                            Vorname
-                                            @if($userSorted && $userSortBy==='givenname')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(3, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[3] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('title')">
-                                            Stellenzeichen
-                                            @if($userSorted && $userSortBy==='title')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(4, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[4] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('tel')">
-                                            Telefon
-                                            @if($userSorted && $userSortBy==='tel')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(5, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[5] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-
-                                {{-- Email header --}}
-                                <th class="px-4 py-3">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="inline-flex items-center gap-1 cursor-pointer"
-                                                wire:click="setUserSort('email')">
-                                            Email
-                                            @if($userSorted && $userSortBy==='email')
-                                                @if($userSortDir==='asc')
-                                                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
-                                                @else
-                                                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
-                                                @endif
-                                            @endif
-                                        </button>
-                                        <span role="button" tabindex="0" title="Spalte kopieren"
-                                              @click="copyColumnByIndex(6, $refs.userHead, $refs.userBody)"
-                                              :data-copyable-copied="colCopied[6] ? '' : null"
-                                              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors">
-                                <flux:icon.clipboard-document-check variant="mini"
-                                                                    class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                <flux:icon.clipboard-document variant="mini"
-                                                              class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                            </span>
-                                    </div>
-                                </th>
-
-                                {{-- Gruppen header (sticky) --}}
-                                <th class="px-4 py-3 sticky right-0 z-20 bg-gray-100 dark:bg-gray-800">
-                                    <div class="inline-flex items-center gap-1">
-                                        <span>Gruppen</span>
-                                    </div>
-                                </th>
-                            </tr>
-                            </thead>
-                        </table>
-                    </div>
-
-                    {{-- Body --}}
-                    <div class="max-h-[60vh] overflow-y-auto overflow-x-auto" x-ref="userBodyWrap"
-                         @scroll="$refs.userHeadWrap.scrollLeft = $event.target.scrollLeft">
-                        <table
-                            class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900/20">
-                            <colgroup>
-                                <col class="w-[8rem]">
-                                <col class="w-[8rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[16rem]">
-                                <col class="w-[12rem]">
-                                <col class="w-[20rem]"> {{-- Email --}}
-                                <col class="w-[10rem]"> {{-- Aktionen --}}
-                            </colgroup>
-                            <tbody x-ref="userBody" class="bg-white dark:bg-gray-800/60">
-                            @foreach ($searchResults as $idx => $user)
-                                @php $tel = $user['tel'] ?? ''; @endphp
-                                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/40' : 'bg-white dark:bg-gray-800/70' }}"
-                                    data-user-row="rk-{{ $idx }}-{{ $user['pid'] }}">
-                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate">{{ $user['pid'] }}</td>
-                                    {{-- Aktiv Data Cell - Centered and now with px-4 --}}
-                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate text-center">
-
-                                        @if($user['active'] || !((bool) $user['logindisabled']))
-                                            <flux:icon.check-circle variant="solid" class="text-green-600"/>
-                                        @else
-                                            <flux:tooltip content="{!! nl2br($user['additionalinfo']) !!}">
-                                                <flux:icon.x-circle variant="solid" class="text-red-600"/>
-                                            </flux:tooltip>
-                                        @endif
-                                    </td>
-                                    {{-- Added px-4 to subsequent cells --}}
-                                    <td class="px-4 py-3 truncate">{{ $user['surname'] ?? '–' }}</td>
-                                    <td class="px-4 py-3 truncate">{{ $user['givenname'] ?? '–' }}</td>
-                                    <td class="px-4 py-3 truncate">{{ $user['title'] ?? '–' }}</td>
-                                    <td class="px-4 py-3 truncate">{{ $tel !== '' ? $tel : '–' }}</td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex flex-col space-y-1">
-                                            @if(!empty($user['email']))
-                                                <flux:badge2 copyable variant="pill" color="green">
-                                                    {{ $user['email'] }}
-                                                </flux:badge2>
-                                            @else
-                                                <flux:text variant="subtle">nicht vorhanden</flux:text>
-                                            @endif
-
-                                            @if(!empty($user['external_email']))
-                                                <div class="flex items-center space-x-2">
-                                                    <flux:badge2 copyable variant="pill" color="teal">
-                                                        {{ $user['external_email'] }}
-                                                    </flux:badge2>
-                                                    <flux:tooltip toggleable>
-                                                        <flux:button icon="information-circle" size="sm"
-                                                                     variant="ghost"/>
-                                                        <flux:tooltip.content class="max-w-[20rem]">extern
-                                                        </flux:tooltip.content>
-                                                    </flux:tooltip>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </td>
-
-
-                                    {{-- Aktionen cell (sticky) - Padding was already px-2, keeping it consistent with the original --}}
-                                    <td class="px-2 py-3 whitespace-nowrap no-copy sticky right-0 z-10 bg-inherit [background:inherit] border-l-0 border-gray-200 dark:border-gray-700">
-                                        <div class="flex items-center justify-end gap-1">
-                                            <flux:button size="xs" variant="primary" color="green"
-                                                         class="cursor-pointer"
-                                                         wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
-                                                Anzeigen
-                                            </flux:button>
-                                            <flux:button size="xs" variant="primary" color="blue" class="cursor-pointer"
-                                                         wire:click="openCompare('{{ $user['pid'] }}')">
-                                                Vergleichen
-                                            </flux:button>
-                                            <span role="button" tabindex="0" title="Zeile kopieren"
-                                                  @click="copyRowByKey('rk-{{ $idx }}-{{ $user['pid'] }}', $refs.userHead, $refs.userBody)"
-                                                  :data-copyable-copied="rowCopied['rk-{{ $idx }}-{{ $user['pid'] }}'] ? '' : null"
-                                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                                                  class="inline-flex w-5 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
-                                    <flux:icon.clipboard-document-check variant="mini"
-                                                                        class="hidden size-4 [[data-copyable-copied]>&]:block"/>
-                                    <flux:icon.clipboard-document variant="mini"
-                                                                  class="block size-4 [[data-copyable-copied]>&]:hidden"/>
-                                </span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+            <div class="flex items-center gap-2">
+                <flux:text size="sm" class="text-gray-500 dark:text-gray-400">Kopier-Modus</flux:text>
+                <flux:switch @change="showCopy = $event.target.checked"/>
             </div>
+        </div>
+    </div>
+
+    <div class="relative shadow-md sm:rounded-lg border border-gray-300 dark:border-gray-700">
+        {{-- Header (Scrollbar verstecken, aber scrollfähig für JS-Sync) --}}
+        <div class="overflow-x-auto hide-scrollbar" x-ref="userHeadWrap">
+            <table class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200">
+                <colgroup>
+                    <col class="w-[8rem]">   {{-- PID --}}
+                    <col class="w-[8rem]">   {{-- Aktiv --}}
+                    <col class="w-[12rem]">  {{-- Nachname --}}
+                    <col class="w-[12rem]">  {{-- Vorname --}}
+                    <col class="w-[16rem]">  {{-- Stellenzeichen / Title --}}
+                    <col class="w-[12rem]">  {{-- Telefon / Organisation --}}
+                    <col class="w-[20rem]">  {{-- Email --}}
+                    <col class="w-[8rem]">   {{-- Aktionen / Gruppen (sticky) --}}
+                </colgroup>
+
+                <thead x-ref="userHead" class="text-xs uppercase bg-gray-100 dark:bg-gray-800">
+                <tr>
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <button type="button" class="inline-flex items-center gap-1" wire:click="setUserSort('pid')">
+                                PID
+                            </button>
+                            <span class="ml-1">
+                                @if($userSorted && $userSortBy==='pid')
+                                    @if($userSortDir==='asc')
+                                        <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                    @else
+                                        <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                    @endif
+                                @endif
+                            </span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(0, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[0] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    <th class="px-4 py-3 text-center">
+    <div class="inline-flex items-center gap-1 justify-center">
+        <button type="button"
+                class="inline-flex items-center gap-1"
+                wire:click="setUserSort('kontext')">
+            Aktiv
+        </button>
+        <span class="ml-1">
+            @if($userSorted && $userSortBy==='active')
+                @if($userSortDir==='asc')
+                    <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                @else
+                    <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                @endif
+            @endif
+        </span>
+        <span role="button" tabindex="0" title="Spalte kopieren"
+              @click="copyColumnByIndex(1, $refs.userHead, $refs.userBody)"
+              :data-copyable-copied="colCopied[1] ? '' : null"
+              :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+              class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+            <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+            <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+        </span>
+    </div>
+</th>
+
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <button type="button" class="inline-flex items-center gap-1" wire:click="setUserSort('surname')">
+                                Nachname
+                            </button>
+                            <span class="ml-1">
+                                @if($userSorted && $userSortBy==='surname')
+                                    @if($userSortDir==='asc')
+                                        <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                    @else
+                                        <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                    @endif
+                                @endif
+                            </span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(2, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[2] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <button type="button" class="inline-flex items-center gap-1" wire:click="setUserSort('givenname')">
+                                Vorname
+                            </button>
+                            <span class="ml-1">
+                                @if($userSorted && $userSortBy==='givenname')
+                                    @if($userSortDir==='asc')
+                                        <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                    @else
+                                        <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                    @endif
+                                @endif
+                            </span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(3, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[3] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <button type="button" class="inline-flex items-center gap-1" wire:click="setUserSort('title')">
+                                Stellenzeichen
+                            </button>
+                            <span class="ml-1">
+                                @if($userSorted && $userSortBy==='title')
+                                    @if($userSortDir==='asc')
+                                        <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                    @else
+                                        <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                    @endif
+                                @endif
+                            </span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(4, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[4] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <span>Telefon</span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(5, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[5] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    <th class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1 justify-center">
+                            <button type="button" class="inline-flex items-center gap-1" wire:click="setUserSort('email')">
+                                Email
+                            </button>
+                            <span class="ml-1">
+                                @if($userSorted && $userSortBy==='email')
+                                    @if($userSortDir==='asc')
+                                        <flux:icon.arrow-up-wide-narrow class="size-3.5"/>
+                                    @else
+                                        <flux:icon.arrow-down-wide-narrow class="size-3.5"/>
+                                    @endif
+                                @endif
+                            </span>
+                            <span role="button" tabindex="0" title="Spalte kopieren"
+                                  @click="copyColumnByIndex(6, $refs.userHead, $refs.userBody)"
+                                  :data-copyable-copied="colCopied[6] ? '' : null"
+                                  :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                  class="inline-flex w-5 justify-center cursor-pointer no-copy text-gray-500/80 hover:text-black transition-colors ml-2">
+                                <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                            </span>
+                        </div>
+                    </th>
+
+                    {{-- Sticky Gruppen / Aktionen (right) --}}
+                    <th class="px-4 py-3 sticky right-0 z-20 bg-gray-100 dark:bg-gray-800">
+                        <div class="inline-flex items-center gap-1 justify-end">
+                            <span>Gruppen</span>
+                        </div>
+                    </th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+
+        {{-- Body (scrollbar aktiv, synchronisiert Header scrollLeft) --}}
+        <div class="max-h-[60vh] overflow-y-auto overflow-x-auto" x-ref="userBodyWrap"
+             @scroll="$refs.userHeadWrap.scrollLeft = $event.target.scrollLeft">
+            <table class="min-w-[80rem] w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200">
+                <colgroup>
+                    <col class="w-[8rem]">
+                    <col class="w-[8rem]">
+                    <col class="w-[12rem]">
+                    <col class="w-[12rem]">
+                    <col class="w-[16rem]">
+                    <col class="w-[12rem]">
+                    <col class="w-[20rem]">
+                    <col class="w-[8rem]">
+                </colgroup>
+
+                <tbody x-ref="userBody" class="bg-white dark:bg-gray-800/60">
+                @foreach ($searchResults as $idx => $user)
+                    @php $tel = $user['tel'] ?? ''; @endphp
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {{ $loop->odd ? 'bg-gray-50 dark:bg-gray-800/40' : 'bg-white dark:bg-gray-800/70' }}"
+                        data-user-row="rk-{{ $idx }}-{{ $user['pid'] }}">
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate text-center">{{ $user['pid'] }}</td>
+
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 truncate text-center">
+                            @if($user['active'] || !((bool) ($user['logindisabled'] ?? false)))
+                                <flux:icon.check-circle variant="solid" class="text-green-600 mx-4"/>
+                            @else
+                                <flux:tooltip content="{!! nl2br($user['additionalinfo'] ?? '') !!}">
+                                    <flux:icon.x-circle variant="solid" class="text-red-600 mx-4"/>
+                                </flux:tooltip>
+                            @endif
+                        </td>
+
+                        <td class="px-4 py-3 truncate text-center">{{ $user['surname'] ?? '–' }}</td>
+                        <td class="px-4 py-3 truncate text-center">{{ $user['givenname'] ?? '–' }}</td>
+                        <td class="px-4 py-3 truncate text-center">{{ $user['title'] ?? '–' }}</td>
+                        <td class="px-4 py-3 truncate text-center">{{ $tel !== '' ? $tel : '–' }}</td>
+
+                        <td class="px-4 py-3">
+                            <div class="flex flex-col space-y-1">
+                                @if(!empty($user['email']))
+                                    <flux:badge2 copyable variant="pill" color="green">
+                                        {{ $user['email'] }}
+                                    </flux:badge2>
+                                @else
+                                    <flux:text variant="subtle">nicht vorhanden</flux:text>
+                                @endif
+
+                                @if(!empty($user['external_email']))
+                                    <div class="flex items-center space-x-2">
+                                        <flux:badge2 copyable variant="pill" color="teal">
+                                            {{ $user['external_email'] }}
+                                        </flux:badge2>
+                                        <flux:tooltip toggleable>
+                                            <flux:button icon="information-circle" size="sm" variant="ghost"/>
+                                            <flux:tooltip.content class="max-w-[20rem]">extern</flux:tooltip.content>
+                                        </flux:tooltip>
+                                    </div>
+                                @endif
+                            </div>
+                        </td>
+
+                        <td class="px-2 py-3 whitespace-nowrap no-copy sticky right-0 z-10 bg-white dark:bg-gray-800/70 border-l border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-end gap-1">
+                                <flux:button size="xs" variant="primary" color="green" class="cursor-pointer" wire:click="loadGroupsAndInfo('{{ $user['pid'] }}')">
+                                    Anzeigen
+                                </flux:button>
+                                <flux:button size="xs" variant="primary" color="blue" class="cursor-pointer" wire:click="openCompare('{{ $user['pid'] }}')">
+                                    Vergleichen
+                                </flux:button>
+
+                                <span role="button" tabindex="0" title="Zeile kopieren"
+                                      @click="copyRowByKey('rk-{{ $idx }}-{{ $user['pid'] }}', $refs.userHead, $refs.userBody)"
+                                      :data-copyable-copied="rowCopied['rk-{{ $idx }}-{{ $user['pid'] }}'] ? '' : null"
+                                      :class="showCopy ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                                      class="inline-flex w-5 justify-center items-center cursor-pointer text-gray-500/80 hover:text-black transition-colors">
+                                    <flux:icon.clipboard-document-check variant="mini" class="hidden size-4 [[data-copyable-copied]>&]:block"/>
+                                    <flux:icon.clipboard-document variant="mini" class="block size-4 [[data-copyable-copied]>&]:hidden"/>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
         @endif
     </flux:card>
 

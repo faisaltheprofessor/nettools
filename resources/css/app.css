@@ -36,6 +36,7 @@
     }
 }
 
+
 @layer base {
 
     *,
@@ -60,6 +61,9 @@ textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* \[:where(&)\]:size-4 {
     @apply size-4;
