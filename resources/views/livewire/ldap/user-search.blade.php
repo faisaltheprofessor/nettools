@@ -307,7 +307,7 @@
                                 <col class="w-[16rem]">
                                 <col class="w-[12rem]">
                                 <col class="w-[20rem]"> {{-- Email --}}
-                                <col class="w-[8rem]"> {{-- Aktionen --}}
+                                <col class="w-[10rem]"> {{-- Aktionen --}}
                             </colgroup>
                             <tbody x-ref="userBody" class="bg-white dark:bg-gray-800/60">
                             @foreach ($searchResults as $idx => $user)

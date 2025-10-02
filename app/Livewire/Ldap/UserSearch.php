@@ -62,78 +62,121 @@ class UserSearch extends Component
      * - Telefon strictly matches last 4 digits (post-filtered).
      * - Wildcards (*) supported for name/title; RFC4515 escaping.
      */
-    public function search(): void
-    {
-        $this->reset(['error', 'searchResults', 'selectedUserGroups', 'selectedUserInfo']);
-        if (trim($this->searchTerm) === '') {
-            $this->error = 'Bitte geben Sie einen Suchbegriff ein.';
+public function search(): void
+{
+    $this->reset(['error', 'searchResults', 'selectedUserGroups', 'selectedUserInfo']);
 
+    if (trim($this->searchTerm) === '') {
+        $this->error = 'Bitte geben Sie einen Suchbegriff ein.';
+        return;
+    }
+
+    try {
+        $attribute = $this->searchAttribute;
+        $term = trim($this->searchTerm);
+
+        // Normalize PID
+        if ($attribute === 'PID') {
+            $term = $this->normalizePid($term);
+
+        // Normalize phone number to last 4 digits
+        } elseif ($attribute === 'Telefon') {
+            $term = $this->normalizeShortTel($term);
+            if (strlen($term) !== 4) {
+                $this->error = 'Bitte genau 4 Ziffern eingeben.';
+                return;
+            }
+
+        // Extract only last name if format is "Lastname, Firstname"
+        } elseif ($attribute === 'Nachname') {
+            if (str_contains($term, ',')) {
+                [$last, $first] = array_map('trim', explode(',', $term, 2));
+                $term = $last;
+            }
+
+        // Normalize "Firstname Lastname" or "Lastname, Firstname"
+        } elseif ($attribute === 'Vollst. Name') {
+            $term = trim($term);
+            if (str_contains($term, ',')) {
+                [$last, $first] = array_map('trim', explode(',', $term, 2));
+                $firstEsc = self::withWildcards(self::rfc4515Escape($first, true));
+                $lastEsc = self::withWildcards(self::rfc4515Escape($last, true));
+                $filter = sprintf('(&(givenname=%s)(sn=%s))', $firstEsc, $lastEsc);
+            } else {
+                $parts = preg_split('/\s+/', $term);
+                if (count($parts) >= 2) {
+                    [$first, $last] = $parts;
+                    $firstEsc = self::withWildcards(self::rfc4515Escape($first, true));
+                    $lastEsc = self::withWildcards(self::rfc4515Escape($last, true));
+                    $filter = sprintf('(&(givenname=%s)(sn=%s))', $firstEsc, $lastEsc);
+                } else {
+                    // Fallback to cn search if only one word entered
+                    $t = self::withWildcards(self::rfc4515Escape($term, true));
+                    $filter = sprintf('(cn=%s)', $t);
+                }
+            }
+        }
+
+        // Build default filter if not already created above
+        if (!isset($filter)) {
+            $filter = $this->ldapFilterForUserSearch($attribute, $term);
+        }
+
+        $attrs = [
+            'uid', 'cn', 'sn', 'givenname', 'title', 'mail',
+            'BAPK-mailext', 'telephonenumber', 'telephoneNumber',
+            'BAPK-telefon', 'mobile'
+        ];
+
+        $users = User::query()->select($attrs)->rawFilter($filter)->limit(500)->get();
+
+        if ($users->isEmpty()) {
+            $this->error = 'Keine Benutzer gefunden.';
             return;
         }
 
-        try {
-            $attribute = $this->searchAttribute;
-            $term = trim($this->searchTerm);
+        $results = collect();
 
-            if ($attribute === 'PID') {
-                $term = $this->normalizePid($term);
-            } elseif ($attribute === 'Telefon') {
-                $term = $this->normalizeShortTel($term);
-                if (strlen($term) !== 4) {
-                    $this->error = 'Bitte genau 4 Ziffern eingeben.';
+        foreach ($users as $user) {
+            $rawTel = $user->getFirstAttribute('telephonenumber')
+                ?? $user->getFirstAttribute('telephoneNumber')
+                ?? $user->getFirstAttribute('BAPK-telefon')
+                ?? $user->getFirstAttribute('mobile')
+                ?? '';
 
-                    return;
-                }
+            $shortTel = $this->normalizeShortTel($rawTel);
+
+            if ($attribute === 'Telefon' && $shortTel !== $term) {
+                continue;
             }
 
-            $filter = $this->ldapFilterForUserSearch($attribute, $term);
-
-            $attrs = ['uid', 'cn', 'sn', 'givenname', 'title', 'mail', 'BAPK-mailext', 'telephonenumber', 'telephoneNumber', 'BAPK-telefon', 'mobile'];
-            $users = User::query()->select($attrs)->rawFilter($filter)->limit(500)->get();
-            if ($users->isEmpty()) {
-                $this->error = 'Keine Benutzer gefunden.';
-
-                return;
-            }
-
-            $results = collect();
-            foreach ($users as $user) {
-                $rawTel = $user->getFirstAttribute('telephonenumber')
-                    ?? $user->getFirstAttribute('telephoneNumber')
-                    ?? $user->getFirstAttribute('BAPK-telefon')
-                    ?? $user->getFirstAttribute('mobile')
-                    ?? '';
-
-                $shortTel = $this->normalizeShortTel($rawTel);
-
-                if ($attribute === 'Telefon' && $shortTel !== $term) {
-                    continue;
-                }
-
-                $results->push([
-                    'pid' => $user->getFirstAttribute('uid'),
-                    'fullname' => $user->getFirstAttribute('cn') ?? '',
-                    'surname' => $user->getFirstAttribute('sn') ?? '',
-                    'givenname' => $user->getFirstAttribute('givenname') ?? '',
-                    'title' => $user->getFirstAttribute('title') ?? '',
-                    'email' => $user->getFirstAttribute('mail') ?? '',
-                    'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
-                    'tel' => $shortTel,
-                ]);
-            }
-
-            $results = $results->unique('pid')->values();
-            if ($results->isEmpty()) {
-                $this->error = 'Keine Benutzer gefunden.';
-
-                return;
-            }
-
-            $this->searchResults = $this->sortUserCollection($results);
-        } catch (\Exception $e) {
-            $this->error = $e->getMessage();
+            $results->push([
+                'pid' => $user->getFirstAttribute('uid'),
+                'fullname' => $user->getFirstAttribute('cn') ?? '',
+                'surname' => $user->getFirstAttribute('sn') ?? '',
+                'givenname' => $user->getFirstAttribute('givenname') ?? '',
+                'title' => $user->getFirstAttribute('title') ?? '',
+                'email' => $user->getFirstAttribute('mail') ?? '',
+                'external_email' => $user->getFirstAttribute('BAPK-mailext') ?? '',
+                'tel' => $shortTel,
+            ]);
         }
+
+        $results = $results->unique('pid')->values();
+
+        if ($results->isEmpty()) {
+            $this->error = 'Keine Benutzer gefunden.';
+            return;
+        }
+
+        $this->searchResults = $this->sortUserCollection($results);
+
+    } catch (\Exception $e) {
+        $this->error = $e->getMessage();
     }
+}
+
+
 
     /**
      * Toggle header sort for results table.
