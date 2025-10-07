@@ -66,6 +66,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('firewall-template', \App\Livewire\FirewallVorlagen::class)
         ->name('firewall.vorlage');
+
+    Route::get('domain-analysis', \App\Livewire\DomainAnalysis::class)
+        ->name('domain.analysis');
 });
 
 Route::middleware(['auth'])->group(function () {

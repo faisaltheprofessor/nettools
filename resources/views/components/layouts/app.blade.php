@@ -41,6 +41,13 @@
                 <span>LDAP</span>
             </div>
         </flux:navlist.item>
+
+        <flux:navlist.item icon="magnifying-glass" href="{{ route('domain.analysis') }}" wire:navigate>
+            <div class="flex items-center justify-between">
+                <span>Domain-Analyse</span>
+            </div>
+        </flux:navlist.item>
+
         <flux:navlist.group expandable icon="generators" heading="Generatoren" class="grid" :expanded="$generatorsExpanded">
             <flux:navlist.item icon="key" href="/password-generator" wire:navigate>Passwort</flux:navlist.item>
             <flux:navlist.item icon="numbered-list" href="/ovirt-serialnumber-generator" wire:navigate>oVirt Seriennummer</flux:navlist.item>
