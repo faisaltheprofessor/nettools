@@ -7,7 +7,7 @@
                 wire:keydown.enter.prevent="searchNow"
                 icon="magnifying-glass"
                 label="Domain oder URL suchen"
-                placeholder="example.com oder https://foo.example.com"
+                placeholder="berlin.de"
                 class="w-full text-lg py-3"
             />
             <p class="mt-1 text-xs text-zinc-500">Drücke Enter, um zu suchen.</p>
