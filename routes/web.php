@@ -25,9 +25,11 @@ Route::middleware(['auth'])->group(function () {
 
     // DHCP
     Route::get('dhcp', DHCP::class)
+        //->middleware('ldap.right:dhcp')
         ->name('dhcp.index');
 
     Route::get('dns', DNS::class)
+        ->middleware('ldap.right:dns')
         ->name('dns.index');
 
     Route::get('ip-calculator', IpCalculator::class)
