@@ -97,7 +97,7 @@
                         <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal>
 
-                    <flux:button variant="danger" type="submit" wire:click.prevent="restartDns" class="cursor-pointer">
+                    <flux:button variant="primary" color="teal" type="submit" wire:click.prevent="restartDns" class="cursor-pointer">
                         Ja! Neustart
                     </flux:button>
                 </div>
