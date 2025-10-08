@@ -4,6 +4,7 @@
             'storage/undraw/1.svg',
             'storage/undraw/2.svg',
             'storage/undraw/3.svg',
+            'storage/undraw/4.svg',
         ];
         // Random SVG
         $randomImage = asset($images[array_rand($images)]);

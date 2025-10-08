@@ -71,6 +71,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('domain-analysis', \App\Livewire\DomainAnalysis::class)
         ->name('domain.analysis');
+
+    // Test Routes
+Route::get('/_test/maintenance', function () {
+    config(['app.debug' => true]);
+    return response()->view('errors.503', [], 503);
+});
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -79,5 +85,7 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
+
+
 
 require __DIR__.'/auth.php';
