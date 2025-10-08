@@ -16,5 +16,8 @@ class Domain extends Model
     protected $fillable = [
         'host','tld','normalized_host','category_id','first_seen_at','last_seen_at'
     ];
-    public function category(){ return $this->belongsTo(DomainCategory::class); }
+       public function category()
+    {
+        return $this->belongsTo(DomainCategory::class, 'category_id');
+    }
 }

@@ -2,7 +2,6 @@
     <form wire:submit.prevent="searchNow">
         <div class="w-3/4 mx-auto mt-10 mb-8">
             <flux:input
-                clearable
                 wire:model.defer="search"
                 wire:keydown.enter.prevent="searchNow"
                 icon="magnifying-glass"
@@ -95,14 +94,54 @@
         @endif
     </form>
 
-    <div class="fixed bottom-4 right-6 text-xs text-zinc-500 bg-white/70 dark:bg-zinc-900/60 backdrop-blur px-3 py-2 rounded-lg border">
-        @php $dt = $lastSyncAt ?? null; @endphp
-        @if($dt)
-            Letzte Synchronisierung:
-            <span class="font-medium">{{ $dt->format('Y-m-d H:i') }}</span>
-            <span class="ml-2">({{ $dt->diffForHumans() }})</span>
-        @else
-            Letzte Synchronisierung: –
-        @endif
+    {{-- ===== Fixed Bottom Stats (aligned with main content) ===== --}}
+    <div class="fixed bottom-4 left-200 right-4 z-40">
+        <div class="w-3/4 mx-auto">
+            <flux:accordion>
+                <flux:accordion.item expanded>
+                    <flux:accordion.heading>Kategorien-Statistik</flux:accordion.heading>
+                    <flux:accordion.content>
+                        @php
+                            $max = !empty($chartData) ? max(array_column($chartData, 'count')) : 0;
+                            $total = !empty($chartData) ? array_sum(array_column($chartData, 'count')) : 0;
+                        @endphp
+
+                        @if(!empty($chartData) && $max > 0)
+                            <div class="rounded-xl border bg-white/90 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-md space-y-4">
+                                <div class="space-y-2">
+                                    @foreach($chartData as $row)
+                                        @php $pct = $max > 0 ? round(($row['count'] / $max) * 100, 2) : 0; @endphp
+                                        <div class="grid grid-cols-6 items-center gap-3">
+                                            <div class="col-span-2 truncate text-sm text-zinc-700 dark:text-zinc-300">
+                                                {{ $row['category'] }}
+                                            </div>
+                                            <div class="col-span-3">
+                                                <div class="h-3 w-full rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 overflow-hidden">
+                                                    <div class="h-full rounded-md bg-blue-500/80 dark:bg-blue-400/80" style="width: {{ $pct }}%;" aria-hidden="true"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-span-1 text-right tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
+                                                {{ $row['count'] }}
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="text-xs text-zinc-600 dark:text-zinc-400">
+                                    Gesamt: <span class="font-medium">{{ $total }}</span> Domains
+                                    @if(isset($lastSyncAt) && $lastSyncAt)
+                                        <span class="ml-2">• Stand: {{ $lastSyncAt->format('Y-m-d H:i') }} ({{ $lastSyncAt->diffForHumans() }})</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-xl border bg-white/90 dark:bg-zinc-900/80 backdrop-blur p-4 text-sm text-zinc-500">
+                                Keine Daten für die Statistik.
+                            </div>
+                        @endif
+                    </flux:accordion.content>
+                </flux:accordion.item>
+            </flux:accordion>
+        </div>
     </div>
 </div>

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Domain;
 use App\Models\DomainCategory;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class DomainAnalysis extends Component
@@ -14,6 +15,14 @@ class DomainAnalysis extends Component
     public ?Domain $selected = null;
     public ?string $errorMsg = null;
     public bool $hasSearched = false;
+
+    /** Chart data: [['category' => string, 'count' => int], ...] */
+    public array $chartData = [];
+
+    public function mount(): void
+    {
+        $this->loadChartData();
+    }
 
     public function searchNow(): void
     {
@@ -62,10 +71,7 @@ class DomainAnalysis extends Component
         $this->errorMsg = null;
 
         $domain = Domain::with('category')->find($id);
-        if (!$domain) {
-            $this->selected = null;
-            return;
-        }
+        if (!$domain) { $this->selected = null; return; }
 
         $this->selected = $domain;
         $this->results = [$domain];
@@ -76,9 +82,37 @@ class DomainAnalysis extends Component
         $ts = DomainCategory::query()->max('updated_from_fs_at');
         $lastSyncAt = $ts ? Carbon::parse($ts) : null;
 
+        // In case cache was invalidated after mount
+        if (empty($this->chartData)) {
+            $this->loadChartData();
+        }
+
         return view('livewire.domain-analysis', [
             'lastSyncAt' => $lastSyncAt,
         ]);
+    }
+
+    private function loadChartData(): void
+    {
+        $this->chartData = Cache::remember('domain_category_counts:v1', 3600, function () {
+            $rows = DomainCategory::query()
+                ->withCount('domains')
+                ->orderByDesc('domains_count')
+                ->get(['id', 'name'])
+                ->map(fn($c) => ['category' => $c->name, 'count' => (int) $c->domains_count])
+                ->all();
+
+            // Top 12 + Others bucket
+            $top = array_slice($rows, 0, 12);
+            $rest = array_slice($rows, 12);
+            if (!empty($rest)) {
+                $others = array_sum(array_column($rest, 'count'));
+                if ($others > 0) {
+                    $top[] = ['category' => 'Others', 'count' => $others];
+                }
+            }
+            return $top;
+        });
     }
 
     private function normalizeHostFromInput(string $input): array

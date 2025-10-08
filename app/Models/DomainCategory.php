@@ -8,5 +8,8 @@ class DomainCategory extends Model
 {
     protected $table = 'domain_categories';
     protected $fillable = ['slug','name','files_path','updated_from_fs_at'];
-    public function domains(){ return $this->hasMany(Domain::class); }
+    public function domains()
+    {
+        return $this->hasMany(Domain::class, 'category_id');
+    }
 }
