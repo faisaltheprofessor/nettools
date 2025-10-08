@@ -16,7 +16,8 @@
         <flux:callout.heading>Service-Migration</flux:callout.heading>
 
         <flux:callout.text>
-            <p>Zum Migrieren des Dienstes auf einen VS bitte mit der rechten Maustaste auf den gewünschten VS klicken.</p>
+            <p>Zum Migrieren des Dienstes auf einen VS bitte mit der rechten Maustaste auf den gewünschten VS
+                klicken.</p>
         </flux:callout.text>
     </flux:callout>
 
@@ -89,7 +90,9 @@
 
                 <div class="absolute right-2 bottom-2 text-xs">
                     @php $dhcpNets = config("urls.dhcp_nets") @endphp
-                    <flux:link target="_blank" :href="$dhcpNets">DHCP Netze anzeigen <flux:icon.arrow-top-right-on-square class="inline size-4"/></flux:link>
+                    <flux:link target="_blank" :href="$dhcpNets">DHCP Netze anzeigen
+                        <flux:icon.arrow-top-right-on-square class="inline size-4"/>
+                    </flux:link>
                 </div>
             </div>
         </div>
@@ -97,24 +100,35 @@
         <flux:modal name="confirm-restart">
             <div class="space-y-6">
                 <div>
-                    <flux:heading size="lg">Achtung</flux:heading>
-                    <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DHCP Server wirklich gestoppt und danach
-                            neugestartet werden?</p>
+                    <flux:heading size="lg">Neustart auswählen</flux:heading>
+                    <flux:text class="mt-2 space-y-2">
+                        <p>Wählen Sie, welche Dienste neu gestartet werden sollen.</p>
                     </flux:text>
                 </div>
 
-                <div class="flex gap-2">
-                    <flux:spacer/>
-                    <flux:modal>
-                        <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal>
-                    <flux:button variant="danger" type="submit" wire:click.prevent="restartDhcp" class="cursor-pointer">
-                        Ja! Neustart
+                {{-- Checkbox group: DHCP, DNS, Beide (All) --}}
+                <flux:checkbox.group label="Dienst(e)" wire:model="restartServices" class="w-1/2 mx-auto">
+                    <flux:checkbox.all label="Beide"/>
+                    <flux:checkbox value="dhcp" label="DHCP"/>
+                    <flux:checkbox value="dns" label="DNS"/>
+                </flux:checkbox.group>
+
+                <div class="flex gap-2 justify-end">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Abbrechen</flux:button>
+                    </flux:modal.close>
+                    <flux:button
+                        variant="primary"
+                        color="teal"
+                        class="cursor-pointer"
+                        wire:click.prevent="restartSelectedServices"
+                    >
+                        Neustart
                     </flux:button>
                 </div>
             </div>
         </flux:modal>
+
 
         <flux:modal name="select-vs" variant="flyout">
             <div class="space-y-6">
@@ -142,4 +156,3 @@
         </flux:modal>
     </div>
 </flux:card>
-

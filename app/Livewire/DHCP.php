@@ -8,7 +8,7 @@ use Flux\Flux;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
-use Throwable; // <-- our trait
+use Throwable;
 
 class DHCP extends Component
 {
@@ -17,14 +17,18 @@ class DHCP extends Component
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
-
     public ?string $runningServer = null;
 
     public bool $loading = false;
-
     public bool $beingRestarted = false;
 
     public ?string $selectedServer = null;
+
+    /**
+     * Selected services in the restart modal: values are 'dhcp' and/or 'dns'.
+     * Bound to <flux:checkbox.group wire:model="restartServices">.
+     */
+    public array $restartServices = ["dhcp", "dns"]; // default: none selected
 
     public function render()
     {
@@ -47,7 +51,7 @@ class DHCP extends Component
         try {
             $status = Cache::get('dhcp:status');
 
-            if (! $status) {
+            if (!$status) {
                 throw new Exception('Kein Status im Cache gefunden.');
             }
 
@@ -83,6 +87,9 @@ class DHCP extends Component
         }
     }
 
+    /**
+     * Legacy single-service restart for DHCP (kept as-is for other entry points).
+     */
     public function restartDhcp(): void
     {
         if ($this->beingRestarted || $this->loading) {
@@ -124,13 +131,88 @@ class DHCP extends Component
         }
     }
 
+    /**
+     * New: restart the services chosen in the confirmation dialog.
+     * Supported values: 'dhcp', 'dns' (or both).
+     */
+    public function restartSelectedServices(): void
+    {
+        // Normalize + guard
+        $services = array_values(array_unique(array_map('strtolower', $this->restartServices)));
+        $services = array_intersect($services, ['dhcp', 'dns']);
+
+        if (empty($services)) {
+            Flux::toast(
+                text: 'Bitte mindestens einen Dienst auswählen (DHCP, DNS oder Beide).',
+                heading: 'Keine Auswahl',
+                variant: 'warning'
+            );
+            return;
+        }
+
+        if ($this->beingRestarted) {
+            return;
+        }
+
+        $this->beingRestarted = true;
+
+        try {
+            $queued = [];
+
+            // Queue DHCP restart if selected
+            if (in_array('dhcp', $services, true)) {
+                if (Cache::get('dhcp:restart:queued')) {
+                    Flux::toast(
+                        text: 'DHCP-Neustart ist bereits in der Warteschlange.',
+                        heading: 'DHCP bereits geplant',
+                        variant: 'info'
+                    );
+                } else {
+                    Artisan::queue('dhcp:restart-service');
+                    $queued[] = 'DHCP';
+                    $this->logAction('dhcp', 'restart', $this->runningServer, ['queued' => true]);
+                }
+            }
+
+            // Queue DNS restart if selected
+            if (in_array('dns', $services, true)) {
+                // If you have a similar cache/lock for DNS, check it here analogously.
+                Artisan::queue('dns:restart-service');
+                $queued[] = 'DNS';
+                $this->logAction('dns', 'restart', null, ['queued' => true]);
+            }
+
+            if (!empty($queued)) {
+                $list = implode(' & ', $queued);
+                Flux::toast(
+                    text: "Neustart gestartet für: {$list}.",
+                    heading: 'Neustart eingeleitet',
+                    variant: 'success'
+                );
+            }
+
+            // Reset selection and close modal
+            $this->restartServices = [];
+            Flux::modals()->close();
+
+        } catch (Throwable $e) {
+            Flux::toast(
+                text: $e->getMessage(),
+                heading: 'Neustart-Fehler',
+                variant: 'danger'
+            );
+        } finally {
+            $this->beingRestarted = false;
+        }
+    }
+
     public function pollRestartStatus(): void
     {
         $status = Cache::get('dhcp:restart:status');
 
         match (true) {
             $status === 'running' => $this->dhcpStatus = 'loading',
-            str_starts_with($status, 'error') => Flux::toast(
+            is_string($status) && str_starts_with($status, 'error') => Flux::toast(
                 text: $status,
                 heading: 'Restart fehlgeschlagen',
                 variant: 'danger'
@@ -191,7 +273,7 @@ class DHCP extends Component
 
     public function startDhcp(): void
     {
-        if (! $this->selectedServer) {
+        if (!$this->selectedServer) {
             Flux::toast(
                 text: 'Bitte einen Server auswählen.',
                 heading: 'Keine Auswahl',
