@@ -4,17 +4,17 @@ namespace App\Console\Commands;
 
 use App\Models\DomainCategory;
 use App\Models\Domain;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SyncDomainsFromFs extends Command
 {
     protected $signature = 'domains:sync {--root=public/storage/proxy-domains} {--no-prune}';
-    protected $description = 'Sync domains from folder structure into the database.';
+    protected $description = 'Mirror folders to categories and domains (create new, update existing, remove missing).';
 
     public function handle(): int
     {
@@ -24,102 +24,102 @@ class SyncDomainsFromFs extends Command
             return self::FAILURE;
         }
 
-        $now = Carbon::now();
-        $seenHosts = [];
-        $seenCategorySlugs = [];
+        $now     = Carbon::now();
         $rootRel = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $root);
+        $prioMap = $this->loadPriorityMap($root);
 
         DB::beginTransaction();
-
         try {
-            foreach (File::directories($root) as $catDir) {
-                $slug = basename($catDir);
-                $seenCategorySlugs[$slug] = true;
+            $seenCategoryIds  = [];
+            $seenHostsByCatId = [];
 
-                $name = Str::headline($slug);
+            $dirPaths = File::directories($root);
+            foreach ($dirPaths as $catDir) {
+                $slug       = basename($catDir);
                 $domainFile = $catDir . DIRECTORY_SEPARATOR . 'domains';
 
                 $category = DomainCategory::query()->updateOrCreate(
                     ['slug' => $slug],
-                    ['name' => $name, 'files_path' => str_replace(base_path().DIRECTORY_SEPARATOR, '', $catDir)]
+                    [
+                        'name'       => $slug,
+                        'files_path' => str_replace(base_path() . DIRECTORY_SEPARATOR, '', $catDir),
+                        'priority'   => $prioMap[$slug] ?? 0,
+                        'updated_from_fs_at' => $now,
+                    ]
                 );
 
-                if (!File::exists($domainFile)) {
-                    $this->warn("No 'domains' file in $catDir");
-                    $category->updated_from_fs_at = $now;
-                    $category->save();
-                    continue;
-                }
+                $seenCategoryIds[]                 = $category->id;
+                $seenHostsByCatId[$category->id]   = [];
+
+                if (!File::exists($domainFile)) continue;
 
                 foreach (File::lines($domainFile) as $raw) {
                     $raw = trim($raw);
                     if ($raw === '' || str_starts_with($raw, '#')) continue;
 
-                    $host = $this->normalizeHost($raw);
+                    $host = $this->normalizeHostKeepingWww($raw);
                     if ($host === null) continue;
 
                     $normalized = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) ?: $host;
-                    $tld = str_contains($normalized, '.') ? Str::afterLast($normalized, '.') : null;
+                    $tld        = str_contains($normalized, '.') ? Str::afterLast($normalized, '.') : null;
 
-                    $domain = Domain::query()->updateOrCreate(
+                    $domain = Domain::firstOrCreate(
                         ['host' => $normalized],
                         [
                             'normalized_host' => $normalized,
-                            'tld'            => $tld,
-                            'category_id'    => $category->id,
-                            'last_seen_at'   => $now,
+                            'tld'             => $tld,
+                            'category_id'     => $category->id,
+                            'first_seen_at'   => $now,
+                            'last_seen_at'    => $now,
                         ]
                     );
 
-                    if (!$domain->first_seen_at) {
-                        $domain->first_seen_at = $now;
-                        $domain->save();
-                    }
+                    if ($domain->first_seen_at === null) $domain->first_seen_at = $now;
+                    $domain->last_seen_at = $now;
+                    if ($domain->normalized_host !== $normalized) $domain->normalized_host = $normalized;
+                    if ($domain->tld !== $tld) $domain->tld = $tld;
+                    $domain->save();
 
-                    $seenHosts[$normalized] = true;
+                    $domain->categories()->syncWithoutDetaching([$category->id]);
+                    $seenHostsByCatId[$category->id][$normalized] = true;
                 }
-
-                $category->updated_from_fs_at = $now;
-                $category->save();
             }
+
+            $this->assignPrimaryCategories();
 
             if (!$this->option('no-prune')) {
-                $rootCategoryIds = DomainCategory::query()
-                    ->where('files_path', 'like', $rootRel . '/%')
-                    ->pluck('id');
+                $toDelete = DomainCategory::query()
+                    ->where('files_path', 'like', rtrim($rootRel, '/').'/'.'%')
+                    ->when(!empty($seenCategoryIds), fn($q) => $q->whereNotIn('id', $seenCategoryIds))
+                    ->get();
 
-                if ($rootCategoryIds->isNotEmpty()) {
-                    $deletedDomains = Domain::query()
-                        ->whereIn('category_id', $rootCategoryIds)
-                        ->when(!empty($seenHosts), function ($q) use ($seenHosts) {
-                            $q->whereNotIn('host', array_keys($seenHosts));
-                        })
-                        ->delete();
+                foreach ($toDelete as $cat) $cat->delete();
 
-                    if ($deletedDomains) {
-                        $this->info("Pruned $deletedDomains domain(s) not present in filesystem.");
+                foreach ($seenHostsByCatId as $catId => $seenHosts) {
+                    $hostList = array_keys($seenHosts);
+
+                    $detachIds = DB::table('domain_category_domain')
+                        ->join('domains', 'domains.id', '=', 'domain_category_domain.domain_id')
+                        ->where('domain_category_domain.domain_category_id', $catId)
+                        ->when(!empty($hostList), fn($q) => $q->whereNotIn('domains.host', $hostList))
+                        ->pluck('domain_category_domain.domain_id')
+                        ->all();
+
+                    if (!empty($detachIds)) {
+                        DB::table('domain_category_domain')
+                            ->where('domain_category_id', $catId)
+                            ->whereIn('domain_id', $detachIds)
+                            ->delete();
                     }
                 }
 
-                $deletedCats = DomainCategory::query()
-                    ->where('files_path', 'like', $rootRel . '/%')
-                    ->whereNotIn('slug', array_keys($seenCategorySlugs))
-                    ->get();
-
-                foreach ($deletedCats as $cat) {
-                    $cat->delete();
-                }
-                if ($deletedCats->count()) {
-                    $this->info("Removed {$deletedCats->count()} stale categor(ies) not present in filesystem.");
-                }
+                $orphans = Domain::doesntHave('categories')->pluck('id');
+                if ($orphans->count()) Domain::whereIn('id', $orphans)->delete();
             }
 
+            Cache::put('domain_stats_version', $now->timestamp, 86400);
             DB::commit();
-
-            // refresh cached stats AFTER successful commit
-            $this->refreshStatsCache();
-
-            $this->info('Sync complete (mirrored).');
+            $this->info('Sync complete. Stats cache version bumped.');
             return self::SUCCESS;
 
         } catch (\Throwable $e) {
@@ -129,52 +129,62 @@ class SyncDomainsFromFs extends Command
         }
     }
 
-    private function normalizeHost(string $raw): ?string
+    private function loadPriorityMap(string $root): array
     {
-        $raw = strtolower($raw);
-        $maybe = $raw;
-        if (!str_starts_with($maybe, 'http://') && !str_starts_with($maybe, 'https://')) {
-            $maybe = 'http://' . $maybe;
+        $file = $root . DIRECTORY_SEPARATOR . 'prio.txt';
+        if (!File::exists($file)) return [];
+
+        $content = trim(File::get($file));
+        if ($content === '') return [];
+
+        $tokens = preg_split('/\s+/', $content);
+        $order  = [];
+        foreach ($tokens as $t) {
+            $t = trim($t);
+            if ($t === '' || strtolower($t) === 'pass') continue;
+            $t    = ltrim($t, '!');
+            $slug = Str::slug($t);
+            if ($slug !== '') $order[] = $slug;
         }
+        $order = array_values(array_unique($order));
 
-        $parts = @parse_url($maybe);
-        $host = $parts['host'] ?? null;
-        if (!$host) return null;
-
-        $host = preg_replace('/^www\./', '', $host);
-        $host = rtrim($host, '.');
-
-        if ($host === '' || (!str_contains($host, '.') && $host !== 'localhost')) {
-            return null;
-        }
-
-        return $host;
+        $map = [];
+        foreach ($order as $i => $slug) $map[$slug] = $i + 1;
+        return $map;
     }
 
-    private function refreshStatsCache(): void
+    private function assignPrimaryCategories(): void
     {
-        // clear old cache
-        Cache::forget('domain_category_counts:v1');
+        Domain::with(['categories:id,priority'])
+            ->get(['id','category_id'])
+            ->each(function (Domain $d) {
+                if ($d->categories->isEmpty()) {
+                    if ($d->category_id !== null) { $d->category_id = null; $d->save(); }
+                    return;
+                }
+                $best = $d->categories
+                    ->sortBy(fn($c) => ((int)($c->priority ?? 0)) > 0 ? (int)$c->priority : PHP_INT_MAX)
+                    ->first();
+                if ($best && $d->category_id !== $best->id) {
+                    $d->category_id = $best->id;
+                    $d->save();
+                }
+            });
+    }
 
-        // recompute counts
-        $rows = DomainCategory::query()
-            ->withCount('domains')
-            ->orderByDesc('domains_count')
-            ->get(['id','name'])
-            ->map(fn($c) => ['category' => $c->name, 'count' => (int)$c->domains_count])
-            ->all();
+    private function normalizeHostKeepingWww(string $raw): ?string
+    {
+        $raw = strtolower(trim($raw));
+        if ($raw === '') return null;
 
-        // Top 12 + "Others"
-        $top = array_slice($rows, 0, 12);
-        $rest = array_slice($rows, 12);
-        if (!empty($rest)) {
-            $others = array_sum(array_column($rest, 'count'));
-            if ($others > 0) {
-                $top[] = ['category' => 'Others', 'count' => $others];
-            }
-        }
+        $maybe = (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) ? $raw : 'http://' . $raw;
+        $parts = @parse_url($maybe);
+        $host  = $parts['host'] ?? null;
+        if (!$host) return null;
 
-        // cache for 1 hour
-        Cache::put('domain_category_counts:v1', $top, now()->addHour());
+        $host = rtrim($host, '.');
+        if ($host === '' || (!str_contains($host, '.') && $host !== 'localhost')) return null;
+
+        return $host;
     }
 }

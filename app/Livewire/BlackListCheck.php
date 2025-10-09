@@ -21,7 +21,7 @@ class BlacklistCheck extends Component
     public array $acSuggestions = [];
     public int $acIndex = -1;
     public bool $acOpen = false;
-    public bool $acBlock = false; // suppress one autocomplete cycle after Enter
+    public bool $acBlock = false;
 
     public function mount(): void
     {
@@ -35,29 +35,25 @@ class BlacklistCheck extends Component
 
         if (empty($this->chartData)) $this->loadChartData();
 
-        return view('livewire.blacklist-check', ['lastSyncAt' => $lastSyncAt]);
+        return view('livewire.blacklist-check', [
+            'lastSyncAt' => $lastSyncAt,
+        ]);
     }
 
     public function updatedSearch(): void
     {
-        if ($this->acBlock) {
-            $this->acBlock = false;
-            $this->closeAutocomplete();
-            return;
-        }
+        if ($this->acBlock) { $this->acBlock = false; $this->closeAutocomplete(); return; }
 
         $q = $this->normalizeInput($this->search);
-
         $this->acIndex = -1;
         $this->acSuggestions = [];
         $this->acOpen = false;
-
         if (mb_strlen($q) < 2) return;
 
-        $perCat = 5;
         $rows = Domain::query()
-            ->select('domains.id','domains.host','domains.normalized_host','domain_categories.name as category')
-            ->join('domain_categories','domain_categories.id','=','domains.category_id')
+            ->select('domains.id','domains.host','domains.normalized_host','domain_categories.slug as category')
+            ->join('domain_category_domain','domain_category_domain.domain_id','=','domains.id')
+            ->join('domain_categories','domain_categories.id','=','domain_category_domain.domain_category_id')
             ->where('domains.normalized_host','like',"%{$q}%")
             ->orderByRaw("CASE WHEN INSTR(domains.normalized_host, ?) = 0 THEN 9999 ELSE INSTR(domains.normalized_host, ?) END", [$q,$q])
             ->orderBy('domains.normalized_host')
@@ -66,22 +62,16 @@ class BlacklistCheck extends Component
 
         $grouped = [];
         foreach ($rows as $r) {
-            $cat = $r->category ?? 'Uncategorized';
+            $cat = $r->category ?? 'uncategorized';
             $grouped[$cat] = $grouped[$cat] ?? [];
-            if (count($grouped[$cat]) < $perCat) {
-                $grouped[$cat][] = ['id' => (int)$r->id, 'host' => (string)$r->host];
-            }
+            if (count($grouped[$cat]) < 5) $grouped[$cat][] = ['id' => (int)$r->id, 'host' => (string)$r->host];
         }
 
-        $out = [];
-        $total = 0;
+        $out = []; $total = 0;
         foreach ($grouped as $cat => $items) {
             if ($total >= 40) break;
             $slice = array_slice($items, 0, max(0, 40 - $total));
-            if (!empty($slice)) {
-                $out[] = ['category' => $cat, 'items' => $slice];
-                $total += count($slice);
-            }
+            if (!empty($slice)) { $out[] = ['category' => $cat, 'items' => $slice]; $total += count($slice); }
         }
 
         $this->acSuggestions = $out;
@@ -122,7 +112,9 @@ class BlacklistCheck extends Component
         $q = $this->normalizeInput($this->search);
         if ($q === '') return;
 
-        $candidates = Domain::with('category')
+        $candidates = Domain::with(['categories' => function($q){
+                $q->select('domain_categories.id','domain_categories.slug','domain_categories.priority');
+            }])
             ->where('normalized_host','like',"%{$q}%")
             ->orderBy('normalized_host')
             ->limit(300)
@@ -132,17 +124,13 @@ class BlacklistCheck extends Component
         if (!$candidates) return;
 
         $scored = array_map(function (Domain $d) use ($q) {
-            $h = $d->normalized_host;
-            $dist  = levenshtein($h, $q);
-            $pos   = mb_strpos($h, $q);
-            $starts= $pos === 0 ? 1 : 0;
-            $exact = ($h === $q) ? 1 : 0;
-            $score = $dist + ($pos === false ? 5 : min(3, (int)$pos)) - ($starts * 2) - ($exact * 5);
-            return [$score, $d];
+            $h=$d->normalized_host; $dist=levenshtein($h,$q); $pos=mb_strpos($h,$q);
+            $starts=$pos===0?1:0; $exact=($h===$q)?1:0;
+            $score=$dist+($pos===false?5:min(3,(int)$pos))-($starts*2)-($exact*5);
+            return [$score,$d];
         }, $candidates);
-
-        usort($scored, fn($a,$b) => $a[0] <=> $b[0]);
-        $this->results = array_map(fn($row) => $row[1], array_slice($scored, 0, 300));
+        usort($scored, fn($a,$b)=>$a[0]<=>$b[0]);
+        $this->results = array_map(fn($r)=>$r[1], array_slice($scored,0,300));
     }
 
     public function selectDomain(int $id): void
@@ -151,37 +139,26 @@ class BlacklistCheck extends Component
         $this->hasSearched = true;
         $this->errorMsg = null;
 
-        $domain = Domain::with('category')->find($id);
+        $domain = Domain::with(['categories' => fn($q)=>$q->select('domain_categories.id','domain_categories.slug','domain_categories.priority')])->find($id);
         if (!$domain) { $this->selected = null; return; }
 
         $this->selected = $domain;
         $this->results  = [$domain];
     }
 
-    private function suppressAutocomplete(): void
-    {
-        $this->acBlock = true; // skip the very next updatedSearch tick
-        $this->closeAutocomplete();
-    }
-
-    private function closeAutocomplete(): void
-    {
-        $this->acOpen = false;
-        $this->acIndex = -1;
-        $this->acSuggestions = [];
-    }
+    private function suppressAutocomplete(): void { $this->acBlock = true; $this->closeAutocomplete(); }
+    private function closeAutocomplete(): void { $this->acOpen = false; $this->acIndex = -1; $this->acSuggestions = []; }
 
     private function normalizeInput(string $input): string
     {
         $in = trim(mb_strtolower($input));
-        if ($in === '') return '';
-        $in = preg_replace('#^\s*(https?://)#', '', $in);
-        $first = explode('/', $in, 2)[0];
-        if (str_contains($first, '@')) $first = substr($first, strrpos($first, '@') + 1);
-        $host = explode(':', $first, 2)[0];
-        $host = preg_replace('/^www\./', '', $host);
-        $host = rtrim($host, '.');
-        if ($host === '' || $host === null) return '';
+        if ($in==='') return '';
+        $in = preg_replace('#^\s*(https?://)#','',$in);
+        $first = explode('/',$in,2)[0];
+        if (str_contains($first,'@')) $first = substr($first, strrpos($first,'@')+1);
+        $host = explode(':',$first,2)[0];
+        $host = rtrim($host,'.');
+        if ($host==='' || $host===null) return '';
         if (function_exists('idn_to_ascii')) {
             $ascii = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
             if ($ascii !== false && $ascii !== null && $ascii !== '') $host = $ascii;
@@ -191,32 +168,32 @@ class BlacklistCheck extends Component
 
     private function flattenSuggestions(): array
     {
-        $flat = [];
+        $flat=[];
         foreach ($this->acSuggestions as $group) {
-            foreach ($group['items'] as $it) {
-                $flat[] = $it;
-            }
+            foreach ($group['items'] as $it) $flat[]=$it;
         }
         return $flat;
     }
 
     private function loadChartData(): void
     {
-        $this->chartData = Cache::remember('domain_category_counts:v1', 3600, function () {
-            $rows = DomainCategory::query()
-                ->withCount('domains')
-                ->orderByDesc('domains_count')
-                ->get(['id','name'])
-                ->map(fn($c) => ['category' => $c->name, 'count' => (int)$c->domains_count])
-                ->all();
+        $ver = Cache::get('domain_stats_version', 0);
+        $key = "domain_category_counts:v{$ver}";
 
-            $top  = array_slice($rows, 0, 12);
-            $rest = array_slice($rows, 12);
-            if (!empty($rest)) {
-                $others = array_sum(array_column($rest, 'count'));
-                if ($others > 0) $top[] = ['category' => 'Others', 'count' => $others];
-            }
-            return $top;
+        $this->chartData = Cache::remember($key, 3600, function () {
+            return DomainCategory::query()
+                ->select('domain_categories.id','domain_categories.slug','domain_categories.priority')
+                ->withCount(['domains'])
+                ->orderByRaw('CASE WHEN priority=0 THEN 1 ELSE 0 END, priority ASC')
+                ->get()
+                ->map(fn($c)=>[
+                    'slug'     => $c->slug,
+                    'count'    => (int)$c->domains_count,
+                    'priority' => (int)$c->priority,
+                ])
+                ->filter(fn($r)=>$r['count']>0)
+                ->values()
+                ->all();
         });
     }
 }
