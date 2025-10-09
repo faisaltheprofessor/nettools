@@ -1,16 +1,27 @@
 <div>
     <form wire:submit.prevent="searchNow">
-        {{-- Search + autocomplete --}}
-        <div x-data="{ open: @entangle('acOpen').live, idx: @entangle('acIndex').live }"
-             class="max-w-5xl mx-auto px-4 mt-10 mb-2 relative">
+        <div
+            x-data="{
+                open: @entangle('acOpen').live,
+                idx:  @entangle('acIndex').live
+            }"
+            class="max-w-5xl mx-auto px-4 mt-10 mb-2 relative"
+        >
             <label class="block text-sm text-zinc-600 mb-1">Domain oder URL suchen</label>
 
             <input
                 type="text"
-                wire:model.live.debounce.250ms="search"
+                wire:model.live.debounce.150ms="search"
                 @keydown.arrow-down.prevent="$wire.acMove(1)"
                 @keydown.arrow-up.prevent="$wire.acMove(-1)"
-                @keydown.enter.prevent="$wire.acSelectCurrent()"
+                @keydown.enter.prevent="
+                    if (open && idx >= 0) {
+                        $wire.acSelectCurrent()
+                    } else {
+                        open = false;
+                        $wire.set('acBlock', true);
+                        $wire.searchNow()
+                    }"
                 @keydown.escape.prevent="open = false"
                 class="w-full rounded-xl border px-4 py-3 text-base bg-white dark:bg-zinc-900
                        border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2
@@ -19,7 +30,6 @@
                 autocomplete="off"
             />
 
-            {{-- Autocomplete dropdown --}}
             <div
                 x-show="open"
                 x-transition
@@ -55,11 +65,8 @@
             </div>
         </div>
 
-        <div class="max-w-5xl mx-auto px-4 mb-8">
-            <p class="text-xs text-zinc-500">Enter wählt den markierten Vorschlag oder führt die Suche aus.</p>
-        </div>
+        <div class="max-w-5xl mx-auto px-4 mb-4"></div>
 
-        {{-- Results --}}
         <div class="max-w-5xl mx-auto px-4">
             <div class="min-h-[28rem]">
                 @if($hasSearched)
@@ -96,34 +103,33 @@
                             <div class="overflow-x-auto rounded-xl border shadow-sm">
                                 <table class="min-w-full text-sm">
                                     <thead class="bg-gray-50 dark:bg-zinc-800/40">
-                                    <tr>
-                                        <th class="text-left p-3 font-semibold">Domain</th>
-                                        <th class="text-left p-3 font-semibold">Kategorie</th>
-                                        <th class="text-left p-3 font-semibold">TLD</th>
-                                    </tr>
+                                        <tr>
+                                            <th class="text-left p-3 font-semibold">Domain</th>
+                                            <th class="text-left p-3 font-semibold">Kategorie</th>
+                                            <th class="text-left p-3 font-semibold">TLD</th>
+                                        </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
-                                    @foreach($results as $d)
-                                        <tr
-                                            wire:click="selectDomain({{ $d->id }})"
-                                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30"
-                                        >
-                                            <td class="p-3 font-mono">
+                                        @foreach($results as $d)
+                                            <tr
+                                                wire:click="selectDomain({{ $d->id }})"
+                                                class="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30"
+                                            >
+                                                <td class="p-3 font-mono">
                                                     <span role="button"
                                                           class="hover:underline cursor-pointer"
                                                           wire:click.stop="selectDomain({{ $d->id }})">
                                                         {{ $d->host }}
                                                     </span>
-                                            </td>
-                                            <td class="p-3">{{ $d->category->name ?? '–' }}</td>
-                                            <td class="p-3">{{ $d->tld ?? '–' }}</td>
-                                        </tr>
-                                    @endforeach
+                                                </td>
+                                                <td class="p-3">{{ $d->category->name ?? '–' }}</td>
+                                                <td class="p-3">{{ $d->tld ?? '–' }}</td>
+                                            </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
-                                @if(count($results) >= 200)
-                                    <div class="p-3 text-xs text-zinc-500">Ergebnisse gekürzt (max. 200 angezeigt).
-                                    </div>
+                                @if(count($results) >= 300)
+                                    <div class="p-3 text-xs text-zinc-500">Ergebnisse gekürzt (max. 300 angezeigt).</div>
                                 @endif
                             </div>
                         @endif
@@ -137,19 +143,16 @@
                         @endif
                     </flux:card>
                 @else
-                    {{-- Placeholder matches reserved height via flex centering inside min-h container --}}
-                    <div
-                        class="h-full rounded-xl border border-dashed p-10 text-center text-sm text-zinc-500 flex items-center justify-center">
+                    <div class="h-full rounded-xl border border-dashed p-10 text-center text-sm text-zinc-500 flex items-center justify-center">
                         Ergebnisse erscheinen hier nach der Suche.
                     </div>
                 @endif
             </div>
         </div>
 
-        {{-- Kategorien-Statistik --}}
         <div class="max-w-5xl mx-auto px-4 mt-6 mb-16">
             <flux:accordion>
-                <flux:accordion.item expanded>
+                <flux:accordion.item open>
                     <flux:accordion.heading>Kategorien-Statistik</flux:accordion.heading>
                     <flux:accordion.content>
                         @php
@@ -173,8 +176,7 @@
                                                          style="width: {{ $pct }}%;" aria-hidden="true"></div>
                                                 </div>
                                             </div>
-                                            <div
-                                                class="col-span-1 text-right tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
+                                            <div class="col-span-1 text-right tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
                                                 {{ $row['count'] }}
                                             </div>
                                         </div>

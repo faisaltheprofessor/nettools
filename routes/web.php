@@ -76,9 +76,13 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('ldap.right:generators.firewall_vorlage')
         ->name('firewall.vorlage');
 
-    Route::get('blacklist-check', \App\Livewire\DomainAnalysis::class)
+    Route::get('blacklist-check', \App\Livewire\BlackListCheck::class)
         ->middleware('ldap.right:blacklist-check')
         ->name('blacklist.check');
+
+    Route::get('global-settings', \App\Livewire\GlobalSettings::class)
+        ->middleware('ldap.right:admin')
+        ->name('settings.global');
 
     Route::fallback(NotFound::class);
 

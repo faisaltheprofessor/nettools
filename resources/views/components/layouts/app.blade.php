@@ -60,9 +60,12 @@
         </flux:navlist.group>
     </flux:navlist>
     <flux:spacer/>
+
+    <flux:navlist.item icon="cog-6-tooth" href="{{ route('settings.global') }}" wire:navigate>Globale Einstellungen</flux:navlist.item>
+
     <flux:navlist variant="outline">
         <flux:menu.item icon="arrow-right-start-on-rectangle" class="cursor-pointer" x-on:click.prevent="document.getElementById('logout-form').submit()">
-            Logout
+            Logout ({{ auth()->user()->username }})
         </flux:menu.item>
     </flux:navlist>
 </flux:sidebar>

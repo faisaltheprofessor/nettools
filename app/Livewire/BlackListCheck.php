@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
-class DomainAnalysis extends Component
+class BlacklistCheck extends Component
 {
     public string $search = '';
     public array  $results = [];
@@ -16,13 +16,12 @@ class DomainAnalysis extends Component
     public ?string $errorMsg = null;
     public bool $hasSearched = false;
 
-    // stats (for the bottom chart)
     public array $chartData = [];
 
-    // autocomplete (grouped)
-    public array $acSuggestions = []; // [['category' => 'Whitelist','items' => [['id'=>1,'host'=>'a.com'],...]], ...]
+    public array $acSuggestions = [];
     public int $acIndex = -1;
     public bool $acOpen = false;
+    public bool $acBlock = false; // suppress one autocomplete cycle after Enter
 
     public function mount(): void
     {
@@ -36,12 +35,17 @@ class DomainAnalysis extends Component
 
         if (empty($this->chartData)) $this->loadChartData();
 
-        return view('livewire.domain-analysis', ['lastSyncAt' => $lastSyncAt]);
+        return view('livewire.blacklist-check', ['lastSyncAt' => $lastSyncAt]);
     }
 
-    /** ---------- Autocomplete while typing ---------- */
     public function updatedSearch(): void
     {
+        if ($this->acBlock) {
+            $this->acBlock = false;
+            $this->closeAutocomplete();
+            return;
+        }
+
         $q = $this->normalizeInput($this->search);
 
         $this->acIndex = -1;
@@ -81,7 +85,7 @@ class DomainAnalysis extends Component
         }
 
         $this->acSuggestions = $out;
-        $this->acOpen = !empty($out); // only open when there are matches
+        $this->acOpen = !empty($out);
     }
 
     public function acMove(int $delta): void
@@ -97,25 +101,23 @@ class DomainAnalysis extends Component
         if (!$this->acOpen) return;
         $flat = $this->flattenSuggestions();
         if (!isset($flat[$this->acIndex])) return;
-        $this->selectDomain((int)$flat[$this->acIndex]['id']);
-        $this->search = (string)$flat[$this->acIndex]['host'];
-        $this->acOpen = false;
+        $this->acClickSelect((int)$flat[$this->acIndex]['id'], (string)$flat[$this->acIndex]['host']);
     }
 
     public function acClickSelect(int $id, string $host): void
     {
         $this->selectDomain($id);
         $this->search = $host;
-        $this->acOpen = false;
+        $this->closeAutocomplete();
     }
 
-    /** ---------- Main search ---------- */
     public function searchNow(): void
     {
+        $this->suppressAutocomplete();
         $this->hasSearched = true;
         $this->errorMsg = null;
         $this->selected = null;
-        $this->results  = [];
+        $this->results = [];
 
         $q = $this->normalizeInput($this->search);
         if ($q === '') return;
@@ -140,13 +142,12 @@ class DomainAnalysis extends Component
         }, $candidates);
 
         usort($scored, fn($a,$b) => $a[0] <=> $b[0]);
-        $this->results = array_map(fn($row) => $row[1], array_slice($scored, 0, 200));
-
-        if (count($this->results) === 1) $this->selected = $this->results[0];
+        $this->results = array_map(fn($row) => $row[1], array_slice($scored, 0, 300));
     }
 
     public function selectDomain(int $id): void
     {
+        $this->suppressAutocomplete();
         $this->hasSearched = true;
         $this->errorMsg = null;
 
@@ -157,37 +158,34 @@ class DomainAnalysis extends Component
         $this->results  = [$domain];
     }
 
-    /** ---------- Helpers ---------- */
+    private function suppressAutocomplete(): void
+    {
+        $this->acBlock = true; // skip the very next updatedSearch tick
+        $this->closeAutocomplete();
+    }
+
+    private function closeAutocomplete(): void
+    {
+        $this->acOpen = false;
+        $this->acIndex = -1;
+        $this->acSuggestions = [];
+    }
+
     private function normalizeInput(string $input): string
     {
         $in = trim(mb_strtolower($input));
         if ($in === '') return '';
-
-        // Strip scheme if present
         $in = preg_replace('#^\s*(https?://)#', '', $in);
-
-        // Take only authority before any path
         $first = explode('/', $in, 2)[0];
-
-        // Strip credentials and port
-        if (str_contains($first, '@')) {
-            $first = substr($first, strrpos($first, '@') + 1);
-        }
+        if (str_contains($first, '@')) $first = substr($first, strrpos($first, '@') + 1);
         $host = explode(':', $first, 2)[0];
-
-        // Tidy common prefixes/suffixes
         $host = preg_replace('/^www\./', '', $host);
         $host = rtrim($host, '.');
-
         if ($host === '' || $host === null) return '';
-
         if (function_exists('idn_to_ascii')) {
             $ascii = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
-            if ($ascii !== false && $ascii !== null && $ascii !== '') {
-                $host = $ascii;
-            }
+            if ($ascii !== false && $ascii !== null && $ascii !== '') $host = $ascii;
         }
-
         return $host;
     }
 
@@ -196,7 +194,7 @@ class DomainAnalysis extends Component
         $flat = [];
         foreach ($this->acSuggestions as $group) {
             foreach ($group['items'] as $it) {
-                $flat[] = $it; // ['id'=>..,'host'=>..]
+                $flat[] = $it;
             }
         }
         return $flat;
