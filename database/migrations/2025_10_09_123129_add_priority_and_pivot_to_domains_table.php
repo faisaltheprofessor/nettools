@@ -4,11 +4,13 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         // category priority
         Schema::table('domain_categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('domain_categories', 'priority')) {
+            if (! Schema::hasColumn('domain_categories', 'priority')) {
                 $table->integer('priority')->nullable()->index();
             }
         });
@@ -23,7 +25,7 @@ return new class extends Migration {
         });
 
         // keep domains.category_id as "primary" category (highest priority among its categories)
-        if (!Schema::hasColumn('domains', 'normalized_host')) {
+        if (! Schema::hasColumn('domains', 'normalized_host')) {
             Schema::table('domains', function (Blueprint $table) {
                 $table->string('normalized_host')->index()->after('tld');
             });
@@ -31,7 +33,8 @@ return new class extends Migration {
         // ensure index on category_id already exists through foreign key
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('domain_category_domain');
         Schema::table('domain_categories', function (Blueprint $table) {
             if (Schema::hasColumn('domain_categories', 'priority')) {

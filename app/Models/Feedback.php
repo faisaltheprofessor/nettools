@@ -11,10 +11,9 @@ class Feedback extends Model
     protected $table = 'feedback';
 
     protected $fillable = [
-        'user_id','assigned_to_id','title','type','description','url','user_agent',
-        'attachments','status','tags','priority', 'assigned_to_id'
+        'user_id', 'assigned_to_id', 'title', 'type', 'description', 'url', 'user_agent',
+        'attachments', 'status', 'tags', 'priority', 'assigned_to_id',
     ];
-
 
     protected $casts = [
         'attachments' => 'array',
@@ -35,14 +34,21 @@ class Feedback extends Model
         return ['open', 'in_progress', 'resolved', 'closed', 'wontfix'];
     }
 
-    public const TAG_SUGGESTIONS = ['UI','Performance','Bug','Importer','Excel','Vorschlag', 'Tracking Tool'];
-    public const STATUSES   = ['open','in_progress','resolved','in_review', 'closed','wontfix'];
-    public const PRIORITIES = ['low','normal','high','urgent'];
+    public const TAG_SUGGESTIONS = ['UI', 'Performance', 'Bug', 'Importer', 'Excel', 'Vorschlag', 'Tracking Tool'];
 
-    public function assignee(): BelongsTo { return $this->belongsTo(User::class, 'assigned_to_id'); }
+    public const STATUSES = ['open', 'in_progress', 'resolved', 'in_review', 'closed', 'wontfix'];
 
+    public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
-    public function reactions(): HasMany { return $this->hasMany(FeedbackReaction::class); }
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(FeedbackReaction::class);
+    }
 
     public function userHasReacted(int $userId, ?int $commentId, string $emoji): bool
     {
@@ -52,5 +58,4 @@ class Feedback extends Model
             ->where('comment_id', $commentId)
             ->exists();
     }
-
 }

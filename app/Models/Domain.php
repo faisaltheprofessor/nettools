@@ -19,9 +19,9 @@ class Domain extends Model
 
     protected $casts = [
         'first_seen_at' => 'datetime',
-        'last_seen_at'  => 'datetime',
-        'created_at'    => 'datetime',
-        'updated_at'    => 'datetime',
+        'last_seen_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function category()

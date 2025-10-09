@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Ldap\User as LdapEntryModel;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,7 +12,6 @@ use Illuminate\Support\Str;
 use LdapRecord\Laravel\Auth\AuthenticatesWithLdap;
 use LdapRecord\Laravel\Auth\LdapAuthenticatable;
 use LdapRecord\Models\Model as LdapRecordModel;
-use App\Ldap\User as LdapEntryModel;
 
 class User extends Authenticatable implements LdapAuthenticatable
 {
@@ -75,17 +75,17 @@ class User extends Authenticatable implements LdapAuthenticatable
      */
     public function ldapEntry(): ?LdapRecordModel
     {
-        $ldapModel   = config('rights.lookup.ldap_model', LdapEntryModel::class);
-        $ldapAttr    = config('rights.lookup.ldap_attr', 'uid');
+        $ldapModel = config('rights.lookup.ldap_model', LdapEntryModel::class);
+        $ldapAttr = config('rights.lookup.ldap_attr', 'uid');
         $eloquentCol = config('rights.lookup.eloquent_field', 'username');
 
         $value = $this->{$eloquentCol} ?? null;
-        if (!$ldapModel || !$value) {
+        if (! $ldapModel || ! $value) {
             return null;
         }
 
         /** @var \LdapRecord\Models\Model $model */
-        $model = new $ldapModel();
+        $model = new $ldapModel;
 
         return $model::query()
             ->whereEquals($ldapAttr, $value)
@@ -98,12 +98,12 @@ class User extends Authenticatable implements LdapAuthenticatable
     protected function ldapGroupDns(): array
     {
         $entry = $this->ldapEntry();
-        if (!$entry) {
+        if (! $entry) {
             return [];
         }
 
         // Attribute-based memberships:
-        $memberOf        = (array) ($entry->getAttribute('memberOf') ?? []);         // AD
+        $memberOf = (array) ($entry->getAttribute('memberOf') ?? []);         // AD
         $groupMembership = (array) ($entry->getAttribute('groupMembership') ?? []);  // eDirectory
 
         $dns = array_values(array_unique(array_filter([
@@ -132,7 +132,7 @@ class User extends Authenticatable implements LdapAuthenticatable
     public function inLdapGroup(string $groupDnOrCn): bool
     {
         $entry = $this->ldapEntry();
-        if (!$entry) {
+        if (! $entry) {
             return false;
         }
 
@@ -153,7 +153,7 @@ class User extends Authenticatable implements LdapAuthenticatable
         }
 
         // CN check (best effort)
-        $needle = 'cn=' . strtolower($groupDnOrCn) . ',';
+        $needle = 'cn='.strtolower($groupDnOrCn).',';
         foreach ($memberships as $dn) {
             if (str_contains($dn, $needle)) {
                 return true;
@@ -166,7 +166,7 @@ class User extends Authenticatable implements LdapAuthenticatable
     /**
      * True if the user is in ANY of the given groups (DNs or CNs). No caching.
      *
-     * @param array<int, string> $groups
+     * @param  array<int, string>  $groups
      */
     public function inAnyLdapGroup(array $groups): bool
     {
@@ -175,6 +175,7 @@ class User extends Authenticatable implements LdapAuthenticatable
                 return true;
             }
         }
+
         return false;
     }
 }

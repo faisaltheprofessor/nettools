@@ -17,9 +17,11 @@ class DHCP extends Component
     public array $servers = ['vs002', 'vs003', 'vs004'];
 
     public ?string $dhcpStatus = null;
+
     public ?string $runningServer = null;
 
     public bool $loading = false;
+
     public bool $beingRestarted = false;
 
     public ?string $selectedServer = null;
@@ -28,7 +30,7 @@ class DHCP extends Component
      * Selected services in the restart modal: values are 'dhcp' and/or 'dns'.
      * Bound to <flux:checkbox.group wire:model="restartServices">.
      */
-    public array $restartServices = ["dhcp", "dns"]; // default: none selected
+    public array $restartServices = ['dhcp', 'dns']; // default: none selected
 
     public function render()
     {
@@ -51,7 +53,7 @@ class DHCP extends Component
         try {
             $status = Cache::get('dhcp:status');
 
-            if (!$status) {
+            if (! $status) {
                 throw new Exception('Kein Status im Cache gefunden.');
             }
 
@@ -147,6 +149,7 @@ class DHCP extends Component
                 heading: 'Keine Auswahl',
                 variant: 'warning'
             );
+
             return;
         }
 
@@ -182,7 +185,7 @@ class DHCP extends Component
                 $this->logAction('dns', 'restart', null, ['queued' => true]);
             }
 
-            if (!empty($queued)) {
+            if (! empty($queued)) {
                 $list = implode(' & ', $queued);
                 Flux::toast(
                     text: "Neustart gestartet für: {$list}.",
@@ -273,7 +276,7 @@ class DHCP extends Component
 
     public function startDhcp(): void
     {
-        if (!$this->selectedServer) {
+        if (! $this->selectedServer) {
             Flux::toast(
                 text: 'Bitte einen Server auswählen.',
                 heading: 'Keine Auswahl',

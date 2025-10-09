@@ -52,8 +52,8 @@ return [
 
     // How to resolve the LDAP entry for the current Eloquent user
     'lookup' => [
-        'ldap_model'     => App\Ldap\User::class,
-        'ldap_attr'      => env('RIGHTS_LDAP_ATTR', 'uid'),       // e.g. 'uid' or 'sAMAccountName'
+        'ldap_model' => App\Ldap\User::class,
+        'ldap_attr' => env('RIGHTS_LDAP_ATTR', 'uid'),       // e.g. 'uid' or 'sAMAccountName'
         'eloquent_field' => env('RIGHTS_ELOQUENT_FIELD', 'username'),
     ],
 ];

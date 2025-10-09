@@ -12,4 +12,3 @@ Schedule::command('dhcp:poll-status')->everyFiveSeconds();
 Schedule::command('dns:poll-status')->everyFiveSeconds();
 Schedule::command('view:clear')->hourly();
 Schedule::command('domain:sync')->everyThirtyMinutes();
-

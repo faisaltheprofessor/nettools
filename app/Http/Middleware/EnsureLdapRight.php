@@ -11,10 +11,14 @@ class EnsureLdapRight
     public function handle(Request $request, Closure $next, string $rightKey)
     {
         $user = $request->user();
-        if (!$user) abort(401);
+        if (! $user) {
+            abort(401);
+        }
 
         $groups = $this->groupsForRight($rightKey);
-        if (empty($groups)) abort(404);
+        if (empty($groups)) {
+            abort(404);
+        }
 
         $ttl = (int) config('rights.cache_ttl', 300);
 
@@ -42,7 +46,9 @@ class EnsureLdapRight
             }
         }
 
-        if (!$allowed) abort(403, 'You are not authorized for this right.');
+        if (! $allowed) {
+            abort(403, 'You are not authorized for this right.');
+        }
 
         return $next($request);
     }
@@ -55,9 +61,9 @@ class EnsureLdapRight
         $parts = explode('.', $rightKey);
         $accum = '';
         foreach ($parts as $i => $p) {
-            $accum = $i === 0 ? $p : ($accum . '.' . $p);
+            $accum = $i === 0 ? $p : ($accum.'.'.$p);
             if ($i < count($parts) - 1) {
-                $candidates[] = $accum . '.*';
+                $candidates[] = $accum.'.*';
             }
         }
         $candidates[] = $rightKey;
@@ -68,6 +74,7 @@ class EnsureLdapRight
                 $groups = array_merge($groups, $map[$k]);
             }
         }
-        return array_values(array_unique(array_filter($groups, fn ($g) => !empty($g))));
+
+        return array_values(array_unique(array_filter($groups, fn ($g) => ! empty($g))));
     }
 }

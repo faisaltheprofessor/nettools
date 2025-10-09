@@ -109,6 +109,7 @@
                             </div>
 
                             @php $cats = $selected->categories->sortBy($sortByPriorityField)->values(); @endphp
+                         <p>Ich weiß, es ist etwas redundant, aber ich arbeite/überlege daran, es besser zu machen! 😅</p>
                             @foreach($cats as $i => $cat)
                                 @php $col = $colorMap($cat->slug); @endphp
                                 <div class="rounded-xl border p-6 grid gap-4 bg-white/60 dark:bg-zinc-900/40 shadow-sm">
