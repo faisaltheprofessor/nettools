@@ -23,6 +23,8 @@ class BlacklistCheck extends Component
     public bool $acOpen = false;
     public bool $acBlock = false;
 
+    public array $prevResults = [];
+
     public function mount(): void
     {
         $this->loadChartData();
@@ -107,6 +109,8 @@ class BlacklistCheck extends Component
         $this->hasSearched = true;
         $this->errorMsg = null;
         $this->selected = null;
+
+        $this->prevResults = [];
         $this->results = [];
 
         $q = $this->normalizeInput($this->search);
@@ -142,8 +146,22 @@ class BlacklistCheck extends Component
         $domain = Domain::with(['categories' => fn($q)=>$q->select('domain_categories.id','domain_categories.slug','domain_categories.priority')])->find($id);
         if (!$domain) { $this->selected = null; return; }
 
+        $this->prevResults = $this->results;
+
         $this->selected = $domain;
         $this->results  = [$domain];
+    }
+
+    public function backToList(): void
+    {
+        $this->selected = null;
+
+        if (!empty($this->prevResults)) {
+            $this->results = $this->prevResults;
+            $this->prevResults = [];
+        } else {
+            $this->searchNow();
+        }
     }
 
     private function suppressAutocomplete(): void { $this->acBlock = true; $this->closeAutocomplete(); }
