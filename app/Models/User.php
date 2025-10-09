@@ -7,7 +7,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use LdapRecord\Laravel\Auth\AuthenticatesWithLdap;
 use LdapRecord\Laravel\Auth\LdapAuthenticatable;
@@ -67,47 +66,34 @@ class User extends Authenticatable implements LdapAuthenticatable
     }
 
     /* =========================================================================
-     | LDAP helpers for per-feature authorization
+     | LDAP helpers for rights (no caching)
      |=========================================================================*/
 
     /**
      * Resolve this Eloquent user to its LDAP entry using your App\Ldap\User model
-     * and the configured attribute mapping.
-     *
-     * Config used (see config/features.php):
-     *   features.lookup.ldap_model      default: App\Ldap\User::class
-     *   features.lookup.ldap_attr       default: 'uid'
-     *   features.lookup.eloquent_field  default: 'username'
+     * and the configured attribute mapping. No caching.
      */
     public function ldapEntry(): ?LdapRecordModel
     {
-        $ldapModel   = config('features.lookup.ldap_model', LdapEntryModel::class);
-        $ldapAttr    = config('features.lookup.ldap_attr', 'uid');
-        $eloquentCol = config('features.lookup.eloquent_field', 'username');
+        $ldapModel   = config('rights.lookup.ldap_model', LdapEntryModel::class);
+        $ldapAttr    = config('rights.lookup.ldap_attr', 'uid');
+        $eloquentCol = config('rights.lookup.eloquent_field', 'username');
 
         $value = $this->{$eloquentCol} ?? null;
         if (!$ldapModel || !$value) {
             return null;
         }
 
-        $cacheKey = "ldap:entry:" . md5($ldapModel . '|' . $ldapAttr . '|' . $value);
-        $ttl = (int) config('features.cache_ttl', 300);
+        /** @var \LdapRecord\Models\Model $model */
+        $model = new $ldapModel();
 
-        return Cache::remember(
-            $cacheKey,
-            now()->addSeconds($ttl),
-            function () use ($ldapModel, $ldapAttr, $value) {
-                /** @var \LdapRecord\Models\Model $model */
-                $model = new $ldapModel();
-                return $model::query()->whereEquals($ldapAttr, $value)->first();
-            }
-        );
+        return $model::query()
+            ->whereEquals($ldapAttr, $value)
+            ->first();
     }
 
     /**
      * Collect group DNs from common attributes / relations across AD & eDirectory.
-     *
-     * @return string[] Lower/upper-case as-is DNs (callers may normalize)
      */
     protected function ldapGroupDns(): array
     {
@@ -116,7 +102,7 @@ class User extends Authenticatable implements LdapAuthenticatable
             return [];
         }
 
-        // Attribute-based memberships (differs by directory):
+        // Attribute-based memberships:
         $memberOf        = (array) ($entry->getAttribute('memberOf') ?? []);         // AD
         $groupMembership = (array) ($entry->getAttribute('groupMembership') ?? []);  // eDirectory
 
@@ -139,7 +125,7 @@ class User extends Authenticatable implements LdapAuthenticatable
     }
 
     /**
-     * Check membership in a group by DN or CN.
+     * Check membership in a group by DN or CN. No caching.
      * - DN: try inGroup($dn, true) if available; else compare membership DNs.
      * - CN: match if any membership DN contains "CN=<cn>," (case-insensitive).
      */
@@ -152,12 +138,11 @@ class User extends Authenticatable implements LdapAuthenticatable
 
         $isDn = str_contains($groupDnOrCn, '=');
 
-        // Prefer native recursive check when possible:
         if ($isDn && method_exists($entry, 'inGroup')) {
             try {
                 return (bool) $entry->inGroup($groupDnOrCn, true);
             } catch (\Throwable $e) {
-                // Fall back to attribute comparison
+                // fall through to attribute comparison
             }
         }
 
@@ -167,7 +152,7 @@ class User extends Authenticatable implements LdapAuthenticatable
             return in_array(strtolower($groupDnOrCn), $memberships, true);
         }
 
-        // CN check (best effort, case-insensitive substring in DN):
+        // CN check (best effort)
         $needle = 'cn=' . strtolower($groupDnOrCn) . ',';
         foreach ($memberships as $dn) {
             if (str_contains($dn, $needle)) {
@@ -179,7 +164,7 @@ class User extends Authenticatable implements LdapAuthenticatable
     }
 
     /**
-     * True if the user is in ANY of the given groups (DNs or CNs).
+     * True if the user is in ANY of the given groups (DNs or CNs). No caching.
      *
      * @param array<int, string> $groups
      */

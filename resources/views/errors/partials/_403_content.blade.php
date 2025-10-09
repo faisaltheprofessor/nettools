@@ -9,13 +9,6 @@
 
     <div class="relative flex items-center justify-center h-[80vh] overscroll-none">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 w-full">
-            {{-- Callout Hinweis  --}}
-            <div class="mb-8">
-                <flux:callout color="amber" icon="information-circle" class="flex flex-row text-left">
-                    Ich arbeite derzeit an den Berechtigungen. Bitte benutze vorübergehend die DHCP-Seite, um den DNS-Dienst neu zu starten. Diese Seite wird für Tests während der Entwicklung verwendet.
-                </flux:callout>
-            </div>
-
             <div class="flex flex-col items-center pt-8 sm:pt-0 text-center">
 
                 <div class="flex items-center">

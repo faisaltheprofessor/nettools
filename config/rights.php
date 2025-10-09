@@ -2,7 +2,7 @@
 
 return [
     // Cache duration for LDAP lookup + authorization decisions (seconds)
-    'cache_ttl' => env('RIGHTS_CACHE_TTL', 300),
+    'cache_ttl' => env('RIGHTS_CACHE_TTL', 0),
 
     // Map: right-key => array of LDAP groups (DNs or CNs)
     // Supports wildcards via middleware ('*' and 'section.*')
@@ -23,6 +23,10 @@ return [
             env('RIGHTS_LDAP_GROUP_LDAP'),
         ],
 
+        'blacklist-check' => [
+            env('RIGHTS_LDAP_GROUP_BLACKLIST_CHECK'),
+        ],
+
         // Parent right: all generator tools
         'generators.*' => [
             env('RIGHTS_LDAP_GROUP_GENERATORS'),
@@ -37,6 +41,9 @@ return [
         ],
         'generators.subnetting' => [
             env('RIGHTS_LDAP_GROUP_GENERATORS.SUBNETTING'),
+        ],
+        'generators.signature' => [
+            env('RIGHTS_LDAP_GROUP_GENERATORS.SIGNATURE'),
         ],
         'generators.firewall_vorlage' => [
             env('RIGHTS_LDAP_GROUP_GENERATORS.FIREWALL_VORLAGE'),

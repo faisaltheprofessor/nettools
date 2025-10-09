@@ -42,9 +42,9 @@
             </div>
         </flux:navlist.item>
 
-        <flux:navlist.item icon="magnifying-glass" href="{{ route('domain.analysis') }}" wire:navigate>
+        <flux:navlist.item icon="magnifying-glass" href="{{ route('blacklist.check') }}" wire:navigate>
             <div class="flex items-center justify-between">
-                <span>Domain-Analyse</span>
+                <span>Blacklist Check</span>
             </div>
         </flux:navlist.item>
 

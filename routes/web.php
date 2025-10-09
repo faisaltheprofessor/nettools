@@ -26,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
 
     // DHCP
     Route::get('dhcp', DHCP::class)
-        //->middleware('ldap.right:dhcp')
+        ->middleware('ldap.right:dhcp')
         ->name('dhcp.index');
 
     Route::get('dns', DNS::class)
@@ -34,21 +34,26 @@ Route::middleware(['auth'])->group(function () {
         ->name('dns.index');
 
     Route::get('ip-calculator', IpCalculator::class)
+        ->middleware('ldap.right:generators.subnetting')
         ->name('ip-calculator.index');
 
     Route::get('ovirt-serialnumber-generator', OVirtSerialNumberGenerator::class)
+        ->middleware('ldap.right:generators.ovirt_serial_number')
         ->name('ovirt-serialnumber-generator.index');
 
     // Password Generator
     Route::get('password-generator', PasswordGenerator::class)
+        ->middleware('ldap.right:generators.password')
         ->name('signature.generator');
 
     // Signature
     Route::get('signature-generator', Signature::class)
-        ->name('password.generator');
+        ->middleware('ldap.right:generators.signature')
+        ->name('signature.generator');
 
     // ID Tools
     Route::get('ldap', IdTools::class)
+        ->middleware('ldap.right:ldap')
         ->name('ldap.index');
 
     // ID Tools
@@ -68,10 +73,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('feedbacks.index');
 
     Route::get('firewall-template', \App\Livewire\FirewallVorlagen::class)
+        ->middleware('ldap.right:generators.firewall_vorlage')
         ->name('firewall.vorlage');
 
-    Route::get('domain-analysis', \App\Livewire\DomainAnalysis::class)
-        ->name('domain.analysis');
+    Route::get('blacklist-check', \App\Livewire\DomainAnalysis::class)
+        ->middleware('ldap.right:blacklist-check')
+        ->name('blacklist.check');
 
     Route::fallback(NotFound::class);
 
