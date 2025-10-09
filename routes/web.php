@@ -8,6 +8,7 @@ use App\Livewire\IdTools;
 use App\Livewire\IpCalculator;
 use App\Livewire\Ldap\NextMailboxPid;
 use App\Livewire\Ldap\NextUserPid;
+use App\Livewire\NotFound;
 use App\Livewire\OVirtSerialNumberGenerator;
 use App\Livewire\PasswordGenerator;
 use App\Livewire\Signature;
@@ -71,6 +72,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('domain-analysis', \App\Livewire\DomainAnalysis::class)
         ->name('domain.analysis');
+
+    Route::fallback(NotFound::class);
 
     // Test Routes
 Route::get('/_test/maintenance', function () {
