@@ -3,6 +3,20 @@ Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 
 ## Unveröffentlicht
+## [0.9.0-beta.7] - 09-10-2025
+### Behoben / Geändert
+- **Benutzersuche**: Suche nach Nachnamen liefert nun Ergebnisse
+- **LDAP**: Beim Öffnen wird automatisch die **Benutzersuche** angezeigt und das Suchfeld fokussiert
+
+### Hinzugefügt
+- Neues **Rechtesystem (Rights)** mit LDAP-Gruppensteuerung  
+  - Hierarchische Rechte (z. B. *Admin* → alle Unterrechte)  
+  - Änderungen in LDAP werden sofort übernommen (kein Caching)  
+- **DHCP und DNS** können jetzt gemeinsam neu gestartet werden  
+- **Statuscode-Seite**: Neue Seite für 403, 404 und 503
+- **Blacklist-Check**: Neue Funktion zur Prüfung von Domains gegen bekannte Sperrlisten
+- **Benutzersuche**: Anzeige, ob eine P-Kennung deaktiviert ist
+
 ## [0.9.0-beta.6] - 22-09-2025
 ### Behoben / Geändert
 - Signatur: Vorname und Nachname werden jetzt großgeschrieben
