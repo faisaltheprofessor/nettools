@@ -7,7 +7,7 @@
                 <flux:label>PID</flux:label>
                 <flux:input.group>
                     <flux:input.group.prefix>P</flux:input.group.prefix>
-                    <flux:input wire:model.defer="pkennung" placeholder="12345"/>
+                    <flux:input wire:model.defer="pkennung" placeholder="12345 oder p12345"/>
                 </flux:input.group>
                 <flux:error name="pkennung"/>
             </flux:field>

@@ -18,18 +18,22 @@ class Signature extends Component
     {
         $this->resetErrorBag();
 
+        // Accept "12345", "p12345" or "P12345"
         $this->validate([
-            'pkennung' => 'required|numeric',
+            'pkennung' => ['required', 'regex:/^\s*p?\s*\d+\s*$/i'],
         ]);
 
-        $pid = 'p'.ltrim($this->pkennung, 'pP');
+        // Normalize to 'p' + digits
+        $normalized = preg_replace('/\s+/', '', $this->pkennung); // remove spaces
+        $digits = ltrim($normalized, 'pP');                       // drop any leading p/P
+        $pid = 'p' . $digits;
+
         $user = User::where('cn', '=', $pid)->first();
 
         if (! $user) {
             $this->addError('pkennung', 'Benutzer nicht gefunden.');
             $this->ldapUser = null;
             $this->signatureContent = '';
-
             return;
         }
 
@@ -39,7 +43,7 @@ class Signature extends Component
         $lines = array_filter([
             'Freundliche Grüße',
             'Im Auftrag',
-            (Str::title($user->givenName[0]) ?? '').' '.(Str::title($user->sn[0]) ?? ''),
+            (Str::title($user->givenName[0] ?? '')).' '.(Str::title($user->sn[0] ?? '')),
             $user->company[0] ?? '',
             $user->description[0] ?? '',
             $user->title[0] ?? '',
@@ -51,7 +55,6 @@ class Signature extends Component
         ]);
 
         $htmlContent = '';
-
         foreach ($lines as $line) {
             $htmlContent .= '<p>'.e($line).'</p>';
         }
