@@ -1,4 +1,6 @@
+{{-- resources/views/livewire/blacklist-check.blade.php --}}
 <div>
+    {{-- Search form --}}
     <form wire:submit.prevent="searchNow">
         <div
             x-data="{ open: @entangle('acOpen').live, idx: @entangle('acIndex').live }"
@@ -57,6 +59,7 @@
 
         <div class="max-w-5xl mx-auto px-4 mb-4"></div>
 
+        {{-- Results area --}}
         <div class="max-w-5xl mx-auto px-4">
             <div class="min-h-[28rem]">
                 @php
@@ -115,7 +118,8 @@
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <div class="text-xs text-zinc-500">Domain</div>
-                                            <div class="text-2xl font-semibold font-mono tracking-tight">{{ $selected->host }}</div>
+                                            <div
+                                                class="text-2xl font-semibold font-mono tracking-tight">{{ $selected->host }}</div>
                                         </div>
                                         <flux:badge color="{{ $col['badge'] }}">
                                             {{ $cat->slug }} • Priorität {{ $i + 1 }}
@@ -146,40 +150,40 @@
                             <div class="overflow-x-auto rounded-xl border shadow-sm">
                                 <table class="min-w-full text-sm">
                                     <thead class="bg-gray-50 dark:bg-zinc-800/40">
-                                        <tr>
-                                            <th class="text-left p-3 font-semibold">Domain</th>
-                                            <th class="text-left p-3 font-semibold">Kategorie</th>
-                                            <th class="text-left p-3 font-semibold">Priorität</th>
-                                            <th class="text-left p-3 font-semibold">First seen</th>
-                                        </tr>
+                                    <tr>
+                                        <th class="text-left p-3 font-semibold">Domain</th>
+                                        <th class="text-left p-3 font-semibold">Kategorie</th>
+                                        <th class="text-left p-3 font-semibold">Priorität</th>
+                                        <th class="text-left p-3 font-semibold">First seen</th>
+                                    </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
-                                        @foreach($results as $d)
-                                            @php $cats = $d->categories ? $d->categories->sortBy($sortByPriorityField)->values() : collect(); @endphp
-                                            @foreach($cats as $i => $cat)
-                                                @php $col = $colorMap($cat->slug); @endphp
-                                                <tr
-                                                    wire:click="selectDomain({{ $d->id }})"
-                                                    class="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30"
-                                                >
-                                                    <td class="p-3 font-mono">
+                                    @foreach($results as $d)
+                                        @php $cats = $d->categories ? $d->categories->sortBy($sortByPriorityField)->values() : collect(); @endphp
+                                        @foreach($cats as $i => $cat)
+                                            @php $col = $colorMap($cat->slug); @endphp
+                                            <tr
+                                                wire:click="selectDomain({{ $d->id }})"
+                                                class="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30"
+                                            >
+                                                <td class="p-3 font-mono">
                                                         <span class="hover:underline cursor-pointer"
                                                               wire:click.stop="selectDomain({{ $d->id }})">
                                                             {{ $d->host }}
                                                         </span>
-                                                    </td>
-                                                    <td class="p-3">
-                                                        <flux:badge color="{{ $col['badge'] }}">
-                                                            {{ $cat->slug }}
-                                                        </flux:badge>
-                                                    </td>
-                                                    <td class="p-3">#{{ $i + 1 }}</td>
-                                                    <td class="p-3">
-                                                        {{ optional($d->first_seen_at)->format('Y-m-d H:i') ?? '–' }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
+                                                </td>
+                                                <td class="p-3">
+                                                    <flux:badge color="{{ $col['badge'] }}">
+                                                        {{ $cat->slug }}
+                                                    </flux:badge>
+                                                </td>
+                                                <td class="p-3">#{{ $i + 1 }}</td>
+                                                <td class="p-3">
+                                                    {{ optional($d->first_seen_at)->format('Y-m-d H:i') ?? '–' }}
+                                                </td>
+                                            </tr>
                                         @endforeach
+                                    @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -194,13 +198,15 @@
                         @endif
                     </flux:card>
                 @else
-                    <div class="h-full rounded-xl border border-dashed p-10 text-center text-sm text-zinc-500 flex items-center justify-center">
+                    <div
+                        class="h-full rounded-xl border border-dashed p-10 text-center text-sm text-zinc-500 flex items-center justify-center">
                         Ergebnisse erscheinen hier nach der Suche.
                     </div>
                 @endif
             </div>
         </div>
 
+        {{-- Statistik --}}
         <div class="max-w-5xl mx-auto px-4 mt-6 mb-16">
             <flux:accordion>
                 <flux:accordion.item expanded>
@@ -219,16 +225,25 @@
                                             $pct = $max > 0 ? round(($row['count'] / $max) * 100, 2) : 0;
                                             $col = $colorMap($row['slug']);
                                         @endphp
-                                        <div class="grid grid-cols-6 items-center gap-3">
-                                            <div class="col-span-2 truncate text-sm text-zinc-700 dark:text-zinc-300">
+                                        <div class="grid grid-cols-6 items-center gap-3 group">
+                                            <button
+                                                type="button"
+                                                wire:click="openCategory('{{ $row['slug'] }}')"
+                                                class="col-span-2 text-left truncate text-sm text-zinc-700 dark:text-zinc-300 transition hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer focus:outline-none"
+                                                title="Alle Einträge in {{ $row['slug'] }} anzeigen"
+                                            >
                                                 {{ $row['slug'] }}
-                                            </div>
+                                            </button>
                                             <div class="col-span-3">
-                                                <div class="h-3 w-full rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 overflow-hidden">
-                                                    <div class="h-full rounded-md {{ $col['bar'] }}" style="width: {{ $pct }}%;" aria-hidden="true"></div>
+                                                <div
+                                                    class="h-3 w-full rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 overflow-hidden">
+                                                    <div
+                                                        class="h-full rounded-md {{ $col['bar'] }} transition-all duration-300 group-hover:opacity-90"
+                                                        style="width: {{ $pct }}%;" aria-hidden="true"></div>
                                                 </div>
                                             </div>
-                                            <div class="col-span-1 text-right tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
+                                            <div
+                                                class="col-span-1 text-right tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
                                                 {{ $row['count'] }}
                                             </div>
                                         </div>
@@ -252,4 +267,90 @@
             </flux:accordion>
         </div>
     </form>
+
+    {{-- Category modal --}}
+    <flux:modal :dismissible="false" name="category-modal" wire:model.self="showCategoryModal" class="min-w-[48rem]">
+        <div class="space-y-4">
+            @php
+                $palette_modal = ['amber','indigo','teal','fuchsia','emerald','orange','sky','rose','violet','cyan','lime','blue','purple','pink'];
+                $colorMapBadge = function(?string $slug) use ($palette_modal) {
+                    if (!$slug) return 'indigo';
+                    if ($slug === 'whitelist') return 'green';
+                    if ($slug === 'blacklist') return 'red';
+                    $base = $palette_modal[crc32($slug) % count($palette_modal)];
+                    return $base;
+                };
+            @endphp
+
+            <div class="flex items-center justify-between">
+                <div class="font-medium flex items-center gap-2">
+                    <span>Kategorie:</span>
+                    @if($categorySlug)
+                        <flux:badge color="{{ $colorMapBadge($categorySlug) }}">{{ $categorySlug }}</flux:badge>
+                    @else
+                        —
+                    @endif
+                </div>
+                <div class="flex gap-2">
+                    <flux:input
+                        wire:model.live.debounce.300ms="categorySearch"
+                        placeholder="Suchbegriff…"
+                        class="w-96 mr-8"
+                    />
+                </div>
+            </div>
+
+            @if($categoryPage instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                <flux:table :paginate="$categoryPage" class="table-fixed">
+                    <flux:table.columns>
+                        <flux:table.column class="w-1/2">Domain</flux:table.column>
+                        <flux:table.column class="w-1/2">In anderen Listen</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @foreach ($categoryPage as $d)
+                            @php
+                                $main      = $d->categories->firstWhere('slug', $categorySlug);
+                                $mainPrio  = $main?->priority ?? 0;
+                                $others    = $d->categories->filter(fn($c) => $c->slug !== $categorySlug)->values();
+                            @endphp
+
+                            <flux:table.row :key="$d->id">
+                                <flux:table.cell class="font-mono whitespace-normal break-words">
+                                    {{ $d->host }}
+                                </flux:table.cell>
+
+                                <flux:table.cell class="whitespace-normal break-words text-sm leading-relaxed">
+                                    @if($others->isEmpty())
+                                        Nur in dieser Liste
+                                    @else
+                                        <div class="space-y-1">
+                                            @foreach($others->sortBy('priority') as $c)
+                                                @php
+                                                    $rel = (int)$c->priority < $mainPrio
+                                                        ? 'höhere Priorität'
+                                                        : ((int)$c->priority > $mainPrio ? 'niedrigere Priorität' : 'gleiche Priorität');
+                                                @endphp
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <flux:badge
+                                                        color="{{ $colorMapBadge($c->slug) }}">{{ $c->slug }}</flux:badge>
+                                                    <span class="text-zinc-500">({{ $rel }})</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            @else
+                <div class="p-8 text-center text-sm text-zinc-500 border rounded-lg">
+                    Keine Daten verfügbar.
+                </div>
+            @endif
+        </div>
+    </flux:modal>
+
+
 </div>

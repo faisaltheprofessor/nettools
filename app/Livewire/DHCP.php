@@ -32,6 +32,7 @@ class DHCP extends Component
      */
     public array $restartServices = ['dhcp', 'dns']; // default: none selected
 
+
     public function render()
     {
         return view('livewire.dhcp');

@@ -17,7 +17,7 @@
 <flux:sidebar sticky stashable class="bg-zinc-50 dark:bg-zinc-900 border-r rtl:border-r-0 rtl:border-l border-zinc-200 dark:border-zinc-700">
     <flux:sidebar.toggle class="lg:hidden" icon="x-mark"/>
     <div class="flex">
-        <flux:brand href="/dashboard" logo="{{ asset('logo.png') }}" wire:navigate name="{{ config('app.name') }}" class="px-2"/>
+        <flux:brand href="/dashboard" logo="{{ asset('logo.png') }}"  wire:navigate name="{{ config('app.name') }}" class="px-2"/>
         <flux:badge color="lime" size="sm" role="button" tabindex="0" class="cursor-pointer" x-on:click="Flux.modal('changelog').show()">
             {{ config('app.version') }}
         </flux:badge>
@@ -42,7 +42,7 @@
             </div>
         </flux:navlist.item>
 
-        <flux:navlist.item icon="magnifying-glass" href="{{ route('blacklist.check') }}" wire:navigate>
+        <flux:navlist.item icon="search-check" href="{{ route('blacklist.check') }}" wire:navigate>
             <div class="flex items-center justify-between">
                 <span>Blacklist Check</span>
             </div>

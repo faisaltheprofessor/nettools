@@ -15,4 +15,18 @@
             aria-hidden="true"
         />
     </div>
+
+<div class="flex gap-6 mb-6">
+    @if(auth()->user()->username === 'p16184')
+       {{-- DNS card: only “service” and a display name --}}
+<livewire:service-card service="dns" name="DNS-Cluster" description="Verfügbarkeit wird überwacht." />
+
+{{-- DHCP card --}}
+<livewire:service-card service="dhcp" name="DHCP-Cluster" />
+
+    @endif
+</div>
+
+
+
 </div>
