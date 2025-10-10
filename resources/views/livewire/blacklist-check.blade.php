@@ -322,7 +322,7 @@
 
                                 <flux:table.cell class="whitespace-normal break-words text-sm leading-relaxed">
                                     @if($others->isEmpty())
-                                        Nur in dieser Liste
+                                        <span class="block ml-5"> <flux:icon.minus /> </span>
                                     @else
                                         <div class="space-y-1">
                                             @foreach($others->sortBy('priority') as $c)
