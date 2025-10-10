@@ -15,6 +15,8 @@
                 font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
             }
         </style>
+
+        @vite('resources/css/app.css')
     </head>
     <body class="antialiased">
         <div class="relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:pt-0">
@@ -31,7 +33,7 @@
                         @yield('code')
                     </div>
 
-                    <div class="ml-4 mt-4 text-lg text-gray-500 uppercase tracking-wider">
+                    <div class="ml-4 mt-4 text-base text-gray-500  tracking-normal">
                         @yield('message')
                     </div>
                 </div>
