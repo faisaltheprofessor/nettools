@@ -12,7 +12,6 @@
                 <flux:error name="pkennung"/>
             </flux:field>
 
-
             <div class="w-full flex justify-end mt-4">
                  <flux:button type="submit" icon="signature" variant="primary" color="green" class="cursor-pointer">
                 Generieren
