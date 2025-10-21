@@ -44,7 +44,7 @@ Route::middleware(['auth'])->group(function () {
     // Password Generator
     Route::get('password-generator', PasswordGenerator::class)
         ->middleware('ldap.right:generators.password')
-        ->name('signature.generator');
+        ->name('password.generator');
 
     // Signature
     Route::get('signature-generator', Signature::class)
