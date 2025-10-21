@@ -1,6 +1,7 @@
-<flux:card wire:poll.5s="getDnsStatus" class="w-1/2 mx-auto space-y-6">
-    <h2 class="text-lg font-bold flex justify-center items-center">DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator
-                service="dns"/> </span></h2>
+<flux:card wire:poll.5s="getDnsStatus" class="w-1/2 mx-auto space-y-6 relative">
+    <h2 class="text-lg font-bold flex justify-center items-center">
+        DNS Dienst <span class="flex text-xs">&nbsp; <livewire:service-status-indicator service="dns"/></span>
+    </h2>
 
     <flux:callout>
         <x-slot name="icon">
@@ -16,27 +17,20 @@
 
     <div class="flex items-center justify-center">
         <div>
-
             <div class="flex gap-12 mt-3">
                 @foreach($servers as $server)
                     @php $disabled = $runningServer === $server @endphp
                     <flux:context :disabled="$disabled">
-                        <div
-                            class="flex flex-col items-center rounded-md cursor-context-menu relative"
-                            style="width: 80px;"
-                        >
+                        <div class="flex flex-col items-center rounded-md cursor-context-menu relative" style="width: 80px;">
                             <flux:icon.computer-desktop
                                 class="size-20 {{ $runningServer === $server && $dnsStatus === 'running' ? 'text-emerald-600' : 'text-gray-400' }}"
                                 variant="solid"
                             />
-
                             <flux:text>{{ $server }}</flux:text>
 
                             @if($runningServer === $server && $dnsStatus === 'running')
                                 <div class="mt-2 flex justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                         class="h-6 w-6 text-emerald-600 bg-white rounded-full"
-                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600 bg-white rounded-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
@@ -47,6 +41,8 @@
                             <flux:menu.item
                                 wire:click="migrateDns('{{ $server }}')"
                                 icon="git-compare-arrows"
+                                :disabled="$runningServer === $server && $dnsStatus === 'running'"
+                                wire:key="migrate-{{ $server }}"
                             >
                                 Hierhin migrieren
                             </flux:menu.item>
@@ -65,7 +61,8 @@
                         icon="play"
                         :disabled="$dnsStatus === 'running' || $dnsStatus === 'loading'"
                         class="cursor-pointer"
-                    >Start
+                    >
+                        Start
                     </flux:button>
                 </flux:modal.trigger>
                 <flux:modal.trigger name="confirm-restart">
@@ -73,8 +70,10 @@
                         variant="primary"
                         color="teal"
                         icon="arrow-path"
+                        :disabled="!$runningServer || $dnsStatus !== 'running'"
                         class="cursor-pointer"
-                    >Neustart
+                    >
+                        Neustart
                     </flux:button>
                 </flux:modal.trigger>
             </div>
@@ -85,19 +84,22 @@
                 <div>
                     <flux:heading size="lg">Achtung</flux:heading>
                     <flux:text class="mt-2">
-                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach
-                            neugestartet werden?</p>
+                        <p>Dieser Vorgang wird einige Sekunden dauern. Soll der DNS Server wirklich gestoppt und danach neugestartet werden?</p>
                     </flux:text>
                 </div>
 
                 <div class="flex gap-2">
                     <flux:spacer/>
-
-                    <flux:modal>
+                    <flux:modal.close>
                         <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal>
-
-                    <flux:button variant="primary" color="teal" type="submit" wire:click.prevent="restartDns" class="cursor-pointer">
+                    </flux:modal.close>
+                    <flux:button
+                        variant="primary"
+                        color="teal"
+                        type="submit"
+                        wire:click.prevent="restartDns"
+                        class="cursor-pointer"
+                    >
                         Ja! Neustart
                     </flux:button>
                 </div>
@@ -107,24 +109,34 @@
         <flux:modal name="select-vs" variant="flyout">
             <div class="space-y-6">
                 <div>
-                    <flux:heading size="lg">Choose one...</flux:heading>
-                    <flux:text class="mt-2">
-                        <flux:radio.group label="" variant="cards" class="flex-col" wire:model="selectedServer">
-                            @foreach($servers as $server)
-                                <flux:radio value="{{ $server }}" icon="server" label="{{ $server }}" description=""/>
-                            @endforeach
-                        </flux:radio.group>
-                    </flux:text>
+                    <flux:radio.group
+                        label="Server auswählen"
+                        variant="cards"
+                        class="flex-col"
+                        wire:model="selectedServer"
+                    >
+                        @foreach($servers as $server)
+                            <flux:radio
+                                value="{{ $server }}"
+                                icon="server"
+                                label="{{ $server }}"
+                            />
+                        @endforeach
+                    </flux:radio.group>
                 </div>
 
                 <div class="flex gap-2">
                     <flux:spacer/>
-
-                    <flux:modal>
+                    <flux:modal.close>
                         <flux:button variant="ghost">Cancel</flux:button>
-                    </flux:modal>
-
-                    <flux:button color="green" type="submit" wire:click.prevent="startDns" class="cursor-pointer">
+                    </flux:modal.close>
+                    <flux:button
+                        variant="primary"
+                        color="green"
+                        type="submit"
+                        wire:click.prevent="startDns"
+                        class="cursor-pointer"
+                    >
                         Start
                     </flux:button>
                 </div>
@@ -132,4 +144,3 @@
         </flux:modal>
     </div>
 </flux:card>
-
