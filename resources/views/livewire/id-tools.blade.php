@@ -8,7 +8,7 @@
                 <flux:tab name="user-export" icon="file-up">PIDs Exportieren</flux:tab>
                 <flux:tab name="mailbox" icon="envelope">Mailbox PID</flux:tab>
                 @if(in_array(auth()->user()->username, config('users.ldap_raw')))
-                    <flux:tab name="ldap-raw" icon="brackets">Raw</flux:tab>
+                    <flux:tab name="ldap-raw" icon="braces">Raw</flux:tab>
                 @endif
 
             </flux:tabs>

@@ -11,7 +11,7 @@
             </flux:field>
 
             <div class="w-full flex justify-end mt-4">
-                <flux:button type="submit" icon="brackets" variant="primary" color="green" class="cursor-pointer">
+                <flux:button type="submit" icon="braces" variant="primary" color="green" class="cursor-pointer">
                     Abrufen
                 </flux:button>
             </div>
