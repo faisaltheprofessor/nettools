@@ -2,13 +2,14 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class ServiceStatusIndicator extends Component
 {
     public string $service;
+
     public string $display = 'text';
 
     public function render()
@@ -16,7 +17,7 @@ class ServiceStatusIndicator extends Component
         $statusData = Cache::get("{$this->service}:status", []);
 
         $statusRaw = $statusData['status'] ?? $statusData['state'] ?? null;
-        $statusLower = strtolower((string)$statusRaw);
+        $statusLower = strtolower((string) $statusRaw);
 
         // Translated + color-matched display
         $label = match ($statusLower) {
@@ -34,16 +35,16 @@ class ServiceStatusIndicator extends Component
         };
 
         $server = $this->pickFirst($statusData, [
-            'server', 'host', 'node', 'running_server', 'runningServer'
+            'server', 'host', 'node', 'running_server', 'runningServer',
         ]) ?? null;
 
         return view('livewire.service-status-indicator', [
-            'color'      => $color,
-            'label'      => $label,
-            'display'    => $this->display,
-            'status'     => $statusLower ?: null,
-            'service'    => $this->service,
-            'server'     => $server,
+            'color' => $color,
+            'label' => $label,
+            'display' => $this->display,
+            'status' => $statusLower ?: null,
+            'service' => $this->service,
+            'server' => $server,
             'statusText' => $label,
         ]);
     }
@@ -51,10 +52,11 @@ class ServiceStatusIndicator extends Component
     protected function pickFirst(array $data, array $keys): mixed
     {
         foreach ($keys as $k) {
-            if (Arr::has($data, $k) && !empty($data[$k])) {
+            if (Arr::has($data, $k) && ! empty($data[$k])) {
                 return $data[$k];
             }
         }
+
         return null;
     }
 }

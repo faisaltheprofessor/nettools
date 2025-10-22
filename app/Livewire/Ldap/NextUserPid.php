@@ -10,6 +10,7 @@ use Livewire\Component;
 class NextUserPid extends Component
 {
     public ?string $pid = null;
+
     public ?string $error = null;
 
     public function getNextUserPid(): void
@@ -19,6 +20,7 @@ class NextUserPid extends Component
         $lock = Cache::lock('ldap:next-free-user-pid', 10);
         if (! $lock->get()) {
             $this->error = 'Diese Funktion wird aktuell von jemand anderem verwendet. Bitte warte einen Moment.';
+
             return;
         }
 
@@ -38,18 +40,19 @@ class NextUserPid extends Component
 
             if ($numbers->isEmpty()) {
                 $this->error = 'keine passenden P-IDs gefunden.';
+
                 return;
             }
 
             $next = $numbers->max() + 1;
-            $candidate = 'p' . $next;
+            $candidate = 'p'.$next;
 
             while (
                 User::query()->whereEquals('uid', $candidate)->exists()
                 || User::query()->whereEquals('cn', $candidate)->exists()
             ) {
                 $next++;
-                $candidate = 'p' . $next;
+                $candidate = 'p'.$next;
             }
 
             $this->pid = $candidate;

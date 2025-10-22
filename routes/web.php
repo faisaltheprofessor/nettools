@@ -76,7 +76,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('ldap.right:generators.firewall_vorlage')
         ->name('firewall.vorlage');
 
-    Route::get('blacklist-check', \App\Livewire\BlackListCheck::class)
+    Route::get('blacklist-check', \App\Livewire\BlacklistCheck::class)
         ->middleware('ldap.right:blacklist-check')
         ->name('blacklist.check');
 

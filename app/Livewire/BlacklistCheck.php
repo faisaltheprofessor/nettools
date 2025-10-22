@@ -17,24 +17,35 @@ class BlacklistCheck extends Component
     protected string $paginationTheme = 'tailwind';
 
     public string $search = '';
+
     public array $results = [];
+
     public ?Domain $selected = null;
+
     public ?string $errorMsg = null;
+
     public bool $hasSearched = false;
 
     public array $chartData = [];
 
     public array $acSuggestions = [];
+
     public int $acIndex = -1;
+
     public bool $acOpen = false;
+
     public bool $acBlock = false;
 
     public array $prevResults = [];
 
     public bool $showCategoryModal = false;
+
     public ?string $categorySlug = null;
+
     public string $categorySearch = '';
+
     public int $catPerPage = 20;
+
     public string $catPageName = 'catPage';
 
     public function mount(): void
@@ -57,7 +68,7 @@ class BlacklistCheck extends Component
         }
 
         return view('livewire.blacklist-check', [
-            'lastSyncAt'   => $lastSyncAt,
+            'lastSyncAt' => $lastSyncAt,
             'categoryPage' => $categoryPage,
         ]);
     }
@@ -67,6 +78,7 @@ class BlacklistCheck extends Component
         if ($this->acBlock) {
             $this->acBlock = false;
             $this->closeAutocomplete();
+
             return;
         }
 
@@ -101,31 +113,41 @@ class BlacklistCheck extends Component
         $out = [];
         $total = 0;
         foreach ($grouped as $cat => $items) {
-            if ($total >= 40) break;
+            if ($total >= 40) {
+                break;
+            }
             $slice = array_slice($items, 0, max(0, 40 - $total));
-            if (!empty($slice)) {
+            if (! empty($slice)) {
                 $out[] = ['category' => $cat, 'items' => $slice];
                 $total += count($slice);
             }
         }
 
         $this->acSuggestions = $out;
-        $this->acOpen = !empty($out);
+        $this->acOpen = ! empty($out);
     }
 
     public function acMove(int $delta): void
     {
-        if (!$this->acOpen) return;
+        if (! $this->acOpen) {
+            return;
+        }
         $flat = $this->flattenSuggestions();
-        if (empty($flat)) return;
+        if (empty($flat)) {
+            return;
+        }
         $this->acIndex = ($this->acIndex + $delta + count($flat)) % count($flat);
     }
 
     public function acSelectCurrent(): void
     {
-        if (!$this->acOpen) return;
+        if (! $this->acOpen) {
+            return;
+        }
         $flat = $this->flattenSuggestions();
-        if (!isset($flat[$this->acIndex])) return;
+        if (! isset($flat[$this->acIndex])) {
+            return;
+        }
         $this->acClickSelect((int) $flat[$this->acIndex]['id'], (string) $flat[$this->acIndex]['host']);
     }
 
@@ -147,7 +169,9 @@ class BlacklistCheck extends Component
         $this->results = [];
 
         $q = $this->normalizeInput($this->search);
-        if ($q === '') return;
+        if ($q === '') {
+            return;
+        }
 
         $candidates = Domain::with(['categories' => function ($q) {
             $q->select('domain_categories.id', 'domain_categories.slug', 'domain_categories.priority');
@@ -158,15 +182,18 @@ class BlacklistCheck extends Component
             ->get()
             ->all();
 
-        if (!$candidates) return;
+        if (! $candidates) {
+            return;
+        }
 
         $scored = array_map(function (Domain $d) use ($q) {
             $h = $d->normalized_host;
             $dist = levenshtein($h, $q);
             $pos = mb_strpos($h, $q);
             $starts = $pos === 0 ? 1 : 0;
-            $exact  = ($h === $q) ? 1 : 0;
-            $score  = $dist + ($pos === false ? 5 : min(3, (int) $pos)) - ($starts * 2) - ($exact * 5);
+            $exact = ($h === $q) ? 1 : 0;
+            $score = $dist + ($pos === false ? 5 : min(3, (int) $pos)) - ($starts * 2) - ($exact * 5);
+
             return [$score, $d];
         }, $candidates);
 
@@ -181,8 +208,9 @@ class BlacklistCheck extends Component
         $this->errorMsg = null;
 
         $domain = Domain::with(['categories' => fn ($q) => $q->select('domain_categories.id', 'domain_categories.slug', 'domain_categories.priority')])->find($id);
-        if (!$domain) {
+        if (! $domain) {
             $this->selected = null;
+
             return;
         }
 
@@ -195,7 +223,7 @@ class BlacklistCheck extends Component
     {
         $this->selected = null;
 
-        if (!empty($this->prevResults)) {
+        if (! empty($this->prevResults)) {
             $this->results = $this->prevResults;
             $this->prevResults = [];
         } else {
@@ -222,26 +250,25 @@ class BlacklistCheck extends Component
     }
 
     private function buildCategoryPaginator(): LengthAwarePaginator
-{
-    $q = Domain::query()
-        ->select('domains.id', 'domains.host', 'domains.normalized_host')
-        ->join('domain_category_domain', 'domain_category_domain.domain_id', '=', 'domains.id')
-        ->join('domain_categories', 'domain_categories.id', '=', 'domain_category_domain.domain_category_id')
-        ->where('domain_categories.slug', $this->categorySlug)
-        ->with(['categories:id,slug,priority']);
+    {
+        $q = Domain::query()
+            ->select('domains.id', 'domains.host', 'domains.normalized_host')
+            ->join('domain_category_domain', 'domain_category_domain.domain_id', '=', 'domains.id')
+            ->join('domain_categories', 'domain_categories.id', '=', 'domain_category_domain.domain_category_id')
+            ->where('domain_categories.slug', $this->categorySlug)
+            ->with(['categories:id,slug,priority']);
 
-    if ($this->categorySearch !== '') {
-        $needle = str_replace('*', '%', mb_strtolower(trim($this->categorySearch)));
-        $q->where(function ($sub) use ($needle) {
-            $sub->where('domains.host', 'like', "%{$needle}%")
-                ->orWhere('domains.normalized_host', 'like', "%{$needle}%");
-        });
+        if ($this->categorySearch !== '') {
+            $needle = str_replace('*', '%', mb_strtolower(trim($this->categorySearch)));
+            $q->where(function ($sub) use ($needle) {
+                $sub->where('domains.host', 'like', "%{$needle}%")
+                    ->orWhere('domains.normalized_host', 'like', "%{$needle}%");
+            });
+        }
+
+        return $q->orderBy('domains.normalized_host')
+            ->paginate($this->catPerPage, pageName: $this->catPageName);
     }
-
-    return $q->orderBy('domains.normalized_host')
-        ->paginate($this->catPerPage, pageName: $this->catPageName);
-}
-
 
     private function suppressAutocomplete(): void
     {
@@ -259,7 +286,9 @@ class BlacklistCheck extends Component
     private function normalizeInput(string $input): string
     {
         $in = trim(mb_strtolower($input));
-        if ($in === '') return '';
+        if ($in === '') {
+            return '';
+        }
 
         $in = preg_replace('#^\s*(https?://)#', '', $in);
         $first = explode('/', $in, 2)[0];
@@ -268,12 +297,17 @@ class BlacklistCheck extends Component
         }
         $host = explode(':', $first, 2)[0];
         $host = rtrim($host, '.');
-        if ($host === '' || $host === null) return '';
+        if ($host === '' || $host === null) {
+            return '';
+        }
 
         if (function_exists('idn_to_ascii')) {
             $ascii = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
-            if ($ascii) $host = $ascii;
+            if ($ascii) {
+                $host = $ascii;
+            }
         }
+
         return $host;
     }
 
@@ -285,6 +319,7 @@ class BlacklistCheck extends Component
                 $flat[] = $it;
             }
         }
+
         return $flat;
     }
 
@@ -310,3 +345,4 @@ class BlacklistCheck extends Component
         });
     }
 }
+

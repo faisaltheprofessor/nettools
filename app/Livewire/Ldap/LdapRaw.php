@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Ldap;
 
-use Livewire\Component;
 use App\Ldap\User;
 use Illuminate\Validation\ValidationException;
+use Livewire\Component;
 
 class LdapRaw extends Component
 {
     public array $result = [];
+
     public string $pkennung = '';
+
     public string $errorMessage = '';
 
     public function render()
@@ -28,12 +30,13 @@ class LdapRaw extends Component
 
             $normalized = preg_replace('/\s+/', '', $this->pkennung);
             $digits = ltrim($normalized, 'pP');
-            $pid = 'p' . $digits;
+            $pid = 'p'.$digits;
 
             $user = User::where('cn', '=', $pid)->first();
 
-            if (!$user) {
+            if (! $user) {
                 $this->errorMessage = "Kein Benutzer mit der Kennung '{$pid}' gefunden.";
+
                 return;
             }
 
@@ -42,13 +45,13 @@ class LdapRaw extends Component
                 : (array) $user->getAttributes();
 
             $this->result = collect($data)
-                ->reject(fn($value, $key) => str_starts_with(strtolower($key), 'saslogin'))
+                ->reject(fn ($value, $key) => str_starts_with(strtolower($key), 'saslogin'))
                 ->toArray();
         } catch (ValidationException $e) {
             $this->errorMessage = 'Die eingegebene Kennung ist ungültig.';
             throw $e;
         } catch (\Throwable $e) {
-            $this->errorMessage = 'Beim Abrufen der LDAP-Daten ist ein Fehler aufgetreten: ' . $e->getMessage();
+            $this->errorMessage = 'Beim Abrufen der LDAP-Daten ist ein Fehler aufgetreten: '.$e->getMessage();
         }
     }
 }

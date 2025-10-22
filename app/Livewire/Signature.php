@@ -26,7 +26,7 @@ class Signature extends Component
         // Normalize to 'p' + digits
         $normalized = preg_replace('/\s+/', '', $this->pkennung); // remove spaces
         $digits = ltrim($normalized, 'pP');                       // drop any leading p/P
-        $pid = 'p' . $digits;
+        $pid = 'p'.$digits;
 
         $user = User::where('cn', '=', $pid)->first();
 
@@ -34,6 +34,7 @@ class Signature extends Component
             $this->addError('pkennung', 'Benutzer nicht gefunden.');
             $this->ldapUser = null;
             $this->signatureContent = '';
+
             return;
         }
 
