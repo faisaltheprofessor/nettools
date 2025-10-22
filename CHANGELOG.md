@@ -3,6 +3,12 @@ Alle relevanten Änderungen an diesem Projekt werden hier dokumentiert.
 Dieses Projekt verwendet [Semantic Versioning](https://semver.org/lang/de/).
 
 ## Unveröffentlicht
+## [1.0.0] - 22-10-2025
+### Behoben / Geändert
+- Improved LDAP search algorithm
+### Hinzugefügt
+- LDAP Raw
+
 ## [0.9.0-beta.7] - 09-10-2025
 ### Behoben / Geändert
 - **Benutzersuche**: Suche nach Nachnamen liefert nun Ergebnisse
