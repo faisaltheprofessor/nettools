@@ -106,9 +106,30 @@
             </div>
         </div>
     </flux:heading>
+
     <flux:text class="mb-6 mt-2 text-base">Herzlich willkommen bei {{ config('app.name') }}</flux:text>
     <flux:separator variant="subtle"/>
-    <div class="mt-4">
+    <div class="mt">
+        @if(App::currentEnvironmentIs('dev'))
+    <div class="w-1/2 mx-auto my-4">
+        <flux:callout icon="shield-check" color="amber" inline>
+    <flux:callout.heading>Entwicklungsserver</flux:callout.heading>
+
+    <flux:callout.text>
+        Sie befinden sich derzeit auf der <span class="font-semibold">Beta- bzw. Development Version</span> von Nettools.
+    </flux:callout.text>
+
+    <x-slot name="actions" class="@md:h-full m-0!">
+        <flux:button>
+            <a href="{{ env('APP_PROD_URL') }}">
+                Zur Produktionsversion wechseln →
+            </a>
+        </flux:button>
+    </x-slot>
+</flux:callout>
+    </div>
+
+@endif
         {{-- slot --}}
         {{ $slot }}
     </div>
