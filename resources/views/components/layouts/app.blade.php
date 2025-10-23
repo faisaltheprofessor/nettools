@@ -88,8 +88,10 @@
         <div class="flex justify-between">
             <div>Hallo, {{ Str::title(Auth::user()->name) }}</div>
             <div class="flex items-center gap-2">
-                <livewire:feedback name="submit-feedback" />
+               @if(App::currentEnvironmentIs('production'))
+                 <livewire:feedback name="submit-feedback" />
                 <livewire:notification-bell />
+                @endif
                 <flux:dropdown x-data align="end">
                     <flux:button variant="subtle" square class="group" aria-label="Preferred color scheme">
                         <flux:icon.sun x-show="$flux.appearance === 'light'" variant="mini" class="text-zinc-500 dark:text-white"/>
