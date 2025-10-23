@@ -12,7 +12,7 @@ class Feedback extends Model
 
     protected $fillable = [
         'user_id', 'assigned_to_id', 'title', 'type', 'description', 'url', 'user_agent',
-        'attachments', 'status', 'tags', 'priority', 'assigned_to_id',
+        'attachments', 'status', 'tags', 'priority', 'assigned_to_id', 'user_guid'
     ];
 
     protected $casts = [
