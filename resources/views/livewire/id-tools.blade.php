@@ -7,9 +7,8 @@
                 <flux:tab name="pid-gaps" icon="user">User PID Lücken</flux:tab>
                 <flux:tab name="user-export" icon="file-up">PIDs Exportieren</flux:tab>
                 <flux:tab name="mailbox" icon="envelope">Mailbox PID</flux:tab>
-                @if(in_array(auth()->user()->username, config('users.ldap_raw')))
-                    <flux:tab name="ldap-raw" icon="braces">Raw</flux:tab>
-                @endif
+                <flux:tab name="ldap-raw" icon="braces">Raw</flux:tab>
+
 
             </flux:tabs>
         </div>
@@ -34,9 +33,8 @@
             <livewire:ldap.user-search />
         </flux:tab.panel>
 
-        @if(in_array(auth()->user()->username, config('users.ldap_raw')))
-            <flux:tab.panel name="ldap-raw">
-                <livewire:ldap.ldap-raw />
-            </flux:tab.panel>
-        @endif
+        <flux:tab.panel name="ldap-raw">
+            <livewire:ldap.ldap-raw />
+        </flux:tab.panel>
+
     </flux:tab.group>
