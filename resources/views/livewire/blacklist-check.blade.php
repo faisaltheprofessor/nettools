@@ -1,6 +1,6 @@
 {{-- resources/views/livewire/blacklist-check.blade.php --}}
 <div>
-    {{-- Search form --}}
+    {{-- Suchformular --}}
     <form wire:submit.prevent="searchNow">
         <div
             x-data="{ open: @entangle('acOpen').live, idx: @entangle('acIndex').live }"
@@ -59,10 +59,11 @@
 
         <div class="max-w-5xl mx-auto px-4 mb-4"></div>
 
-        {{-- Results area --}}
+        {{-- Ergebnisse --}}
         <div class="max-w-5xl mx-auto px-4">
             <div class="min-h-[28rem]">
                 @php
+                    // Sortier-Helper: kleinere Zahl = höhere Priorität; 0 zählt als niedrigste (kommt nach allen >0)
                     $sortByPriorityField = fn($c) => ((int)($c->priority ?? 0)) > 0 ? (int)$c->priority : PHP_INT_MAX;
 
                     $palette = ['amber','indigo','teal','fuchsia','emerald','orange','sky','rose','violet','cyan','lime','blue','purple','pink'];
@@ -104,7 +105,7 @@
                                     class="cursor-pointer"
                                     size="sm"
                                 >
-                                    Zurück zur Ergebnis
+                                    Zurück zur Ergebnisliste
                                 </flux:button>
                                 <div class="text-xs text-zinc-500">
                                     {{ $selected->categories?->count() ?? 0 }} Kategorien
@@ -118,8 +119,7 @@
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <div class="text-xs text-zinc-500">Domain</div>
-                                            <div
-                                                class="text-2xl font-semibold font-mono tracking-tight">{{ $selected->host }}</div>
+                                            <div class="text-2xl font-semibold font-mono tracking-tight">{{ $selected->host }}</div>
                                         </div>
                                         <flux:badge color="{{ $col['badge'] }}">
                                             {{ $cat->slug }} • Priorität {{ $i + 1 }}
@@ -132,7 +132,7 @@
                                             <div class="text-sm font-medium">{{ $cat->slug }}</div>
                                         </div>
                                         <div class="rounded-lg border p-3">
-                                            <div class="text-xs text-zinc-500">First seen</div>
+                                            <div class="text-xs text-zinc-500">Erst gesehen</div>
                                             <div class="text-sm font-medium">
                                                 {{ optional($selected->first_seen_at)->format('Y-m-d H:i') ?? '–' }}
                                             </div>
@@ -154,30 +154,88 @@
                                         <th class="text-left p-3 font-semibold">Domain</th>
                                         <th class="text-left p-3 font-semibold">Kategorie</th>
                                         <th class="text-left p-3 font-semibold">Priorität</th>
-                                        <th class="text-left p-3 font-semibold">First seen</th>
+                                        <th class="text-left p-3 font-semibold">Erst gesehen</th>
                                     </tr>
                                     </thead>
+
+                                    {{-- Tooltip-Logik basiert ausschließlich auf Priorität (keine "neutral"-Konzeption) --}}
                                     <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                                    @php
+                                        $tieRuleLabel = config('domains.tie_breaker_label', 'Systemregel');
+                                        $prioVal = function ($p) { return ($p && (int)$p > 0) ? (int)$p : PHP_INT_MAX; }; // 0 = niedrigste
+                                    @endphp
+
                                     @foreach($results as $d)
-                                        @php $cats = $d->categories ? $d->categories->sortBy($sortByPriorityField)->values() : collect(); @endphp
+                                        @php
+                                            $cats = $d->categories ? $d->categories->sortBy(fn($c) => $prioVal($c->priority))->values() : collect();
+                                            $minVal = $cats->isEmpty() ? PHP_INT_MAX : $cats->map(fn($c) => $prioVal($c->priority))->min();
+                                            $tieSet = $cats->filter(fn($c) => $prioVal($c->priority) === $minVal)->values();
+                                            $isTie  = $tieSet->count() > 1;
+                                            $winner = $isTie ? null : $cats->first(); // kleinstes Prio
+                                        @endphp
+
                                         @foreach($cats as $i => $cat)
-                                            @php $col = $colorMap($cat->slug); @endphp
+                                            @php
+                                                $col = $colorMap($cat->slug);
+
+                                                $others = $d->categories?->filter(fn($c) => $c->id !== $cat->id)->values() ?? collect();
+                                                $othersList = $others->pluck('slug')->join(', ');
+
+                                                $currentVal = $prioVal($cat->priority);
+                                                $wins   = !$isTie && $winner && $winner->id === $cat->id;
+                                                $loses  = !$isTie && $currentVal > $minVal;
+                                                $equal  =  $isTie && $tieSet->contains(fn($t) => $t->id === $cat->id);
+
+                                                $tooltip = '';
+                                                if ($others->isNotEmpty()) {
+                                                    if ($wins) {
+                                                        $tooltip = "Auch gelistet in: <span class='text-amber-500'>{$othersList}</span>. <p><span class='text-lime-500'>{$cat->slug}</span> hat hier die höhere Priorität.<p> <p class=' text-teal-500 font-bold'> Diese Kategorie ist wirksam.";
+                                                    } elseif ($loses) {
+                                                        // Eine andere Liste hat eine höhere Priorität
+                                                        $winningSlug = $winner?->slug;
+                                                        if ($winningSlug) {
+                                                            $tooltip = "Ebenfalls in: <span class='text-amber-500'>{$othersList}</span>. <p><span class='text-lime-500'>{$winningSlug}</span> hat die höhere Priorität.</p> <p class=' text-teal-500'> Die Entscheidung richtet sich nicht nach dieser Kategorie.";
+                                                        } else {
+                                                            $tooltip = "Ebenfalls in: {$othersList}. Eine andere Liste hat die höhere Priorität. <p class=' text-teal-500'> Die Entscheidung richtet sich nicht nach dieser Kategorie.";
+                                                        }
+                                                    }
+                                                }
+                                            @endphp
+
                                             <tr
                                                 wire:click="selectDomain({{ $d->id }})"
                                                 class="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30"
                                             >
                                                 <td class="p-3 font-mono">
-                                                        <span class="hover:underline cursor-pointer"
-                                                              wire:click.stop="selectDomain({{ $d->id }})">
-                                                            {{ $d->host }}
-                                                        </span>
+                                                    <span class="hover:underline cursor-pointer"
+                                                          wire:click.stop="selectDomain({{ $d->id }})">
+                                                        {{ $d->host }}
+                                                    </span>
                                                 </td>
+
                                                 <td class="p-3">
-                                                    <flux:badge color="{{ $col['badge'] }}">
-                                                        {{ $cat->slug }}
-                                                    </flux:badge>
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:badge color="{{ $col['badge'] }}">
+                                                            {{ $cat->slug }}
+                                                        </flux:badge>
+                                                    </div>
                                                 </td>
-                                                <td class="p-3">#{{ $i + 1 }}</td>
+
+                                                {{-- Tooltip NACH der Prioritätsnummer, nur wenn mehrere Listen existieren --}}
+                                                <td class="p-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <span>#{{ $i + 1 }}</span>
+                                                        @if($others->isNotEmpty() && !empty($tooltip))
+                                                            <flux:tooltip>
+                                                                <flux:icon.information-circle size="sm" variant="solid" class="text-emerald-500 dark:text-emerald-300" />
+                                                                <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                                                                    {!! $tooltip !!}
+                                                                </flux:tooltip.content>
+                                                            </flux:tooltip>
+                                                        @endif
+                                                    </div>
+                                                </td>
+
                                                 <td class="p-3">
                                                     {{ optional($d->first_seen_at)->format('Y-m-d H:i') ?? '–' }}
                                                 </td>
@@ -239,7 +297,9 @@
                                                     class="h-3 w-full rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 overflow-hidden">
                                                     <div
                                                         class="h-full rounded-md {{ $col['bar'] }} transition-all duration-300 group-hover:opacity-90"
-                                                        style="width: {{ $pct }}%;" aria-hidden="true"></div>
+                                                        style="width: {{ $pct }}%;"
+                                                        aria-hidden="true"
+                                                    ></div>
                                                 </div>
                                             </div>
                                             <div
@@ -268,7 +328,7 @@
         </div>
     </form>
 
-    {{-- Category modal --}}
+    {{-- Kategorien-Modal (ohne Tooltip in den Zeilen) --}}
     <flux:modal :dismissible="false" name="category-modal" wire:model.self="showCategoryModal" class="min-w-[48rem]">
         <div class="space-y-4">
             @php
@@ -313,6 +373,11 @@
                                 $main      = $d->categories->firstWhere('slug', $categorySlug);
                                 $mainPrio  = $main?->priority ?? 0;
                                 $others    = $d->categories->filter(fn($c) => $c->slug !== $categorySlug)->values();
+
+                                $relText = function($c) use ($mainPrio) {
+                                    $cp = (int)$c->priority;
+                                    return $cp < (int)$mainPrio ? 'höhere Priorität' : ($cp > (int)$mainPrio ? 'niedrigere Priorität' : 'gleiche Priorität');
+                                };
                             @endphp
 
                             <flux:table.row :key="$d->id">
@@ -322,21 +387,17 @@
 
                                 <flux:table.cell class="whitespace-normal break-words text-sm leading-relaxed">
                                     @if($others->isEmpty())
-                                        <span class="block ml-5"> <flux:icon.minus /> </span>
+                                        <span class="block ml-5"><flux:icon.minus /></span>
                                     @else
                                         <div class="space-y-1">
-                                            @foreach($others->sortBy('priority') as $c)
-                                                @php
-                                                    $rel = (int)$c->priority < $mainPrio
-                                                        ? 'höhere Priorität'
-                                                        : ((int)$c->priority > $mainPrio ? 'niedrigere Priorität' : 'gleiche Priorität');
-                                                @endphp
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <flux:badge
-                                                        color="{{ $colorMapBadge($c->slug) }}">{{ $c->slug }}</flux:badge>
-                                                    <span class="text-zinc-500">({{ $rel }})</span>
-                                                </div>
-                                            @endforeach
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($others->sortBy('priority') as $c)
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:badge color="{{ $colorMapBadge($c->slug) }}">{{ $c->slug }}</flux:badge>
+                                                        <span class="text-zinc-500">({{ $relText($c) }})</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
                                         </div>
                                     @endif
                                 </flux:table.cell>
@@ -351,6 +412,4 @@
             @endif
         </div>
     </flux:modal>
-
-
 </div>
