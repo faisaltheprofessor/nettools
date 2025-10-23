@@ -51,6 +51,33 @@ class DhcpRestartCommand extends Command
             RemoteSSH::execute("cluster status DHCP_SERVER | grep Lives | awk '{print \$1}'");
             $status = trim(RemoteSSH::getOutput());
 
+            // Handle Comatose status
+            if (stripos($status, 'Comatose') !== false) {
+                preg_match('/Running on (\S+)/', $status, $matches);
+                $runningServer = $matches[1] ?? null;
+
+                if ($runningServer) {
+                    Log::info("DHCP service is Comatose on server {$runningServer}");
+                    // Store the status in cache
+                    Cache::put('dhcp:comatose:server', $runningServer, 60); // Store for 1 minute
+
+                    // Take the service offline and online
+                    RemoteSSH::connect($runningServer, $sshUser, $sshPass);
+
+                    Log::info("Attempting to restart DHCP service on {$runningServer}");
+
+                    // Offline and online commands
+                    RemoteSSH::execute("CLUSTER OFFLINE DHCP_SERVER");
+                    sleep(2); // Wait for 2 seconds
+                    RemoteSSH::execute("CLUSTER ONLINE DHCP_SERVER");
+
+                    $this->info("DHCP service has been restarted on {$runningServer}.");
+                } else {
+                    $this->warn("Could not determine which server is Comatose.");
+                }
+                return 0;
+            }
+
             if ($status === 'Offline') {
                 Log::info('Offline');
                 $this->warn('DHCP ist offline. Starte stattdessen den Dienst.');
