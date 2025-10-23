@@ -1,11 +1,4 @@
 <div class="relative">
-
-<div class="relative z-10 mt-8 flex flex-wrap gap-2 md:gap-4 justify-start items-start">
-        <livewire:service-status-indicator service="dns" display="card"/>
-        <livewire:service-status-indicator service="dhcp" display="card"/>
-</div>
-
-
     <div class="fixed inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
         <img
             src="/pankow.svg"
